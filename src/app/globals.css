@@ -1,0 +1,146 @@
+@import "@heroui/styles";
+
+/* ========================================
+ * 自定义主题变量覆盖
+ * ======================================== */
+:root {
+  /* 主色调 - 使用蓝色系 */
+  --accent: oklch(0.6 0.2 250);
+  --accent-foreground: oklch(0.98 0 0);
+}
+
+.dark,
+[data-theme="dark"] {
+  --accent: oklch(0.7 0.2 250);
+  --accent-foreground: oklch(0.15 0 0);
+}
+
+/* ========================================
+ * 全局基础样式
+ * ======================================== */
+@layer base {
+  html {
+    scroll-behavior: smooth;
+  }
+
+  body {
+    @apply min-h-screen antialiased;
+  }
+
+  /* 滚动条样式 */
+  ::-webkit-scrollbar {
+    width: 8px;
+    height: 8px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-transparent;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply rounded-full bg-default;
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-muted;
+  }
+}
+
+/* ========================================
+ * 工具类扩展
+ * ======================================== */
+@layer utilities {
+  /* 文本截断 */
+  .truncate-2 {
+    display: -webkit-box;
+    -webkit-line-clamp: 2;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  .truncate-3 {
+    display: -webkit-box;
+    -webkit-line-clamp: 3;
+    -webkit-box-orient: vertical;
+    overflow: hidden;
+  }
+
+  /* 隐藏滚动条但保持滚动功能 */
+  .scrollbar-hide {
+    -ms-overflow-style: none;
+    scrollbar-width: none;
+  }
+
+  .scrollbar-hide::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* 震动动画 */
+  @keyframes shake {
+    0%,
+    100% {
+      transform: translateX(0);
+    }
+    10%,
+    30%,
+    50%,
+    70%,
+    90% {
+      transform: translateX(-8px);
+    }
+    20%,
+    40%,
+    60%,
+    80% {
+      transform: translateX(8px);
+    }
+  }
+
+  .animate-shake {
+    animation: shake 0.65s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+  }
+
+  /* 网格背景 */
+  .bg-grid-white\/\[0\.02\] {
+    background-image: linear-gradient(
+        to right,
+        rgba(255, 255, 255, 0.02) 1px,
+        transparent 1px
+      ),
+      linear-gradient(to bottom, rgba(255, 255, 255, 0.02) 1px, transparent 1px);
+  }
+
+  /* 自定义径向渐变 */
+  .bg-gradient-radial {
+    background: radial-gradient(ellipse at center, var(--tw-gradient-stops));
+  }
+
+  /* 自定义椭圆渐变 */
+  .bg-gradient-ellipse {
+    background: radial-gradient(
+      ellipse 120% 80% at 50% 50%,
+      var(--tw-gradient-stops)
+    );
+  }
+
+  /* 自定义圆锥渐变 */
+  .bg-gradient-conic {
+    background: conic-gradient(from 0deg at 50% 50%, var(--tw-gradient-stops));
+  }
+
+  /* 渐变动画 */
+  .animate-gradient {
+    animation: gradient 3s ease infinite;
+    background-size: 200% auto;
+  }
+
+  @keyframes gradient {
+    0%,
+    100% {
+      background-position: 0% center;
+    }
+    50% {
+      background-position: 100% center;
+    }
+  }
+}

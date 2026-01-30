@@ -1,0 +1,38 @@
+# Dependencies
+node_modules
+.pnpm-store
+
+# Build outputs
+.next
+out
+dist
+
+# Development
+.env
+.env.local
+.env.*.local
+*.log
+
+# IDE
+.vscode
+.idea
+*.swp
+*.swo
+
+# Git
+.git
+.gitignore
+
+# Tests
+tests
+coverage
+vitest.config.ts
+
+# Docs
+docs
+README.md
+*.md
+
+# Misc
+.trae
+参考demo

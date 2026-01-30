@@ -1,0 +1,11 @@
+services:
+  app:
+    image: ${IMAGE_NAME:-next_hono_admin_service}:${IMAGE_TAG:-latest}
+    container_name: ${CONTAINER_NAME:-app}
+    ports:
+      - "${APP_PORT:-3000}:3000"
+    env_file:
+      - .env.production
+    environment:
+      - TZ=Asia/Shanghai
+    restart: always
