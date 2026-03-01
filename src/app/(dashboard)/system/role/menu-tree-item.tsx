@@ -1,31 +1,31 @@
-"use client";
+'use client'
 
-import { Badge, Checkbox, Group, UnstyledButton } from "@mantine/core";
-import { ChevronRight } from "lucide-react";
+import { Badge, Center, Checkbox, Group, Text, UnstyledButton } from '@mantine/core'
+import { ChevronRight } from 'lucide-react'
 
 export type MenuTreeNode = {
-  id: number;
-  parentId: number;
-  menuType: "D" | "M" | "B";
-  menuName: string;
-  permission: string | null;
-  children?: MenuTreeNode[];
-};
+  id: number
+  parentId: number
+  menuType: 'D' | 'M' | 'B'
+  menuName: string
+  permission: string | null
+  children?: MenuTreeNode[]
+}
 
 interface MenuTreeItemProps {
-  node: MenuTreeNode;
-  checkedIds: number[];
-  expandedIds: number[];
-  onToggleCheck: (node: MenuTreeNode) => void;
-  onToggleExpand: (id: number) => void;
-  level: number;
+  node: MenuTreeNode
+  checkedIds: number[]
+  expandedIds: number[]
+  onToggleCheck: (node: MenuTreeNode) => void
+  onToggleExpand: (id: number) => void
+  level: number
 }
 
 const typeConfig = {
-  D: { label: "目录", color: "gray" as const },
-  M: { label: "菜单", color: "blue" as const },
-  B: { label: "按钮", color: "orange" as const },
-};
+  D: { label: '目录', color: 'gray' as const },
+  M: { label: '菜单', color: 'blue' as const },
+  B: { label: '按钮', color: 'orange' as const },
+}
 
 export function MenuTreeItem({
   node,
@@ -35,10 +35,10 @@ export function MenuTreeItem({
   onToggleExpand,
   level,
 }: MenuTreeItemProps) {
-  const hasChildren = node.children && node.children.length > 0;
-  const isExpanded = expandedIds.includes(node.id);
-  const isChecked = checkedIds.includes(node.id);
-  const config = typeConfig[node.menuType];
+  const hasChildren = node.children && node.children.length > 0
+  const isExpanded = expandedIds.includes(node.id)
+  const isChecked = checkedIds.includes(node.id)
+  const config = typeConfig[node.menuType]
 
   return (
     <div>
@@ -47,45 +47,33 @@ export function MenuTreeItem({
         wrap="nowrap"
         py={4}
         px="xs"
+        pl={level * 20 + 8}
         style={{
-          paddingLeft: level * 20 + 8,
-          borderRadius: "var(--mantine-radius-sm)",
-          cursor: "default",
-          "&:hover": { backgroundColor: "var(--mantine-color-gray-0)" },
+          borderRadius: 'var(--mantine-radius-sm)',
+          cursor: 'default',
         }}
       >
         {hasChildren ? (
-          <UnstyledButton
-            onClick={() => onToggleExpand(node.id)}
-            style={{
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              width: 20,
-              height: 20,
-            }}
-          >
-            <ChevronRight
-              size={14}
-              style={{
-                transition: "transform 150ms",
-                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
-              }}
-            />
+          <UnstyledButton onClick={() => onToggleExpand(node.id)}>
+            <Center w={20} h={20}>
+              <ChevronRight
+                size={14}
+                style={{
+                  transition: 'transform 150ms',
+                  transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
+                }}
+              />
+            </Center>
           </UnstyledButton>
         ) : (
-          <span style={{ width: 20 }} />
+          <Center w={20} />
         )}
 
-        <Checkbox
-          checked={isChecked}
-          onChange={() => onToggleCheck(node)}
-          size="xs"
-        />
+        <Checkbox checked={isChecked} onChange={() => onToggleCheck(node)} size="xs" />
 
-        <span style={{ flex: 1, fontSize: "var(--mantine-font-size-sm)" }}>
+        <Text size="sm" style={{ flex: 1 }}>
           {node.menuName}
-        </span>
+        </Text>
 
         <Badge size="xs" variant="light" color={config.color}>
           {config.label}
@@ -106,5 +94,5 @@ export function MenuTreeItem({
           />
         ))}
     </div>
-  );
+  )
 }

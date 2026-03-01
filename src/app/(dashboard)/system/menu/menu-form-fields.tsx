@@ -1,7 +1,5 @@
-"use client";
+'use client'
 
-import { DynamicIcon } from "@/components/dynamic-icon";
-import { IconPicker } from "@/components/icon-picker";
 import {
   Button,
   Group,
@@ -11,74 +9,72 @@ import {
   Text,
   Textarea,
   TextInput,
-} from "@mantine/core";
-import { useState } from "react";
+} from '@mantine/core'
+import { useState } from 'react'
+import { DynamicIcon } from '@/components/dynamic-icon'
+import { IconPicker } from '@/components/icon-picker'
 
 export type MenuFormData = {
-  parentId: number;
-  menuType: "D" | "M" | "B";
-  menuName: string;
-  permission: string;
-  path: string;
-  component: string;
-  icon: string;
-  sort: number;
-  visible: number;
-  status: number;
-  isExternal: number;
-  isCache: number;
-  remark: string;
-};
+  parentId: number
+  menuType: 'D' | 'M' | 'B'
+  menuName: string
+  permission: string
+  path: string
+  component: string
+  icon: string
+  sort: number
+  visible: number
+  status: number
+  isExternal: number
+  isCache: number
+  remark: string
+}
 
 interface FormFieldProps {
-  formData: MenuFormData;
-  onChange: (data: MenuFormData) => void;
-  parentMenuName: string;
+  formData: MenuFormData
+  onChange: (data: MenuFormData) => void
+  parentMenuName: string
 }
 
 const menuTypeOptions = [
-  { value: "D", label: "目录" },
-  { value: "M", label: "菜单" },
-  { value: "B", label: "按钮" },
-];
+  { value: 'D', label: '目录' },
+  { value: 'M', label: '菜单' },
+  { value: 'B', label: '按钮' },
+]
 
 const statusOptions = [
-  { value: "1", label: "正常" },
-  { value: "0", label: "禁用" },
-];
+  { value: '1', label: '正常' },
+  { value: '0', label: '禁用' },
+]
 
 const visibleOptions = [
-  { value: "1", label: "显示" },
-  { value: "0", label: "隐藏" },
-];
+  { value: '1', label: '显示' },
+  { value: '0', label: '隐藏' },
+]
 
 const yesNoOptions = [
-  { value: "0", label: "否" },
-  { value: "1", label: "是" },
-];
+  { value: '0', label: '否' },
+  { value: '1', label: '是' },
+]
 
 const cacheOptions = [
-  { value: "1", label: "是" },
-  { value: "0", label: "否" },
-];
+  { value: '1', label: '是' },
+  { value: '0', label: '否' },
+]
 
-export function MenuFormFields({
-  formData,
-  onChange,
-  parentMenuName,
-}: FormFieldProps) {
-  const [showIconPicker, setShowIconPicker] = useState(false);
+export function MenuFormFields({ formData, onChange, parentMenuName }: FormFieldProps) {
+  const [showIconPicker, setShowIconPicker] = useState(false)
 
   const handleTypeChange = (val: string | null) => {
-    if (!val) return;
-    const newType = val as "D" | "M" | "B";
+    if (!val) return
+    const newType = val as 'D' | 'M' | 'B'
     onChange({
       ...formData,
       menuType: newType,
-      path: newType === "D" || newType === "B" ? "" : formData.path,
-      component: newType === "B" ? "" : formData.component,
-    });
-  };
+      path: newType === 'D' || newType === 'B' ? '' : formData.path,
+      component: newType === 'B' ? '' : formData.component,
+    })
+  }
 
   return (
     <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
@@ -86,7 +82,7 @@ export function MenuFormFields({
         label="上级菜单"
         value={parentMenuName}
         disabled
-        style={{ gridColumn: "1 / -1" }}
+        style={{ gridColumn: '1 / -1' }}
       />
 
       <Select
@@ -102,18 +98,14 @@ export function MenuFormFields({
         required
         placeholder="请输入菜单名称"
         value={formData.menuName}
-        onChange={(e) =>
-          onChange({ ...formData, menuName: e.currentTarget.value })
-        }
+        onChange={(e) => onChange({ ...formData, menuName: e.currentTarget.value })}
       />
 
       <TextInput
         label="权限标识"
         placeholder="如：system:admin:list"
         value={formData.permission}
-        onChange={(e) =>
-          onChange({ ...formData, permission: e.currentTarget.value })
-        }
+        onChange={(e) => onChange({ ...formData, permission: e.currentTarget.value })}
       />
 
       <NumberInput
@@ -123,63 +115,53 @@ export function MenuFormFields({
         onChange={(val) => onChange({ ...formData, sort: Number(val) || 0 })}
       />
 
-      {formData.menuType !== "B" && (
+      {formData.menuType !== 'B' && (
         <TextInput
           label="路由路径"
-          placeholder={
-            formData.menuType === "D"
-              ? "目录类型无需设置路径"
-              : "如：/system/admin"
-          }
+          placeholder={formData.menuType === 'D' ? '目录类型无需设置路径' : '如：/system/admin'}
           value={formData.path}
-          disabled={formData.menuType === "D"}
+          disabled={formData.menuType === 'D'}
           description={
-            formData.menuType === "D"
-              ? "目录仅用于菜单分组，无需配置路由路径"
-              : undefined
+            formData.menuType === 'D' ? '目录仅用于菜单分组，无需配置路由路径' : undefined
           }
-          onChange={(e) =>
-            onChange({ ...formData, path: e.currentTarget.value })
-          }
+          onChange={(e) => onChange({ ...formData, path: e.currentTarget.value })}
         />
       )}
 
-      {formData.menuType === "M" && (
+      {formData.menuType === 'M' && (
         <TextInput
           label="组件路径"
           placeholder="如：system/admin/index"
           value={formData.component}
-          onChange={(e) =>
-            onChange({ ...formData, component: e.currentTarget.value })
-          }
+          onChange={(e) => onChange({ ...formData, component: e.currentTarget.value })}
         />
       )}
 
-      {formData.menuType !== "B" && (
+      {formData.menuType !== 'B' && (
         <div>
           <Text size="sm" fw={500} mb={4}>
             图标
           </Text>
-          <Group
-            gap="sm"
-            p="xs"
-            style={{
-              border: "1px solid var(--mantine-color-gray-3)",
-              borderRadius: "var(--mantine-radius-sm)",
-            }}
+          <Button
+            variant="default"
+            fullWidth
+            h="auto"
+            py="xs"
+            px="sm"
+            fw="normal"
+            onClick={() => setShowIconPicker(true)}
+            styles={{ inner: { width: '100%', justifyContent: 'flex-start' } }}
           >
-            <DynamicIcon name={formData.icon} size={18} />
-            <Text size="sm" c="dimmed" style={{ flex: 1 }}>
-              {formData.icon || "未选择"}
-            </Text>
-            <Button
-              variant="light"
-              size="xs"
-              onClick={() => setShowIconPicker(true)}
-            >
-              选择
-            </Button>
-          </Group>
+            <Group gap="sm" w="100%" wrap="nowrap">
+              <DynamicIcon name={formData.icon} size={18} />
+              <Text size="sm" c={formData.icon ? 'text' : 'dimmed'} flex={1} ta="left">
+                {formData.icon || '未选择'}
+              </Text>
+              <Text size="xs" c="blue" fw={500}>
+                选择
+              </Text>
+            </Group>
+          </Button>
         </div>
       )}
 
@@ -190,7 +172,7 @@ export function MenuFormFields({
         onChange={(v) => onChange({ ...formData, status: Number(v) })}
       />
 
-      {formData.menuType !== "B" && (
+      {formData.menuType !== 'B' && (
         <Select
           label="显示状态"
           data={visibleOptions}
@@ -199,7 +181,7 @@ export function MenuFormFields({
         />
       )}
 
-      {formData.menuType === "M" && (
+      {formData.menuType === 'M' && (
         <Select
           label="是否外链"
           data={yesNoOptions}
@@ -208,7 +190,7 @@ export function MenuFormFields({
         />
       )}
 
-      {formData.menuType === "M" && (
+      {formData.menuType === 'M' && (
         <Select
           label="是否缓存"
           data={cacheOptions}
@@ -222,10 +204,8 @@ export function MenuFormFields({
         placeholder="请输入备注"
         rows={3}
         value={formData.remark}
-        onChange={(e) =>
-          onChange({ ...formData, remark: e.currentTarget.value })
-        }
-        style={{ gridColumn: "1 / -1" }}
+        onChange={(e) => onChange({ ...formData, remark: e.currentTarget.value })}
+        style={{ gridColumn: '1 / -1' }}
       />
 
       {showIconPicker && (
@@ -236,5 +216,5 @@ export function MenuFormFields({
         />
       )}
     </SimpleGrid>
-  );
+  )
 }

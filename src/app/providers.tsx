@@ -1,27 +1,27 @@
-"use client";
+'use client'
 
-import { createTheme, MantineProvider } from "@mantine/core";
-import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { type ReactNode, useEffect } from "react";
-import { Toaster } from "sonner";
-import { useAuthStore } from "@/hooks/use-auth";
+import { createTheme, MantineProvider } from '@mantine/core'
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query'
+import { type ReactNode, useEffect } from 'react'
+import { Toaster } from 'sonner'
+import { useAuthStore } from '@/hooks/use-auth'
 
 const theme = createTheme({
-  primaryColor: "blue",
-  fontFamily: "system-ui, -apple-system, sans-serif",
-  defaultRadius: "md",
-});
+  primaryColor: 'blue',
+  fontFamily: 'system-ui, -apple-system, sans-serif',
+  defaultRadius: 'md',
+})
 
 function AuthInitializer({ children }: { children: ReactNode }) {
-  const { initialized, refreshAuth } = useAuthStore();
+  const { initialized, refreshAuth } = useAuthStore()
 
   useEffect(() => {
     if (!initialized) {
-      refreshAuth();
+      refreshAuth()
     }
-  }, [initialized, refreshAuth]);
+  }, [initialized, refreshAuth])
 
-  return <>{children}</>;
+  return <>{children}</>
 }
 
 function makeQueryClient() {
@@ -34,19 +34,19 @@ function makeQueryClient() {
       },
       mutations: { retry: 0 },
     },
-  });
+  })
 }
 
-let browserQueryClient: QueryClient | undefined;
+let browserQueryClient: QueryClient | undefined
 
 function getQueryClient() {
-  if (typeof window === "undefined") return makeQueryClient();
-  if (!browserQueryClient) browserQueryClient = makeQueryClient();
-  return browserQueryClient;
+  if (typeof window === 'undefined') return makeQueryClient()
+  if (!browserQueryClient) browserQueryClient = makeQueryClient()
+  return browserQueryClient
 }
 
 export function Providers({ children }: { children: ReactNode }) {
-  const queryClient = getQueryClient();
+  const queryClient = getQueryClient()
 
   return (
     <MantineProvider theme={theme} defaultColorScheme="auto">
@@ -55,5 +55,5 @@ export function Providers({ children }: { children: ReactNode }) {
         <Toaster position="top-center" richColors closeButton />
       </QueryClientProvider>
     </MantineProvider>
-  );
+  )
 }

@@ -1,93 +1,76 @@
-"use client";
+'use client'
 
-import {
-  Button,
-  Card,
-  Group,
-  Select,
-  SimpleGrid,
-  TextInput,
-} from "@mantine/core";
-import { Plus, RefreshCw } from "lucide-react";
-import { useState } from "react";
-import { toast } from "sonner";
+import { Button, Card, Group, Select, SimpleGrid, TextInput } from '@mantine/core'
+import { Plus, RefreshCw } from 'lucide-react'
+import { useState } from 'react'
+import { toast } from 'sonner'
 
-import { PermissionGuard } from "@/components/permission-guard";
-import { DataTable } from "@/components/ui/data-table";
-import { ConfirmDialog } from "@/components/ui/form-dialog";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
-import { Pagination } from "@/components/ui/pagination";
-import {
-  useConfigs,
-  useCreateConfig,
-  useDeleteConfig,
-  useUpdateConfigValue,
-} from "@/hooks/queries";
-import { buildColumns, type Config } from "./config-columns";
-import {
-  ConfigCreateDialog,
-  type CreateFormData,
-  defaultCreateForm,
-} from "./config-create-dialog";
-import { ConfigEditDialog } from "./config-edit-dialog";
+import { PermissionGuard } from '@/components/permission-guard'
+import { DataTable } from '@/components/ui/data-table'
+import { ConfirmDialog } from '@/components/ui/form-dialog'
+import { PageContainer, PageHeader } from '@/components/ui/page-header'
+import { Pagination } from '@/components/ui/pagination'
+import { useConfigs, useCreateConfig, useDeleteConfig, useUpdateConfigValue } from '@/hooks/queries'
+import { buildColumns, type Config } from './config-columns'
+import { ConfigCreateDialog, type CreateFormData, defaultCreateForm } from './config-create-dialog'
+import { ConfigEditDialog } from './config-edit-dialog'
 
 export default function ConfigPage() {
-  const [page, setPage] = useState(1);
-  const [pageSize] = useState(20);
+  const [page, setPage] = useState(1)
+  const [pageSize] = useState(20)
   const [filters, setFilters] = useState({
-    group: "",
-    status: "" as "" | "0" | "1",
-  });
-  const [appliedFilters, setAppliedFilters] = useState(filters);
+    group: '',
+    status: '' as '' | '0' | '1',
+  })
+  const [appliedFilters, setAppliedFilters] = useState(filters)
 
-  const [editingConfig, setEditingConfig] = useState<Config | null>(null);
-  const [editingValue, setEditingValue] = useState("");
+  const [editingConfig, setEditingConfig] = useState<Config | null>(null)
+  const [editingValue, setEditingValue] = useState('')
 
-  const [createDialogOpen, setCreateDialogOpen] = useState(false);
-  const [createForm, setCreateForm] =
-    useState<CreateFormData>(defaultCreateForm);
-  const [createErrors, setCreateErrors] = useState<
-    Partial<Record<keyof CreateFormData, string>>
-  >({});
+  const [createDialogOpen, setCreateDialogOpen] = useState(false)
+  const [createForm, setCreateForm] = useState<CreateFormData>(defaultCreateForm)
+  const [createErrors, setCreateErrors] = useState<Partial<Record<keyof CreateFormData, string>>>(
+    {}
+  )
 
-  const [deleteTarget, setDeleteTarget] = useState<Config | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<Config | null>(null)
 
   const { data, isLoading, refetch } = useConfigs({
     page,
     pageSize,
     group: appliedFilters.group || undefined,
     status: appliedFilters.status ? Number(appliedFilters.status) : undefined,
-  });
+  })
 
-  const createConfig = useCreateConfig();
-  const updateValue = useUpdateConfigValue();
-  const deleteConfig = useDeleteConfig();
+  const createConfig = useCreateConfig()
+  const updateValue = useUpdateConfigValue()
+  const deleteConfig = useDeleteConfig()
 
   const handleSearch = () => {
-    setAppliedFilters(filters);
-    setPage(1);
-  };
+    setAppliedFilters(filters)
+    setPage(1)
+  }
 
   const handleReset = () => {
-    const reset = { group: "", status: "" as const };
-    setFilters(reset);
-    setAppliedFilters(reset);
-    setPage(1);
-  };
+    const reset = { group: '', status: '' as const }
+    setFilters(reset)
+    setAppliedFilters(reset)
+    setPage(1)
+  }
 
   const openEditDialog = (config: Config) => {
-    setEditingConfig(config);
-    setEditingValue(config.configValue ?? "");
-  };
+    setEditingConfig(config)
+    setEditingValue(config.configValue ?? '')
+  }
 
   const openCreateDialog = () => {
-    setCreateForm(defaultCreateForm);
-    setCreateErrors({});
-    setCreateDialogOpen(true);
-  };
+    setCreateForm(defaultCreateForm)
+    setCreateErrors({})
+    setCreateDialogOpen(true)
+  }
 
   const handleSaveValue = async () => {
-    if (!editingConfig) return;
+    if (!editingConfig) return
     try {
       await updateValue.mutateAsync({
         id: editingConfig.id,
@@ -96,76 +79,72 @@ export default function ConfigPage() {
           configType: editingConfig.configType,
           status: editingConfig.status,
         },
-      });
-      setEditingConfig(null);
-      toast.success("配置已保存");
+      })
+      setEditingConfig(null)
+      toast.success('配置已保存')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "保存失败");
+      toast.error(err instanceof Error ? err.message : '保存失败')
     }
-  };
+  }
 
   const validateCreateForm = (): boolean => {
-    const errors: Partial<Record<keyof CreateFormData, string>> = {};
-    if (!createForm.configKey.trim()) errors.configKey = "请输入配置键";
-    if (!createForm.configName.trim()) errors.configName = "请输入配置名称";
-    setCreateErrors(errors);
-    return Object.keys(errors).length === 0;
-  };
+    const errors: Partial<Record<keyof CreateFormData, string>> = {}
+    if (!createForm.configKey.trim()) errors.configKey = '请输入配置键'
+    if (!createForm.configName.trim()) errors.configName = '请输入配置名称'
+    setCreateErrors(errors)
+    return Object.keys(errors).length === 0
+  }
 
   const handleCreateSave = async () => {
-    if (!validateCreateForm()) return;
+    if (!validateCreateForm()) return
     try {
       await createConfig.mutateAsync({
         configKey: createForm.configKey.trim(),
-        configGroup: createForm.configGroup.trim() || "general",
+        configGroup: createForm.configGroup.trim() || 'general',
         configName: createForm.configName.trim(),
         configType: createForm.configType,
-        configValue:
-          createForm.configValue === "" ? null : createForm.configValue,
+        configValue: createForm.configValue === '' ? null : createForm.configValue,
         remark: createForm.remark.trim() || null,
         isSystem: createForm.isSystem,
         status: createForm.status,
-      });
-      setCreateDialogOpen(false);
-      toast.success("配置已创建");
+      })
+      setCreateDialogOpen(false)
+      toast.success('配置已创建')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "创建失败");
+      toast.error(err instanceof Error ? err.message : '创建失败')
     }
-  };
+  }
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) return
     if (deleteTarget.isSystem === 1) {
-      toast.error("系统配置不允许删除");
-      setDeleteTarget(null);
-      return;
+      toast.error('系统配置不允许删除')
+      setDeleteTarget(null)
+      return
     }
     try {
-      await deleteConfig.mutateAsync(deleteTarget.id);
-      setDeleteTarget(null);
-      toast.success("删除成功");
+      await deleteConfig.mutateAsync(deleteTarget.id)
+      setDeleteTarget(null)
+      toast.success('删除成功')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "删除失败");
+      toast.error(err instanceof Error ? err.message : '删除失败')
     }
-  };
+  }
 
   const columns = buildColumns({
     onEdit: openEditDialog,
     onDelete: setDeleteTarget,
-  });
+  })
 
   return (
     <PageContainer>
       <PageHeader
         title="系统配置"
-        breadcrumbs={[{ label: "系统管理" }, { label: "系统配置" }]}
+        breadcrumbs={[{ label: '系统管理' }, { label: '系统配置' }]}
         actions={
           <Group gap="sm">
             <PermissionGuard permission="system:config:create">
-              <Button
-                leftSection={<Plus size={14} />}
-                onClick={openCreateDialog}
-              >
+              <Button leftSection={<Plus size={14} />} onClick={openCreateDialog}>
                 新增配置
               </Button>
             </PermissionGuard>
@@ -186,22 +165,18 @@ export default function ConfigPage() {
             label="分组"
             placeholder="如 security / upload / marketing"
             value={filters.group}
-            onChange={(e) =>
-              setFilters({ ...filters, group: e.currentTarget.value })
-            }
+            onChange={(e) => setFilters({ ...filters, group: e.currentTarget.value })}
           />
           <Select
             label="状态"
             placeholder="全部"
             data={[
-              { value: "", label: "全部" },
-              { value: "1", label: "启用" },
-              { value: "0", label: "停用" },
+              { value: '', label: '全部' },
+              { value: '1', label: '启用' },
+              { value: '0', label: '停用' },
             ]}
             value={filters.status}
-            onChange={(v) =>
-              setFilters({ ...filters, status: (v ?? "") as "" | "0" | "1" })
-            }
+            onChange={(v) => setFilters({ ...filters, status: (v ?? '') as '' | '0' | '1' })}
           />
           <Group align="flex-end" gap="sm">
             <Button variant="filled" onClick={handleSearch}>
@@ -223,12 +198,7 @@ export default function ConfigPage() {
       />
 
       {data && (
-        <Pagination
-          page={page}
-          pageSize={pageSize}
-          total={data.total}
-          onPageChange={setPage}
-        />
+        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
       )}
 
       <ConfigCreateDialog
@@ -261,5 +231,5 @@ export default function ConfigPage() {
         isDanger
       />
     </PageContainer>
-  );
+  )
 }

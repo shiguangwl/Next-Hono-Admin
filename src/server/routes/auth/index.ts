@@ -1,5 +1,5 @@
-import { Hono } from 'hono'
 import { zValidator } from '@hono/zod-validator'
+import { Hono } from 'hono'
 import type { Env } from '@/server/context'
 import { requireAuth } from '@/server/middleware/jwt-auth'
 import { loginRateLimit } from '@/server/middleware/rate-limit'
@@ -9,7 +9,7 @@ import { LoginInputSchema } from './dtos'
 
 const auth = new Hono<Env>()
   .post('/login', zValidator('json', LoginInputSchema), async (c) => {
-    await loginRateLimit(c, async () => { })
+    await loginRateLimit(c, async () => {})
 
     const body = c.req.valid('json')
     const ip =

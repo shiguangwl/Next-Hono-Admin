@@ -1,35 +1,23 @@
-"use client";
+'use client'
 
-import {
-  Anchor,
-  Group,
-  Breadcrumbs as MantineBreadcrumbs,
-  Stack,
-  Text,
-  Title,
-} from "@mantine/core";
-import { Home } from "lucide-react";
-import Link from "next/link";
-import type { ReactNode } from "react";
+import { Anchor, Group, Breadcrumbs as MantineBreadcrumbs, Stack, Text, Title } from '@mantine/core'
+import { Home } from 'lucide-react'
+import Link from 'next/link'
+import type { ReactNode } from 'react'
 
 interface BreadcrumbItem {
-  label: string;
-  href?: string;
+  label: string
+  href?: string
 }
 
 interface PageHeaderProps {
-  title: string;
-  description?: string;
-  breadcrumbs?: BreadcrumbItem[];
-  actions?: ReactNode;
+  title: string
+  description?: string
+  breadcrumbs?: BreadcrumbItem[]
+  actions?: ReactNode
 }
 
-export function PageHeader({
-  title,
-  description,
-  breadcrumbs = [],
-  actions,
-}: PageHeaderProps) {
+export function PageHeader({ title, description, breadcrumbs = [], actions }: PageHeaderProps) {
   return (
     <Stack gap="sm">
       {breadcrumbs.length > 0 && (
@@ -38,25 +26,19 @@ export function PageHeader({
             <Home size={14} />
           </Anchor>
           {breadcrumbs.map((item, index) => {
-            const isLast = index === breadcrumbs.length - 1;
+            const isLast = index === breadcrumbs.length - 1
             if (item.href && !isLast) {
               return (
-                <Anchor
-                  component={Link}
-                  href={item.href}
-                  key={item.label}
-                  size="sm"
-                  c="dimmed"
-                >
+                <Anchor component={Link} href={item.href} key={item.label} size="sm" c="dimmed">
                   {item.label}
                 </Anchor>
-              );
+              )
             }
             return (
               <Text size="sm" key={item.label}>
                 {item.label}
               </Text>
-            );
+            )
           })}
         </MantineBreadcrumbs>
       )}
@@ -73,11 +55,11 @@ export function PageHeader({
         {actions && <Group gap="xs">{actions}</Group>}
       </Group>
     </Stack>
-  );
+  )
 }
 
 export function PageContainer({ children }: { children: ReactNode }) {
-  return <Stack gap="lg">{children}</Stack>;
+  return <Stack gap="lg">{children}</Stack>
 }
 
 export function PageSection({ children }: { children: ReactNode }) {
@@ -85,5 +67,5 @@ export function PageSection({ children }: { children: ReactNode }) {
     <Stack gap="md" component="section">
       {children}
     </Stack>
-  );
+  )
 }

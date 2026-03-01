@@ -23,10 +23,7 @@ export function setupErrorHandlers(app: Hono<Env>): void {
         })
       }
 
-      return c.json(
-        { code: 'HTTP_ERROR', message, requestId },
-        err.status
-      )
+      return c.json({ code: 'HTTP_ERROR', message, requestId }, err.status)
     }
 
     const errorResponse = mapErrorToResponse(err, requestId)

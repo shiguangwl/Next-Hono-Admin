@@ -1,41 +1,39 @@
-"use client";
+'use client'
 
-import { Center, Loader, ScrollArea, Stack, Table, Text } from "@mantine/core";
-import type { ReactNode } from "react";
+import { Center, Loader, ScrollArea, Stack, Table, Text } from '@mantine/core'
+import type { ReactNode } from 'react'
 
 export interface ColumnDef<T> {
-  key: string;
-  title: ReactNode;
-  width?: string | number;
-  align?: "left" | "center" | "right";
-  render?: (value: unknown, record: T, index: number) => ReactNode;
+  key: string
+  title: ReactNode
+  width?: string | number
+  align?: 'left' | 'center' | 'right'
+  render?: (value: unknown, record: T, index: number) => ReactNode
 }
 
 interface DataTableProps<T> {
-  columns: ColumnDef<T>[];
-  data: T[];
-  rowKey: keyof T | ((record: T) => string | number);
-  loading?: boolean;
-  emptyText?: string;
+  columns: ColumnDef<T>[]
+  data: T[]
+  rowKey: keyof T | ((record: T) => string | number)
+  loading?: boolean
+  emptyText?: string
 }
 
 function getRowKey<T>(
   record: T,
-  rowKey: keyof T | ((record: T) => string | number),
+  rowKey: keyof T | ((record: T) => string | number)
 ): string | number {
-  return typeof rowKey === "function"
-    ? rowKey(record)
-    : (record[rowKey] as string | number);
+  return typeof rowKey === 'function' ? rowKey(record) : (record[rowKey] as string | number)
 }
 
 function getCellValue<T>(record: T, key: string): unknown {
-  const keys = key.split(".");
-  let value: unknown = record;
+  const keys = key.split('.')
+  let value: unknown = record
   for (const k of keys) {
-    if (value == null) return undefined;
-    value = (value as Record<string, unknown>)[k];
+    if (value == null) return undefined
+    value = (value as Record<string, unknown>)[k]
   }
-  return value;
+  return value
 }
 
 export function DataTable<T>({
@@ -43,7 +41,7 @@ export function DataTable<T>({
   data,
   rowKey,
   loading = false,
-  emptyText = "暂无数据",
+  emptyText = '暂无数据',
 }: DataTableProps<T>) {
   return (
     <ScrollArea>
@@ -51,11 +49,7 @@ export function DataTable<T>({
         <Table.Thead>
           <Table.Tr>
             {columns.map((col) => (
-              <Table.Th
-                key={col.key}
-                w={col.width}
-                style={{ textAlign: col.align }}
-              >
+              <Table.Th key={col.key} w={col.width} ta={col.align}>
                 {col.title}
               </Table.Th>
             ))}
@@ -89,14 +83,12 @@ export function DataTable<T>({
             data.map((record, index) => (
               <Table.Tr key={getRowKey(record, rowKey)}>
                 {columns.map((col) => {
-                  const value = getCellValue(record, col.key);
+                  const value = getCellValue(record, col.key)
                   return (
-                    <Table.Td key={col.key} style={{ textAlign: col.align }}>
-                      {col.render
-                        ? col.render(value, record, index)
-                        : String(value ?? "-")}
+                    <Table.Td key={col.key} ta={col.align}>
+                      {col.render ? col.render(value, record, index) : String(value ?? '-')}
                     </Table.Td>
-                  );
+                  )
                 })}
               </Table.Tr>
             ))
@@ -104,5 +96,5 @@ export function DataTable<T>({
         </Table.Tbody>
       </Table>
     </ScrollArea>
-  );
+  )
 }

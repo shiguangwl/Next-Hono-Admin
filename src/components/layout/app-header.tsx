@@ -1,50 +1,37 @@
-"use client";
+'use client'
 
-import {
-  ActionIcon,
-  Avatar,
-  Burger,
-  Divider,
-  Group,
-  Menu,
-  Text,
-} from "@mantine/core";
-import { Bell, Home, LogOut, Moon, Sun } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { ActionIcon, Avatar, Burger, Divider, Group, Menu, Text } from '@mantine/core'
+import { Bell, Home, LogOut, Moon, Sun } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
-import { useAuth } from "@/hooks/use-auth";
-import { useTheme } from "@/hooks/use-theme";
+import { useAuth } from '@/hooks/use-auth'
+import { useTheme } from '@/hooks/use-theme'
 
 interface AppHeaderProps {
-  mobileOpened?: boolean;
-  onBurgerClick?: () => void;
+  mobileOpened?: boolean
+  onBurgerClick?: () => void
 }
 
 function ThemeToggle() {
-  const { isDark, toggleTheme } = useTheme();
+  const { isDark, toggleTheme } = useTheme()
   return (
-    <ActionIcon
-      variant="subtle"
-      size="lg"
-      onClick={toggleTheme}
-      aria-label="切换主题"
-    >
+    <ActionIcon variant="subtle" size="lg" onClick={toggleTheme} aria-label="切换主题">
       {isDark ? <Sun size={20} /> : <Moon size={20} />}
     </ActionIcon>
-  );
+  )
 }
 
 function UserDropdown() {
-  const router = useRouter();
-  const { admin, logout } = useAuth();
+  const router = useRouter()
+  const { admin, logout } = useAuth()
 
-  const displayName = admin?.nickname || admin?.username || "Admin";
-  const initials = displayName.charAt(0).toUpperCase();
+  const displayName = admin?.nickname || admin?.username || 'Admin'
+  const initials = displayName.charAt(0).toUpperCase()
 
   const handleLogout = () => {
-    logout();
-    router.replace("/login");
-  };
+    logout()
+    router.replace('/login')
+  }
 
   return (
     <Menu shadow="md" width={200} position="bottom-end">
@@ -68,37 +55,25 @@ function UserDropdown() {
 
         <Divider my={4} />
 
-        <Menu.Item
-          leftSection={<Home size={16} />}
-          onClick={() => router.push("/")}
-        >
+        <Menu.Item leftSection={<Home size={16} />} onClick={() => router.push('/')}>
           返回首页
         </Menu.Item>
 
         <Divider my={4} />
 
-        <Menu.Item
-          color="red"
-          leftSection={<LogOut size={16} />}
-          onClick={handleLogout}
-        >
+        <Menu.Item color="red" leftSection={<LogOut size={16} />} onClick={handleLogout}>
           退出登录
         </Menu.Item>
       </Menu.Dropdown>
     </Menu>
-  );
+  )
 }
 
 export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
   return (
     <Group h="100%" px="md" justify="space-between">
       <Group>
-        <Burger
-          opened={mobileOpened}
-          onClick={onBurgerClick}
-          hiddenFrom="sm"
-          size="sm"
-        />
+        <Burger opened={mobileOpened} onClick={onBurgerClick} hiddenFrom="sm" size="sm" />
       </Group>
 
       <Group gap="xs">
@@ -109,5 +84,5 @@ export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
         <UserDropdown />
       </Group>
     </Group>
-  );
+  )
 }

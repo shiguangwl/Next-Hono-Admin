@@ -1,51 +1,51 @@
-"use client";
+'use client'
 
-import { useCreateMenu, useUpdateMenu } from "@/hooks/queries";
-import { Alert, Button, Group, Modal, ScrollArea, Stack } from "@mantine/core";
-import { AlertCircle } from "lucide-react";
-import { useEffect, useState } from "react";
-import { type MenuFormData, MenuFormFields } from "./menu-form-fields";
+import { Alert, Button, Group, Modal, ScrollArea, Stack } from '@mantine/core'
+import { AlertCircle } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { useCreateMenu, useUpdateMenu } from '@/hooks/queries'
+import { type MenuFormData, MenuFormFields } from './menu-form-fields'
 
 type MenuTreeNode = {
-  id: number;
-  parentId: number;
-  menuType: "D" | "M" | "B";
-  menuName: string;
-  permission: string | null;
-  path: string | null;
-  component: string | null;
-  icon: string | null;
-  sort: number;
-  visible: number;
-  status: number;
-  isExternal: number;
-  isCache: number;
-  remark: string | null;
-};
+  id: number
+  parentId: number
+  menuType: 'D' | 'M' | 'B'
+  menuName: string
+  permission: string | null
+  path: string | null
+  component: string | null
+  icon: string | null
+  sort: number
+  visible: number
+  status: number
+  isExternal: number
+  isCache: number
+  remark: string | null
+}
 
 interface MenuFormDialogProps {
-  open: boolean;
-  menu: MenuTreeNode | null;
-  parentMenu: MenuTreeNode | null;
-  onClose: () => void;
-  onSuccess: () => void;
+  open: boolean
+  menu: MenuTreeNode | null
+  parentMenu: MenuTreeNode | null
+  onClose: () => void
+  onSuccess: () => void
 }
 
 const defaultFormData: MenuFormData = {
   parentId: 0,
-  menuType: "M",
-  menuName: "",
-  permission: "",
-  path: "",
-  component: "",
-  icon: "",
+  menuType: 'M',
+  menuName: '',
+  permission: '',
+  path: '',
+  component: '',
+  icon: '',
   sort: 0,
   visible: 1,
   status: 1,
   isExternal: 0,
   isCache: 1,
-  remark: "",
-};
+  remark: '',
+}
 
 export function MenuFormDialog({
   open,
@@ -54,12 +54,12 @@ export function MenuFormDialog({
   onClose,
   onSuccess,
 }: MenuFormDialogProps) {
-  const isEdit = !!menu;
-  const [formData, setFormData] = useState<MenuFormData>(defaultFormData);
-  const [error, setError] = useState("");
+  const isEdit = !!menu
+  const [formData, setFormData] = useState<MenuFormData>(defaultFormData)
+  const [error, setError] = useState('')
 
-  const createMenu = useCreateMenu();
-  const updateMenu = useUpdateMenu();
+  const createMenu = useCreateMenu()
+  const updateMenu = useUpdateMenu()
 
   useEffect(() => {
     if (open) {
@@ -68,37 +68,33 @@ export function MenuFormDialog({
           parentId: menu.parentId,
           menuType: menu.menuType,
           menuName: menu.menuName,
-          permission: menu.permission || "",
-          path: menu.path || "",
-          component: menu.component || "",
-          icon: menu.icon || "",
+          permission: menu.permission || '',
+          path: menu.path || '',
+          component: menu.component || '',
+          icon: menu.icon || '',
           sort: menu.sort,
           visible: menu.visible,
           status: menu.status,
           isExternal: menu.isExternal,
           isCache: menu.isCache,
-          remark: menu.remark || "",
-        });
+          remark: menu.remark || '',
+        })
       } else {
         setFormData({
           ...defaultFormData,
           parentId: parentMenu?.id || 0,
-          menuType: parentMenu
-            ? parentMenu.menuType === "D"
-              ? "M"
-              : "B"
-            : "D",
-        });
+          menuType: parentMenu ? (parentMenu.menuType === 'D' ? 'M' : 'B') : 'D',
+        })
       }
-      setError("");
+      setError('')
     }
-  }, [open, menu, parentMenu]);
+  }, [open, menu, parentMenu])
 
   const handleSubmit = async () => {
-    setError("");
+    setError('')
     if (!formData.menuName.trim()) {
-      setError("请输入菜单名称");
-      return;
+      setError('请输入菜单名称')
+      return
     }
     try {
       const input = {
@@ -108,7 +104,7 @@ export function MenuFormDialog({
         permission: formData.permission || undefined,
         // WHY: 目录/按钮类型不需要路径
         path:
-          formData.menuType === "D" || formData.menuType === "B"
+          formData.menuType === 'D' || formData.menuType === 'B'
             ? undefined
             : formData.path || undefined,
         component: formData.component || undefined,
@@ -119,28 +115,27 @@ export function MenuFormDialog({
         isExternal: formData.isExternal,
         isCache: formData.isCache,
         remark: formData.remark || undefined,
-      };
-      if (isEdit && menu) {
-        await updateMenu.mutateAsync({ id: menu.id, input });
-      } else {
-        await createMenu.mutateAsync(input);
       }
-      onSuccess();
+      if (isEdit && menu) {
+        await updateMenu.mutateAsync({ id: menu.id, input })
+      } else {
+        await createMenu.mutateAsync(input)
+      }
+      onSuccess()
     } catch (err) {
-      setError(err instanceof Error ? err.message : "操作失败");
+      setError(err instanceof Error ? err.message : '操作失败')
     }
-  };
+  }
 
-  const isPending = createMenu.isPending || updateMenu.isPending;
+  const isPending = createMenu.isPending || updateMenu.isPending
   const parentMenuName =
-    parentMenu?.menuName ||
-    (formData.parentId === 0 ? "根目录" : `ID: ${formData.parentId}`);
+    parentMenu?.menuName || (formData.parentId === 0 ? '根目录' : `ID: ${formData.parentId}`)
 
   return (
     <Modal
       opened={open}
       onClose={onClose}
-      title={isEdit ? "编辑菜单" : "新增菜单"}
+      title={isEdit ? '编辑菜单' : '新增菜单'}
       size="lg"
       centered
     >
@@ -167,5 +162,5 @@ export function MenuFormDialog({
         </Group>
       </Stack>
     </Modal>
-  );
+  )
 }

@@ -1,34 +1,30 @@
-"use client";
+'use client'
 
-import { Box, Center, Stack, Text, Title } from "@mantine/core";
-import { Zap } from "lucide-react";
-import type { ReactNode } from "react";
+import { Center, Flex, Stack, Text, ThemeIcon, Title } from '@mantine/core'
+import { Zap } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-import { GuestGuard } from "@/components/auth-guard";
+import { GuestGuard } from '@/components/auth-guard'
 
 export default function AuthLayout({ children }: { children: ReactNode }) {
   return (
     <GuestGuard redirectTo="/dashboard">
-      <Box style={{ display: "flex", minHeight: "100vh" }}>
+      <Flex mih="100vh">
         <Center
           visibleFrom="lg"
-          style={{
-            flex: "0 0 55%",
-            backgroundImage:
-              "linear-gradient(135deg, var(--mantine-color-blue-7), var(--mantine-color-blue-9))",
-          }}
+          flex="0 0 55%"
+          bg="linear-gradient(135deg, var(--mantine-color-blue-7), var(--mantine-color-blue-9))"
         >
           <Stack align="center" gap="lg" maw={400}>
-            <Center
-              w={80}
-              h={80}
-              style={{
-                borderRadius: "var(--mantine-radius-xl)",
-                backgroundColor: "rgba(255, 255, 255, 0.2)",
-              }}
+            <ThemeIcon
+              size={80}
+              radius="xl"
+              bg="rgba(255, 255, 255, 0.2)"
+              color="white"
+              variant="transparent"
             >
-              <Zap size={40} color="white" />
-            </Center>
+              <Zap size={40} />
+            </ThemeIcon>
             <Title order={1} c="white" ta="center">
               欢迎回来
             </Title>
@@ -41,7 +37,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
         <Center flex={1} p="xl">
           {children}
         </Center>
-      </Box>
+      </Flex>
     </GuestGuard>
-  );
+  )
 }

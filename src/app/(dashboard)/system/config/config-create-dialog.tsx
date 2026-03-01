@@ -1,47 +1,47 @@
-"use client";
+'use client'
 
-import { Select, SimpleGrid, Stack, Textarea, TextInput } from "@mantine/core";
-import { FormDialog } from "@/components/ui/form-dialog";
-import { ConfigValuePreview, type ConfigType } from "./config-value-preview";
+import { Select, SimpleGrid, Stack, Textarea, TextInput } from '@mantine/core'
+import { FormDialog } from '@/components/ui/form-dialog'
+import { type ConfigType, ConfigValuePreview } from './config-value-preview'
 
 export type CreateFormData = {
-  configKey: string;
-  configValue: string;
-  configType: ConfigType;
-  configGroup: string;
-  configName: string;
-  remark: string;
-  isSystem: number;
-  status: number;
-};
+  configKey: string
+  configValue: string
+  configType: ConfigType
+  configGroup: string
+  configName: string
+  remark: string
+  isSystem: number
+  status: number
+}
 
 export const defaultCreateForm: CreateFormData = {
-  configKey: "",
-  configValue: "",
-  configType: "string",
-  configGroup: "",
-  configName: "",
-  remark: "",
+  configKey: '',
+  configValue: '',
+  configType: 'string',
+  configGroup: '',
+  configName: '',
+  remark: '',
   isSystem: 0,
   status: 1,
-};
+}
 
 const CONFIG_TYPES = [
-  { value: "string", label: "string" },
-  { value: "number", label: "number" },
-  { value: "boolean", label: "boolean" },
-  { value: "json", label: "json" },
-  { value: "array", label: "array" },
-];
+  { value: 'string', label: 'string' },
+  { value: 'number', label: 'number' },
+  { value: 'boolean', label: 'boolean' },
+  { value: 'json', label: 'json' },
+  { value: 'array', label: 'array' },
+]
 
 interface ConfigCreateDialogProps {
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => Promise<void>;
-  isSubmitting: boolean;
-  formData: CreateFormData;
-  onChange: (data: CreateFormData) => void;
-  errors: Partial<Record<keyof CreateFormData, string>>;
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: () => Promise<void>
+  isSubmitting: boolean
+  formData: CreateFormData
+  onChange: (data: CreateFormData) => void
+  errors: Partial<Record<keyof CreateFormData, string>>
 }
 
 export function ConfigCreateDialog({
@@ -80,7 +80,7 @@ export function ConfigCreateDialog({
             value={formData.configKey}
             onChange={(e) => onChange({ ...formData, configKey: e.currentTarget.value })}
             error={errors.configKey}
-            style={{ fontFamily: "monospace" }}
+            styles={{ input: { fontFamily: 'monospace' } }}
           />
           <TextInput
             label="名称"
@@ -94,7 +94,7 @@ export function ConfigCreateDialog({
             label="类型"
             data={CONFIG_TYPES}
             value={formData.configType}
-            onChange={(v) => onChange({ ...formData, configType: (v ?? "string") as ConfigType })}
+            onChange={(v) => onChange({ ...formData, configType: (v ?? 'string') as ConfigType })}
           />
         </SimpleGrid>
 
@@ -104,7 +104,7 @@ export function ConfigCreateDialog({
           rows={6}
           value={formData.configValue}
           onChange={(e) => onChange({ ...formData, configValue: e.currentTarget.value })}
-          styles={{ input: { fontFamily: "monospace", fontSize: "0.875rem" } }}
+          styles={{ input: { fontFamily: 'monospace', fontSize: '0.875rem' } }}
         />
 
         <ConfigValuePreview value={formData.configValue} type={formData.configType} />
@@ -113,8 +113,8 @@ export function ConfigCreateDialog({
           <Select
             label="状态"
             data={[
-              { value: "1", label: "启用" },
-              { value: "0", label: "停用" },
+              { value: '1', label: '启用' },
+              { value: '0', label: '停用' },
             ]}
             value={String(formData.status)}
             onChange={(v) => onChange({ ...formData, status: Number(v) })}
@@ -128,6 +128,5 @@ export function ConfigCreateDialog({
         </SimpleGrid>
       </Stack>
     </FormDialog>
-  );
+  )
 }
-

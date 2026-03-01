@@ -1,84 +1,74 @@
-"use client";
+'use client'
 
-import {
-  Button,
-  Card,
-  Center,
-  Group,
-  Loader,
-  Table,
-  Text,
-} from "@mantine/core";
-import { ChevronDown, ChevronUp, Plus, RefreshCw } from "lucide-react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
+import { Button, Card, Center, Group, Loader, Table, Text } from '@mantine/core'
+import { ChevronDown, ChevronUp, Plus, RefreshCw } from 'lucide-react'
+import { useMemo, useState } from 'react'
+import { toast } from 'sonner'
 
-import { PermissionGuard } from "@/components/permission-guard";
-import { ConfirmDialog } from "@/components/ui/form-dialog";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
-import { useDeleteMenu, useMenuTree } from "@/hooks/queries";
-import { MenuFormDialog } from "./menu-form-dialog";
-import { type MenuTreeNode, MenuTreeRow } from "./menu-tree-row";
+import { PermissionGuard } from '@/components/permission-guard'
+import { ConfirmDialog } from '@/components/ui/form-dialog'
+import { PageContainer, PageHeader } from '@/components/ui/page-header'
+import { useDeleteMenu, useMenuTree } from '@/hooks/queries'
+import { MenuFormDialog } from './menu-form-dialog'
+import { type MenuTreeNode, MenuTreeRow } from './menu-tree-row'
 
 export default function MenuPage() {
-  const [dialogOpen, setDialogOpen] = useState(false);
-  const [editingMenu, setEditingMenu] = useState<MenuTreeNode | null>(null);
-  const [parentMenu, setParentMenu] = useState<MenuTreeNode | null>(null);
-  const [expandedIds, setExpandedIds] = useState<number[]>([]);
-  const [deleteTarget, setDeleteTarget] = useState<MenuTreeNode | null>(null);
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingMenu, setEditingMenu] = useState<MenuTreeNode | null>(null)
+  const [parentMenu, setParentMenu] = useState<MenuTreeNode | null>(null)
+  const [expandedIds, setExpandedIds] = useState<number[]>([])
+  const [deleteTarget, setDeleteTarget] = useState<MenuTreeNode | null>(null)
 
-  const { data: menuTree, isLoading, refetch } = useMenuTree();
-  const deleteMenu = useDeleteMenu();
+  const { data: menuTree, isLoading, refetch } = useMenuTree()
+  const deleteMenu = useDeleteMenu()
 
   const allMenuIds = useMemo(() => {
-    const ids: number[] = [];
+    const ids: number[] = []
     const collect = (nodes: MenuTreeNode[]) => {
       for (const node of nodes) {
-        ids.push(node.id);
-        if (node.children) collect(node.children);
+        ids.push(node.id)
+        if (node.children) collect(node.children)
       }
-    };
-    if (menuTree) collect(menuTree);
-    return ids;
-  }, [menuTree]);
+    }
+    if (menuTree) collect(menuTree)
+    return ids
+  }, [menuTree])
 
   const handleCreate = (parent?: MenuTreeNode) => {
-    setEditingMenu(null);
-    setParentMenu(parent || null);
-    setDialogOpen(true);
-  };
+    setEditingMenu(null)
+    setParentMenu(parent || null)
+    setDialogOpen(true)
+  }
 
   const handleEdit = (menu: MenuTreeNode) => {
-    setEditingMenu(menu);
-    setParentMenu(null);
-    setDialogOpen(true);
-  };
+    setEditingMenu(menu)
+    setParentMenu(null)
+    setDialogOpen(true)
+  }
 
   const handleDelete = async () => {
-    if (!deleteTarget) return;
+    if (!deleteTarget) return
     try {
-      await deleteMenu.mutateAsync(deleteTarget.id);
-      setDeleteTarget(null);
-      toast.success("删除成功");
+      await deleteMenu.mutateAsync(deleteTarget.id)
+      setDeleteTarget(null)
+      toast.success('删除成功')
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : "删除失败");
+      toast.error(err instanceof Error ? err.message : '删除失败')
     }
-  };
+  }
 
   const toggleExpand = (id: number) => {
-    setExpandedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
-    );
-  };
+    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
+  }
 
-  const expandAll = () => setExpandedIds(allMenuIds);
-  const collapseAll = () => setExpandedIds([]);
+  const expandAll = () => setExpandedIds(allMenuIds)
+  const collapseAll = () => setExpandedIds([])
 
   return (
     <PageContainer>
       <PageHeader
         title="菜单管理"
-        breadcrumbs={[{ label: "系统管理" }, { label: "菜单管理" }]}
+        breadcrumbs={[{ label: '系统管理' }, { label: '菜单管理' }]}
         actions={
           <Group gap="xs">
             <Button
@@ -106,10 +96,7 @@ export default function MenuPage() {
               刷新
             </Button>
             <PermissionGuard permission="system:menu:create">
-              <Button
-                leftSection={<Plus size={14} />}
-                onClick={() => handleCreate()}
-              >
+              <Button leftSection={<Plus size={14} />} onClick={() => handleCreate()}>
                 新增菜单
               </Button>
             </PermissionGuard>
@@ -181,8 +168,8 @@ export default function MenuPage() {
         parentMenu={parentMenu}
         onClose={() => setDialogOpen(false)}
         onSuccess={() => {
-          setDialogOpen(false);
-          refetch();
+          setDialogOpen(false)
+          refetch()
         }}
       />
 
@@ -197,5 +184,5 @@ export default function MenuPage() {
         isDanger
       />
     </PageContainer>
-  );
+  )
 }

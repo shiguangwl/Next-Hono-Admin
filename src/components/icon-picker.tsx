@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Button,
@@ -11,79 +11,79 @@ import {
   Text,
   TextInput,
   UnstyledButton,
-} from "@mantine/core";
-import * as LucideIcons from "lucide-react";
-import { Search } from "lucide-react";
-import { useMemo, useState } from "react";
+} from '@mantine/core'
+import * as LucideIcons from 'lucide-react'
+import { Search } from 'lucide-react'
+import { useMemo, useState } from 'react'
 
 const COMMON_ICONS = [
-  "Settings",
-  "Users",
-  "Shield",
-  "Menu",
-  "FileText",
-  "House",
-  "LayoutDashboard",
-  "UserCog",
-  "Lock",
-  "Key",
-  "Database",
-  "Server",
-  "Folder",
-  "File",
-  "Search",
-  "Plus",
-  "Edit",
-  "Trash2",
-  "Check",
-  "X",
-  "ChevronRight",
-  "ChevronDown",
-  "AlertCircle",
-  "Info",
-  "Bell",
-  "Mail",
-  "Calendar",
-  "Clock",
-  "Download",
-  "Upload",
-  "RefreshCw",
-  "LogOut",
-  "Eye",
-  "EyeOff",
-  "Star",
-  "Heart",
-  "Bookmark",
-  "Tag",
-  "Filter",
-  "ArrowUpDown",
-  "Grid",
-  "List",
-  "Image",
-  "Package",
-  "Box",
-  "Layers",
-];
+  'Settings',
+  'Users',
+  'Shield',
+  'Menu',
+  'FileText',
+  'House',
+  'LayoutDashboard',
+  'UserCog',
+  'Lock',
+  'Key',
+  'Database',
+  'Server',
+  'Folder',
+  'File',
+  'Search',
+  'Plus',
+  'Edit',
+  'Trash2',
+  'Check',
+  'X',
+  'ChevronRight',
+  'ChevronDown',
+  'AlertCircle',
+  'Info',
+  'Bell',
+  'Mail',
+  'Calendar',
+  'Clock',
+  'Download',
+  'Upload',
+  'RefreshCw',
+  'LogOut',
+  'Eye',
+  'EyeOff',
+  'Star',
+  'Heart',
+  'Bookmark',
+  'Tag',
+  'Filter',
+  'ArrowUpDown',
+  'Grid',
+  'List',
+  'Image',
+  'Package',
+  'Box',
+  'Layers',
+]
 
 interface IconPickerProps {
-  value?: string | null;
-  onChange: (icon: string) => void;
-  onClose: () => void;
+  value?: string | null
+  onChange: (icon: string) => void
+  onClose: () => void
 }
 
 export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
-  const [searchTerm, setSearchTerm] = useState("");
+  const [searchTerm, setSearchTerm] = useState('')
 
   const filteredIcons = useMemo(() => {
-    const term = searchTerm.toLowerCase().trim();
-    if (!term) return COMMON_ICONS;
-    return COMMON_ICONS.filter((name) => name.toLowerCase().includes(term));
-  }, [searchTerm]);
+    const term = searchTerm.toLowerCase().trim()
+    if (!term) return COMMON_ICONS
+    return COMMON_ICONS.filter((name) => name.toLowerCase().includes(term))
+  }, [searchTerm])
 
   const handleSelect = (iconName: string) => {
-    onChange(iconName);
-    onClose();
-  };
+    onChange(iconName)
+    onClose()
+  }
 
   return (
     <Modal opened onClose={onClose} title="选择图标" size="lg" centered>
@@ -106,14 +106,12 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
             ) : (
               <SimpleGrid cols={{ base: 6, sm: 8 }} spacing="xs">
                 {filteredIcons.map((iconName) => {
-                  const IconComponent =
-                    LucideIcons[iconName as keyof typeof LucideIcons];
-                  if (!IconComponent || typeof IconComponent !== "object")
-                    return null;
+                  const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons]
+                  if (!IconComponent || typeof IconComponent !== 'object') return null
                   const Icon = IconComponent as unknown as React.ComponentType<{
-                    size?: number;
-                  }>;
-                  const isSelected = value === iconName;
+                    size?: number
+                  }>
+                  const isSelected = value === iconName
 
                   return (
                     <UnstyledButton
@@ -122,11 +120,9 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                       p="xs"
                       style={(theme) => ({
                         borderRadius: theme.radius.md,
-                        textAlign: "center",
-                        backgroundColor: isSelected
-                          ? theme.colors.blue[1]
-                          : undefined,
-                        "&:hover": { backgroundColor: theme.colors.gray[1] },
+                        textAlign: 'center',
+                        backgroundColor: isSelected ? theme.colors.blue[1] : undefined,
+                        '&:hover': { backgroundColor: theme.colors.gray[1] },
                       })}
                       title={iconName}
                     >
@@ -137,7 +133,7 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                         </Text>
                       </Stack>
                     </UnstyledButton>
-                  );
+                  )
                 })}
               </SimpleGrid>
             )}
@@ -149,5 +145,5 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
         </Button>
       </Stack>
     </Modal>
-  );
+  )
 }

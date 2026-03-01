@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import { AppShell } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { type ReactNode, useState } from "react";
+import { AppShell } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { type ReactNode, useState } from 'react'
 
-import { AuthGuard } from "@/components/auth-guard";
-import { AppHeader } from "@/components/layout/app-header";
-import { AppSidebar } from "@/components/layout/app-sidebar";
+import { AuthGuard } from '@/components/auth-guard'
+import { AppHeader } from '@/components/layout/app-header'
+import { AppSidebar } from '@/components/layout/app-sidebar'
 
 interface DashboardLayoutProps {
-  children: ReactNode;
+  children: ReactNode
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [collapsed, setCollapsed] = useState(false);
-  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
+  const [collapsed, setCollapsed] = useState(false)
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure()
 
   return (
     <AuthGuard redirectTo="/login">
@@ -22,7 +22,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         header={{ height: 60 }}
         navbar={{
           width: collapsed ? 72 : 260,
-          breakpoint: "sm",
+          breakpoint: 'sm',
           collapsed: { mobile: !mobileOpened },
         }}
         padding="md"
@@ -39,5 +39,5 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <AppShell.Main>{children}</AppShell.Main>
       </AppShell>
     </AuthGuard>
-  );
+  )
 }

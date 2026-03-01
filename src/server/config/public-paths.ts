@@ -7,10 +7,7 @@
  * 无需 JWT 认证的路径列表
  * @description 这些路径将跳过 JWT 认证中间件
  */
-export const PUBLIC_PATHS: readonly string[] = [
-  "/api/auth/login",
-  "/api/auth/refresh",
-] as const;
+export const PUBLIC_PATHS: readonly string[] = ['/api/auth/login', '/api/auth/refresh'] as const
 
 /**
  * 检查路径是否为公开路径
@@ -18,5 +15,5 @@ export const PUBLIC_PATHS: readonly string[] = [
  * @returns 是否为公开路径
  */
 export function isPublicPath(path: string): boolean {
-  return PUBLIC_PATHS.includes(path);
+  return PUBLIC_PATHS.includes(path)
 }

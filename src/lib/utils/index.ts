@@ -4,6 +4,6 @@
  */
 
 // 系统常量
-export { SUPER_ADMIN_ID } from "./constants";
+export { SUPER_ADMIN_ID } from './constants'
 // 时间日期工具
-export { formatDateToLocal } from "./date";
+export { formatDateToLocal } from './date'

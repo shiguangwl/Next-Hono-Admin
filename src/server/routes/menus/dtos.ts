@@ -68,10 +68,10 @@ export const CreateMenuInputSchema = z
     isCache: z.number().int().min(0).max(1).default(1),
     remark: z.string().max(500, '备注最多500个字符').optional(),
   })
-  .refine(
-    (data) => !(data.menuType === 'D' && data.path),
-    { message: '目录类型仅用于菜单分组，不能设置路由路径', path: ['path'] }
-  )
+  .refine((data) => !(data.menuType === 'D' && data.path), {
+    message: '目录类型仅用于菜单分组，不能设置路由路径',
+    path: ['path'],
+  })
 
 export const UpdateMenuInputSchema = z
   .object({
@@ -89,10 +89,10 @@ export const UpdateMenuInputSchema = z
     isCache: z.number().int().min(0).max(1).optional(),
     remark: z.string().max(500, '备注最多500个字符').optional(),
   })
-  .refine(
-    (data) => !(data.menuType === 'D' && data.path),
-    { message: '目录类型仅用于菜单分组，不能设置路由路径', path: ['path'] }
-  )
+  .refine((data) => !(data.menuType === 'D' && data.path), {
+    message: '目录类型仅用于菜单分组，不能设置路由路径',
+    path: ['path'],
+  })
 
 export type Menu = z.infer<typeof MenuSchema>
 export type MenuTreeNodeDto = z.infer<typeof MenuTreeNodeSchema>

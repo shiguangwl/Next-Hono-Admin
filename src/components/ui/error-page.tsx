@@ -1,20 +1,10 @@
-"use client";
+'use client'
 
-import {
-  Button,
-  Center,
-  Code,
-  Group,
-  Paper,
-  Stack,
-  Text,
-  ThemeIcon,
-  Title,
-} from "@mantine/core";
-import { AlertCircle, Home, RefreshCw, Server, Wifi } from "lucide-react";
-import { useRouter } from "next/navigation";
+import { Button, Center, Code, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core'
+import { AlertCircle, Home, RefreshCw, Server, Wifi } from 'lucide-react'
+import { useRouter } from 'next/navigation'
 
-export type ErrorType = "server" | "network" | "notFound" | "unknown";
+export type ErrorType = 'server' | 'network' | 'notFound' | 'unknown'
 
 const ERROR_CONFIGS: Record<
   ErrorType,
@@ -22,50 +12,50 @@ const ERROR_CONFIGS: Record<
 > = {
   server: {
     icon: <Server size={24} />,
-    title: "服务暂时不可用",
-    description: "服务器正在维护或遇到了一些问题，请稍后再试",
-    color: "red",
+    title: '服务暂时不可用',
+    description: '服务器正在维护或遇到了一些问题，请稍后再试',
+    color: 'red',
   },
   network: {
     icon: <Wifi size={24} />,
-    title: "网络连接失败",
-    description: "无法连接到服务器，请检查您的网络连接",
-    color: "orange",
+    title: '网络连接失败',
+    description: '无法连接到服务器，请检查您的网络连接',
+    color: 'orange',
   },
   notFound: {
     icon: <AlertCircle size={24} />,
-    title: "页面未找到",
-    description: "您访问的页面不存在或已被移除",
-    color: "blue",
+    title: '页面未找到',
+    description: '您访问的页面不存在或已被移除',
+    color: 'blue',
   },
   unknown: {
     icon: <AlertCircle size={24} />,
-    title: "发生了错误",
-    description: "抱歉，出现了一些意外情况",
-    color: "gray",
+    title: '发生了错误',
+    description: '抱歉，出现了一些意外情况',
+    color: 'gray',
   },
-};
+}
 
 export interface ErrorPageProps {
-  type?: ErrorType;
-  title?: string;
-  description?: string;
-  error?: Error;
-  onRetry?: () => void;
-  showHomeButton?: boolean;
+  type?: ErrorType
+  title?: string
+  description?: string
+  error?: Error
+  onRetry?: () => void
+  showHomeButton?: boolean
 }
 
 export function ErrorPage({
-  type = "unknown",
+  type = 'unknown',
   title,
   description,
   error,
   onRetry,
   showHomeButton = true,
 }: ErrorPageProps) {
-  const router = useRouter();
-  const config = ERROR_CONFIGS[type];
-  const isDev = process.env.NODE_ENV === "development";
+  const router = useRouter()
+  const config = ERROR_CONFIGS[type]
+  const isDev = process.env.NODE_ENV === 'development'
 
   return (
     <Center mih="100vh" p="xl">
@@ -100,7 +90,7 @@ export function ErrorPage({
               <Button
                 variant="default"
                 leftSection={<Home size={16} />}
-                onClick={() => router.push("/")}
+                onClick={() => router.push('/')}
               >
                 返回首页
               </Button>
@@ -113,5 +103,5 @@ export function ErrorPage({
         </Stack>
       </Paper>
     </Center>
-  );
+  )
 }

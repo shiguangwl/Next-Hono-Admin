@@ -84,4 +84,3 @@ export const localDatetime = customType<{
     return parseFromMysqlDatetimeString(value)
   },
 })
-

@@ -1,17 +1,17 @@
-"use client";
+'use client'
 
-import { Center, Stack, Text, ThemeIcon, Title } from "@mantine/core";
-import { Lock } from "lucide-react";
-import type { ReactNode } from "react";
+import { Center, Stack, Text, ThemeIcon, Title } from '@mantine/core'
+import { Lock } from 'lucide-react'
+import type { ReactNode } from 'react'
 
-import { usePermission } from "@/hooks/use-permission";
+import { usePermission } from '@/hooks/use-permission'
 
 interface PermissionGuardProps {
-  children: ReactNode;
-  permission?: string;
-  anyPermissions?: string[];
-  allPermissions?: string[];
-  fallback?: ReactNode;
+  children: ReactNode
+  permission?: string
+  anyPermissions?: string[]
+  allPermissions?: string[]
+  fallback?: ReactNode
 }
 
 export function PermissionGuard({
@@ -21,29 +21,24 @@ export function PermissionGuard({
   allPermissions,
   fallback = null,
 }: PermissionGuardProps) {
-  const { hasPermission, hasAnyPermission, hasAllPermissions } =
-    usePermission();
+  const { hasPermission, hasAnyPermission, hasAllPermissions } = usePermission()
 
   if (permission && !hasPermission(permission)) {
-    return <>{fallback}</>;
+    return <>{fallback}</>
   }
 
   if (anyPermissions?.length && !hasAnyPermission(anyPermissions)) {
-    return <>{fallback}</>;
+    return <>{fallback}</>
   }
 
   if (allPermissions?.length && !hasAllPermissions(allPermissions)) {
-    return <>{fallback}</>;
+    return <>{fallback}</>
   }
 
-  return <>{children}</>;
+  return <>{children}</>
 }
 
-export function NoPermission({
-  message = "暂无权限访问",
-}: {
-  message?: string;
-}) {
+export function NoPermission({ message = '暂无权限访问' }: { message?: string }) {
   return (
     <Center mih={200} p="xl">
       <Stack align="center" gap="md">
@@ -58,5 +53,5 @@ export function NoPermission({
         </Stack>
       </Stack>
     </Center>
-  );
+  )
 }

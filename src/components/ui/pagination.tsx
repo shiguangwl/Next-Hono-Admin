@@ -1,22 +1,17 @@
-"use client";
+'use client'
 
-import {
-  Group,
-  Pagination as MantinePagination,
-  Select,
-  Text,
-} from "@mantine/core";
-import { useMemo } from "react";
+import { Group, Pagination as MantinePagination, Select, Text } from '@mantine/core'
+import { useMemo } from 'react'
 
 interface PaginationProps {
-  page: number;
-  pageSize: number;
-  total: number;
-  onPageChange: (page: number) => void;
-  onPageSizeChange?: (pageSize: number) => void;
-  pageSizeOptions?: number[];
-  showSizeChanger?: boolean;
-  showTotal?: boolean;
+  page: number
+  pageSize: number
+  total: number
+  onPageChange: (page: number) => void
+  onPageSizeChange?: (pageSize: number) => void
+  pageSizeOptions?: number[]
+  showSizeChanger?: boolean
+  showTotal?: boolean
 }
 
 export function Pagination({
@@ -29,12 +24,9 @@ export function Pagination({
   showSizeChanger = true,
   showTotal = true,
 }: PaginationProps) {
-  const totalPages = useMemo(
-    () => Math.ceil(total / pageSize),
-    [total, pageSize],
-  );
+  const totalPages = useMemo(() => Math.ceil(total / pageSize), [total, pageSize])
 
-  if (total === 0) return null;
+  if (total === 0) return null
 
   return (
     <Group justify="space-between">
@@ -57,12 +49,7 @@ export function Pagination({
           />
         )}
       </Group>
-      <MantinePagination
-        total={totalPages}
-        value={page}
-        onChange={onPageChange}
-        size="sm"
-      />
+      <MantinePagination total={totalPages} value={page} onChange={onPageChange} size="sm" />
     </Group>
-  );
+  )
 }

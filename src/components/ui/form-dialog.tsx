@@ -1,20 +1,20 @@
-"use client";
+'use client'
 
-import { Button, Group, Modal, Stack, Text } from "@mantine/core";
-import { useDisclosure } from "@mantine/hooks";
-import { type ReactNode, useCallback, useState } from "react";
+import { Button, Group, Modal, Stack, Text } from '@mantine/core'
+import { useDisclosure } from '@mantine/hooks'
+import { type ReactNode, useCallback, useState } from 'react'
 
 interface FormDialogProps {
-  title: string;
-  description?: string;
-  isOpen: boolean;
-  onClose: () => void;
-  onSubmit: () => void | Promise<void>;
-  isSubmitting?: boolean;
-  submitText?: string;
-  cancelText?: string;
-  size?: "sm" | "md" | "lg" | "xl";
-  children: ReactNode;
+  title: string
+  description?: string
+  isOpen: boolean
+  onClose: () => void
+  onSubmit: () => void | Promise<void>
+  isSubmitting?: boolean
+  submitText?: string
+  cancelText?: string
+  size?: 'sm' | 'md' | 'lg' | 'xl'
+  children: ReactNode
 }
 
 export function FormDialog({
@@ -24,9 +24,9 @@ export function FormDialog({
   onClose,
   onSubmit,
   isSubmitting = false,
-  submitText = "确定",
-  cancelText = "取消",
-  size = "md",
+  submitText = '确定',
+  cancelText = '取消',
+  size = 'md',
   children,
 }: FormDialogProps) {
   return (
@@ -48,19 +48,19 @@ export function FormDialog({
         </Group>
       </Stack>
     </Modal>
-  );
+  )
 }
 
 interface ConfirmDialogProps {
-  title: string;
-  content: ReactNode;
-  isOpen: boolean;
-  onClose: () => void;
-  onConfirm: () => void | Promise<void>;
-  isConfirming?: boolean;
-  confirmText?: string;
-  cancelText?: string;
-  isDanger?: boolean;
+  title: string
+  content: ReactNode
+  isOpen: boolean
+  onClose: () => void
+  onConfirm: () => void | Promise<void>
+  isConfirming?: boolean
+  confirmText?: string
+  cancelText?: string
+  isDanger?: boolean
 }
 
 export function ConfirmDialog({
@@ -70,8 +70,8 @@ export function ConfirmDialog({
   onClose,
   onConfirm,
   isConfirming = false,
-  confirmText = "确定",
-  cancelText = "取消",
+  confirmText = '确定',
+  cancelText = '取消',
   isDanger = false,
 }: ConfirmDialogProps) {
   return (
@@ -84,40 +84,36 @@ export function ConfirmDialog({
           <Button variant="default" onClick={onClose} disabled={isConfirming}>
             {cancelText}
           </Button>
-          <Button
-            color={isDanger ? "red" : undefined}
-            onClick={onConfirm}
-            loading={isConfirming}
-          >
+          <Button color={isDanger ? 'red' : undefined} onClick={onConfirm} loading={isConfirming}>
             {confirmText}
           </Button>
         </Group>
       </Stack>
     </Modal>
-  );
+  )
 }
 
 export function useFormDialog<T = undefined>() {
-  const [opened, { open, close }] = useDisclosure(false);
-  const [data, setData] = useState<T | undefined>(undefined);
+  const [opened, { open, close }] = useDisclosure(false)
+  const [data, setData] = useState<T | undefined>(undefined)
 
   const openWithData = useCallback(
     (initialData?: T) => {
-      setData(initialData);
-      open();
+      setData(initialData)
+      open()
     },
-    [open],
-  );
+    [open]
+  )
 
   const closeAndReset = useCallback(() => {
-    close();
-    setData(undefined);
-  }, [close]);
+    close()
+    setData(undefined)
+  }, [close])
 
   return {
     isOpen: opened,
     data,
     open: openWithData,
     close: closeAndReset,
-  };
+  }
 }

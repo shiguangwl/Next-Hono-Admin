@@ -3,7 +3,7 @@
  * @description 定义初始化所需的角色、菜单、关联数据
  */
 
-import type { NewSysConfig } from "./schema/system-config";
+import type { NewSysConfig } from './schema/system-config'
 
 /**
  * 基础角色数据
@@ -11,12 +11,12 @@ import type { NewSysConfig } from "./schema/system-config";
 export const ROLES = [
   {
     id: 1,
-    roleName: "管理员",
+    roleName: '管理员',
     sort: 1,
     status: 1,
-    remark: "拥有大部分管理权限",
+    remark: '拥有大部分管理权限',
   },
-] as const;
+] as const
 
 /**
  * 系统菜单数据
@@ -27,12 +27,12 @@ export const MENUS = [
   {
     id: 1,
     parentId: 0,
-    menuType: "D" as const,
-    menuName: "系统管理",
+    menuType: 'D' as const,
+    menuName: '系统管理',
     permission: null,
     path: null,
     component: null,
-    icon: "Settings",
+    icon: 'Settings',
     sort: 0,
     visible: 1,
     status: 1,
@@ -41,12 +41,12 @@ export const MENUS = [
   {
     id: 2,
     parentId: 1,
-    menuType: "M" as const,
-    menuName: "用户管理",
-    permission: "system:admin:list",
-    path: "/system/admin",
-    component: "system/admin/page",
-    icon: "Users",
+    menuType: 'M' as const,
+    menuName: '用户管理',
+    permission: 'system:admin:list',
+    path: '/system/admin',
+    component: 'system/admin/page',
+    icon: 'Users',
     sort: 0,
     visible: 1,
     status: 1,
@@ -54,9 +54,9 @@ export const MENUS = [
   {
     id: 3,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "查询管理员",
-    permission: "system:admin:query",
+    menuType: 'B' as const,
+    menuName: '查询管理员',
+    permission: 'system:admin:query',
     path: null,
     component: null,
     icon: null,
@@ -67,9 +67,9 @@ export const MENUS = [
   {
     id: 4,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "新增管理员",
-    permission: "system:admin:create",
+    menuType: 'B' as const,
+    menuName: '新增管理员',
+    permission: 'system:admin:create',
     path: null,
     component: null,
     icon: null,
@@ -80,9 +80,9 @@ export const MENUS = [
   {
     id: 5,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "编辑管理员",
-    permission: "system:admin:update",
+    menuType: 'B' as const,
+    menuName: '编辑管理员',
+    permission: 'system:admin:update',
     path: null,
     component: null,
     icon: null,
@@ -93,9 +93,9 @@ export const MENUS = [
   {
     id: 6,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "删除管理员",
-    permission: "system:admin:delete",
+    menuType: 'B' as const,
+    menuName: '删除管理员',
+    permission: 'system:admin:delete',
     path: null,
     component: null,
     icon: null,
@@ -106,9 +106,9 @@ export const MENUS = [
   {
     id: 7,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "重置密码",
-    permission: "system:admin:resetPwd",
+    menuType: 'B' as const,
+    menuName: '重置密码',
+    permission: 'system:admin:resetPwd',
     path: null,
     component: null,
     icon: null,
@@ -119,9 +119,9 @@ export const MENUS = [
   {
     id: 8,
     parentId: 2,
-    menuType: "B" as const,
-    menuName: "分配角色",
-    permission: "system:admin:assignRole",
+    menuType: 'B' as const,
+    menuName: '分配角色',
+    permission: 'system:admin:assignRole',
     path: null,
     component: null,
     icon: null,
@@ -133,12 +133,12 @@ export const MENUS = [
   {
     id: 9,
     parentId: 1,
-    menuType: "M" as const,
-    menuName: "角色管理",
-    permission: "system:role:list",
-    path: "/system/role",
-    component: "system/role/page",
-    icon: "Shield",
+    menuType: 'M' as const,
+    menuName: '角色管理',
+    permission: 'system:role:list',
+    path: '/system/role',
+    component: 'system/role/page',
+    icon: 'Shield',
     sort: 1,
     visible: 1,
     status: 1,
@@ -146,9 +146,9 @@ export const MENUS = [
   {
     id: 10,
     parentId: 9,
-    menuType: "B" as const,
-    menuName: "新增角色",
-    permission: "system:role:create",
+    menuType: 'B' as const,
+    menuName: '新增角色',
+    permission: 'system:role:create',
     path: null,
     component: null,
     icon: null,
@@ -159,9 +159,9 @@ export const MENUS = [
   {
     id: 11,
     parentId: 9,
-    menuType: "B" as const,
-    menuName: "查询角色",
-    permission: "system:role:query",
+    menuType: 'B' as const,
+    menuName: '查询角色',
+    permission: 'system:role:query',
     path: null,
     component: null,
     icon: null,
@@ -172,9 +172,9 @@ export const MENUS = [
   {
     id: 12,
     parentId: 9,
-    menuType: "B" as const,
-    menuName: "编辑角色",
-    permission: "system:role:update",
+    menuType: 'B' as const,
+    menuName: '编辑角色',
+    permission: 'system:role:update',
     path: null,
     component: null,
     icon: null,
@@ -185,9 +185,9 @@ export const MENUS = [
   {
     id: 13,
     parentId: 9,
-    menuType: "B" as const,
-    menuName: "删除角色",
-    permission: "system:role:delete",
+    menuType: 'B' as const,
+    menuName: '删除角色',
+    permission: 'system:role:delete',
     path: null,
     component: null,
     icon: null,
@@ -198,9 +198,9 @@ export const MENUS = [
   {
     id: 14,
     parentId: 9,
-    menuType: "B" as const,
-    menuName: "分配菜单",
-    permission: "system:role:assignMenu",
+    menuType: 'B' as const,
+    menuName: '分配菜单',
+    permission: 'system:role:assignMenu',
     path: null,
     component: null,
     icon: null,
@@ -212,12 +212,12 @@ export const MENUS = [
   {
     id: 15,
     parentId: 1,
-    menuType: "M" as const,
-    menuName: "菜单管理",
-    permission: "system:menu:list",
-    path: "/system/menu",
-    component: "system/menu/page",
-    icon: "Menu",
+    menuType: 'M' as const,
+    menuName: '菜单管理',
+    permission: 'system:menu:list',
+    path: '/system/menu',
+    component: 'system/menu/page',
+    icon: 'Menu',
     sort: 2,
     visible: 1,
     status: 1,
@@ -225,9 +225,9 @@ export const MENUS = [
   {
     id: 16,
     parentId: 15,
-    menuType: "B" as const,
-    menuName: "新增菜单",
-    permission: "system:menu:create",
+    menuType: 'B' as const,
+    menuName: '新增菜单',
+    permission: 'system:menu:create',
     path: null,
     component: null,
     icon: null,
@@ -238,9 +238,9 @@ export const MENUS = [
   {
     id: 17,
     parentId: 15,
-    menuType: "B" as const,
-    menuName: "编辑菜单",
-    permission: "system:menu:update",
+    menuType: 'B' as const,
+    menuName: '编辑菜单',
+    permission: 'system:menu:update',
     path: null,
     component: null,
     icon: null,
@@ -251,9 +251,9 @@ export const MENUS = [
   {
     id: 18,
     parentId: 15,
-    menuType: "B" as const,
-    menuName: "删除菜单",
-    permission: "system:menu:delete",
+    menuType: 'B' as const,
+    menuName: '删除菜单',
+    permission: 'system:menu:delete',
     path: null,
     component: null,
     icon: null,
@@ -265,12 +265,12 @@ export const MENUS = [
   {
     id: 19,
     parentId: 1,
-    menuType: "M" as const,
-    menuName: "操作日志",
-    permission: "system:log:list",
-    path: "/system/log",
-    component: "system/log/page",
-    icon: "FileText",
+    menuType: 'M' as const,
+    menuName: '操作日志',
+    permission: 'system:log:list',
+    path: '/system/log',
+    component: 'system/log/page',
+    icon: 'FileText',
     sort: 3,
     visible: 1,
     status: 1,
@@ -278,9 +278,9 @@ export const MENUS = [
   {
     id: 20,
     parentId: 19,
-    menuType: "B" as const,
-    menuName: "删除日志",
-    permission: "system:log:delete",
+    menuType: 'B' as const,
+    menuName: '删除日志',
+    permission: 'system:log:delete',
     path: null,
     component: null,
     icon: null,
@@ -292,12 +292,12 @@ export const MENUS = [
   {
     id: 21,
     parentId: 1,
-    menuType: "M" as const,
-    menuName: "系统配置",
-    permission: "system:config:list",
-    path: "/system/config",
-    component: "system/config/page",
-    icon: "Settings2",
+    menuType: 'M' as const,
+    menuName: '系统配置',
+    permission: 'system:config:list',
+    path: '/system/config',
+    component: 'system/config/page',
+    icon: 'Settings2',
     sort: 4,
     visible: 1,
     status: 1,
@@ -305,9 +305,9 @@ export const MENUS = [
   {
     id: 22,
     parentId: 21,
-    menuType: "B" as const,
-    menuName: "查询配置",
-    permission: "system:config:query",
+    menuType: 'B' as const,
+    menuName: '查询配置',
+    permission: 'system:config:query',
     path: null,
     component: null,
     icon: null,
@@ -318,9 +318,9 @@ export const MENUS = [
   {
     id: 23,
     parentId: 21,
-    menuType: "B" as const,
-    menuName: "创建配置",
-    permission: "system:config:create",
+    menuType: 'B' as const,
+    menuName: '创建配置',
+    permission: 'system:config:create',
     path: null,
     component: null,
     icon: null,
@@ -331,9 +331,9 @@ export const MENUS = [
   {
     id: 24,
     parentId: 21,
-    menuType: "B" as const,
-    menuName: "更新配置",
-    permission: "system:config:update",
+    menuType: 'B' as const,
+    menuName: '更新配置',
+    permission: 'system:config:update',
     path: null,
     component: null,
     icon: null,
@@ -344,9 +344,9 @@ export const MENUS = [
   {
     id: 25,
     parentId: 21,
-    menuType: "B" as const,
-    menuName: "删除配置",
-    permission: "system:config:delete",
+    menuType: 'B' as const,
+    menuName: '删除配置',
+    permission: 'system:config:delete',
     path: null,
     component: null,
     icon: null,
@@ -354,19 +354,19 @@ export const MENUS = [
     visible: 1,
     status: 1,
   },
-];
+]
 
 /**
  * 角色菜单关联
  */
-export const ROLE_MENUS: { roleId: number; menuId: number }[] = [];
+export const ROLE_MENUS: { roleId: number; menuId: number }[] = []
 
 /**
  * 管理员角色关联
  */
-export const ADMIN_ROLES: { adminId: number; roleId: number }[] = [];
+export const ADMIN_ROLES: { adminId: number; roleId: number }[] = []
 
 /**
  * 系统配置数据
  */
-export const CONFIGS: NewSysConfig[] = [];
+export const CONFIGS: NewSysConfig[] = []
