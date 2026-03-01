@@ -1,111 +1,112 @@
-'use client'
-
-/**
- * 管理员表单对话框
- * @description 创建和编辑管理员的表单对话框
- */
+"use client";
 
 import {
   Button,
   Checkbox,
-  FieldError,
-  Input,
-  Label,
-  ListBox,
+  Group,
   Modal,
+  Paper,
+  PasswordInput,
   Select,
-  Surface,
-  TextArea,
-  TextField,
-} from '@heroui/react'
-import { useEffect, useState } from 'react'
-import { useAllRoles, useCreateAdmin, useUpdateAdmin, useUpdateAdminRoles } from '@/hooks/queries'
-import { SUPER_ADMIN_ID } from '@/lib/utils'
+  Stack,
+  Text,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
+import { useEffect, useState } from "react";
+
+import {
+  useAllRoles,
+  useCreateAdmin,
+  useUpdateAdmin,
+  useUpdateAdminRoles,
+} from "@/hooks/queries";
+import { SUPER_ADMIN_ID } from "@/lib/utils";
 
 type Admin = {
-  id: number
-  username: string
-  nickname: string
-  status: number
-  remark: string | null
-  roles?: Array<{ id: number; roleName: string }>
-}
+  id: number;
+  username: string;
+  nickname: string;
+  status: number;
+  remark: string | null;
+  roles?: Array<{ id: number; roleName: string }>;
+};
 
 interface AdminFormDialogProps {
-  open: boolean
-  admin: Admin | null
-  onClose: () => void
-  onSuccess: () => void
+  open: boolean;
+  admin: Admin | null;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
 interface FormData {
-  username: string
-  password: string
-  nickname: string
-  status: number
-  remark: string
-  roleIds: number[]
+  username: string;
+  password: string;
+  nickname: string;
+  status: number;
+  remark: string;
+  roleIds: number[];
 }
 
 const initialFormData: FormData = {
-  username: '',
-  password: '',
-  nickname: '',
+  username: "",
+  password: "",
+  nickname: "",
   status: 1,
-  remark: '',
+  remark: "",
   roleIds: [],
-}
+};
 
-export function AdminFormDialog({ open, admin, onClose, onSuccess }: AdminFormDialogProps) {
-  const isEdit = !!admin
-  const isSuperAdmin = admin?.id === SUPER_ADMIN_ID
-  const [formData, setFormData] = useState<FormData>(initialFormData)
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
+export function AdminFormDialog({
+  open,
+  admin,
+  onClose,
+  onSuccess,
+}: AdminFormDialogProps) {
+  const isEdit = !!admin;
+  const isSuperAdmin = admin?.id === SUPER_ADMIN_ID;
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {},
+  );
 
-  const { data: rolesData } = useAllRoles()
-  const roles = (rolesData as Array<{ id: number; roleName: string }> | undefined) || []
-  const createAdmin = useCreateAdmin()
-  const updateAdmin = useUpdateAdmin()
-  const updateAdminRoles = useUpdateAdminRoles()
+  const { data: rolesData } = useAllRoles();
+  const roles =
+    (rolesData as Array<{ id: number; roleName: string }> | undefined) || [];
+  const createAdmin = useCreateAdmin();
+  const updateAdmin = useUpdateAdmin();
+  const updateAdminRoles = useUpdateAdminRoles();
 
   useEffect(() => {
     if (open) {
       if (admin) {
         setFormData({
           username: admin.username,
-          password: '',
-          nickname: admin.nickname || '',
+          password: "",
+          nickname: admin.nickname || "",
           status: admin.status,
-          remark: admin.remark || '',
+          remark: admin.remark || "",
           roleIds: admin.roles?.map((r) => r.id) || [],
-        })
+        });
       } else {
-        setFormData(initialFormData)
+        setFormData(initialFormData);
       }
-      setErrors({})
+      setErrors({});
     }
-  }, [open, admin])
+  }, [open, admin]);
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {}
-
-    if (!formData.username.trim()) {
-      newErrors.username = '请输入用户名'
-    }
-    if (!isEdit && !formData.password) {
-      newErrors.password = '请输入密码'
-    }
-    if (!isEdit && formData.password && formData.password.length < 6) {
-      newErrors.password = '密码长度不能少于6位'
-    }
-
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    const newErrors: Partial<Record<keyof FormData, string>> = {};
+    if (!formData.username.trim()) newErrors.username = "请输入用户名";
+    if (!isEdit && !formData.password) newErrors.password = "请输入密码";
+    if (!isEdit && formData.password && formData.password.length < 6)
+      newErrors.password = "密码长度不能少于6位";
+    setErrors(newErrors);
+    return Object.keys(newErrors).length === 0;
+  };
 
   const handleSubmit = async () => {
-    if (!validate()) return
-
+    if (!validate()) return;
     try {
       if (isEdit && admin) {
         await updateAdmin.mutateAsync({
@@ -115,12 +116,12 @@ export function AdminFormDialog({ open, admin, onClose, onSuccess }: AdminFormDi
             status: formData.status,
             remark: formData.remark || undefined,
           },
-        })
+        });
         if (!isSuperAdmin) {
           await updateAdminRoles.mutateAsync({
             id: admin.id,
             input: { roleIds: formData.roleIds },
-          })
+          });
         }
       } else {
         await createAdmin.mutateAsync({
@@ -130,146 +131,139 @@ export function AdminFormDialog({ open, admin, onClose, onSuccess }: AdminFormDi
           status: formData.status,
           remark: formData.remark || undefined,
           roleIds: formData.roleIds.length > 0 ? formData.roleIds : undefined,
-        })
+        });
       }
-      onSuccess()
+      onSuccess();
     } catch (err) {
-      setErrors({ username: err instanceof Error ? err.message : '操作失败' })
+      setErrors({ username: err instanceof Error ? err.message : "操作失败" });
     }
-  }
+  };
 
-  const isPending = createAdmin.isPending || updateAdmin.isPending || updateAdminRoles.isPending
+  const isPending =
+    createAdmin.isPending ||
+    updateAdmin.isPending ||
+    updateAdminRoles.isPending;
 
   const handleRoleToggle = (roleId: number, checked: boolean) => {
-    if (checked) {
-      setFormData({ ...formData, roleIds: [...formData.roleIds, roleId] })
-    } else {
-      setFormData({ ...formData, roleIds: formData.roleIds.filter((id) => id !== roleId) })
-    }
-  }
+    setFormData({
+      ...formData,
+      roleIds: checked
+        ? [...formData.roleIds, roleId]
+        : formData.roleIds.filter((id) => id !== roleId),
+    });
+  };
 
   return (
-    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-lg">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>{isEdit ? '编辑管理员' : '新增管理员'}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="space-y-4 p-6">
-              {/* 用户名 */}
-              <TextField
-                isRequired
-                isInvalid={!!errors.username}
-                isDisabled={isEdit}
-                value={formData.username}
-                onChange={(v) => setFormData({ ...formData, username: v })}
-              >
-                <Label>用户名</Label>
-                <Input placeholder="请输入用户名" />
-                {errors.username && <FieldError>{errors.username}</FieldError>}
-              </TextField>
+    <Modal
+      opened={open}
+      onClose={onClose}
+      title={isEdit ? "编辑管理员" : "新增管理员"}
+      size="lg"
+      centered
+    >
+      <Stack gap="md">
+        <TextInput
+          label="用户名"
+          placeholder="请输入用户名"
+          required
+          disabled={isEdit}
+          value={formData.username}
+          onChange={(e) =>
+            setFormData({ ...formData, username: e.currentTarget.value })
+          }
+          error={errors.username}
+        />
 
-              {/* 密码 */}
-              {!isEdit && (
-                <TextField
-                  isRequired
-                  isInvalid={!!errors.password}
-                  type="password"
-                  value={formData.password}
-                  onChange={(v) => setFormData({ ...formData, password: v })}
-                >
-                  <Label>密码</Label>
-                  <Input placeholder="请输入密码（至少6位）" />
-                  {errors.password && <FieldError>{errors.password}</FieldError>}
-                </TextField>
+        {!isEdit && (
+          <PasswordInput
+            label="密码"
+            placeholder="请输入密码（至少6位）"
+            required
+            value={formData.password}
+            onChange={(e) =>
+              setFormData({ ...formData, password: e.currentTarget.value })
+            }
+            error={errors.password}
+          />
+        )}
+
+        <TextInput
+          label="昵称"
+          placeholder="请输入昵称"
+          value={formData.nickname}
+          onChange={(e) =>
+            setFormData({ ...formData, nickname: e.currentTarget.value })
+          }
+        />
+
+        <Select
+          label="状态"
+          value={String(formData.status)}
+          onChange={(val) => setFormData({ ...formData, status: Number(val) })}
+          data={[
+            { value: "1", label: "正常" },
+            { value: "0", label: "禁用" },
+          ]}
+        />
+
+        <div>
+          <Text size="sm" fw={500} mb="xs">
+            角色
+          </Text>
+          {isSuperAdmin ? (
+            <Paper withBorder p="sm" radius="md">
+              <Text size="sm" c="dimmed">
+                超级管理员角色不可修改
+              </Text>
+            </Paper>
+          ) : (
+            <Paper
+              withBorder
+              p="sm"
+              radius="md"
+              style={{ maxHeight: 160, overflowY: "auto" }}
+            >
+              {roles.length === 0 ? (
+                <Text size="sm" c="dimmed">
+                  暂无角色
+                </Text>
+              ) : (
+                <Stack gap="xs">
+                  {roles.map((role) => (
+                    <Checkbox
+                      key={role.id}
+                      label={role.roleName}
+                      checked={formData.roleIds.includes(role.id)}
+                      onChange={(e) =>
+                        handleRoleToggle(role.id, e.currentTarget.checked)
+                      }
+                    />
+                  ))}
+                </Stack>
               )}
+            </Paper>
+          )}
+        </div>
 
-              {/* 昵称 */}
-              <TextField
-                value={formData.nickname}
-                onChange={(v) => setFormData({ ...formData, nickname: v })}
-              >
-                <Label>昵称</Label>
-                <Input placeholder="请输入昵称" />
-              </TextField>
+        <Textarea
+          label="备注"
+          placeholder="请输入备注"
+          rows={3}
+          value={formData.remark}
+          onChange={(e) =>
+            setFormData({ ...formData, remark: e.currentTarget.value })
+          }
+        />
 
-              {/* 状态 */}
-              <Select
-                selectedKey={String(formData.status)}
-                onSelectionChange={(key) => setFormData({ ...formData, status: Number(key) })}
-              >
-                <Label>状态</Label>
-                <Select.Trigger>
-                  <Select.Value />
-                  <Select.Indicator />
-                </Select.Trigger>
-                <Select.Popover>
-                  <ListBox>
-                    <ListBox.Item id="1" textValue="正常">
-                      正常
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                    <ListBox.Item id="0" textValue="禁用">
-                      禁用
-                      <ListBox.ItemIndicator />
-                    </ListBox.Item>
-                  </ListBox>
-                </Select.Popover>
-              </Select>
-
-              {/* 角色 */}
-              <div>
-                <Label className="mb-2 block">角色</Label>
-                {isSuperAdmin ? (
-                  <Surface className="rounded-xl p-3">
-                    <p className="text-sm text-muted">超级管理员角色不可修改</p>
-                  </Surface>
-                ) : (
-                  <Surface className="max-h-40 space-y-2 overflow-y-auto rounded-xl p-3">
-                    {roles.length === 0 ? (
-                      <p className="text-sm text-muted">暂无角色</p>
-                    ) : (
-                      roles.map((role) => (
-                        <div key={role.id} className="flex items-center gap-3">
-                          <Checkbox
-                            id={`role-${role.id}`}
-                            isSelected={formData.roleIds.includes(role.id)}
-                            onChange={(checked) => handleRoleToggle(role.id, checked)}
-                          >
-                            <Checkbox.Control>
-                              <Checkbox.Indicator />
-                            </Checkbox.Control>
-                          </Checkbox>
-                          <Label htmlFor={`role-${role.id}`}>{role.roleName}</Label>
-                        </div>
-                      ))
-                    )}
-                  </Surface>
-                )}
-              </div>
-
-              {/* 备注 */}
-              <TextField
-                value={formData.remark}
-                onChange={(v) => setFormData({ ...formData, remark: v })}
-              >
-                <Label>备注</Label>
-                <TextArea placeholder="请输入备注" rows={3} />
-              </TextField>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onClose} isDisabled={isPending}>
-                取消
-              </Button>
-              <Button onPress={handleSubmit} isDisabled={isPending}>
-                {isPending ? '提交中...' : '确定'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+        <Group justify="flex-end" mt="md">
+          <Button variant="default" onClick={onClose} disabled={isPending}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit} loading={isPending}>
+            确定
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
-  )
+  );
 }

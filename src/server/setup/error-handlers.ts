@@ -1,30 +1,18 @@
-/**
- * 错误处理模块
- * @description 配置全局错误处理和 404 处理
- */
-
-import type { OpenAPIHono } from '@hono/zod-openapi'
+import type { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
 import { env } from '@/env'
 import { mapErrorToResponse } from '@/lib/errors'
 import { logger } from '@/lib/logging'
 import type { Env } from '@/server/context'
 
-/**
- * 配置全局错误处理
- * @param app - Hono 应用实例
- */
-export function setupErrorHandlers(app: OpenAPIHono<Env>): void {
-  // 全局错误处理
+export function setupErrorHandlers(app: Hono<Env>): void {
   app.onError((err, c) => {
     const requestId = c.get('requestId')
 
-    // 处理 HTTPException
     if (err instanceof HTTPException) {
       const message =
         env.NODE_ENV === 'production' && err.status >= 500 ? 'Internal Server Error' : err.message
 
-      // 记录 5xx 错误
       if (err.status >= 500) {
         logger.error('HTTP Exception', {
           requestId,
@@ -36,16 +24,11 @@ export function setupErrorHandlers(app: OpenAPIHono<Env>): void {
       }
 
       return c.json(
-        {
-          code: 'HTTP_ERROR',
-          message,
-          requestId,
-        },
+        { code: 'HTTP_ERROR', message, requestId },
         err.status
       )
     }
 
-    // 处理业务错误（集成日志和监控）
     const errorResponse = mapErrorToResponse(err, requestId)
 
     return c.json(
@@ -59,7 +42,6 @@ export function setupErrorHandlers(app: OpenAPIHono<Env>): void {
     )
   })
 
-  // 404 处理
   app.notFound((c) => {
     return c.json(
       {

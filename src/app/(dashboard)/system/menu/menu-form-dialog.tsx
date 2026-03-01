@@ -1,12 +1,8 @@
 "use client";
 
-/**
- * 菜单表单对话框
- * @description 创建和编辑菜单的表单对话框
- */
-
 import { useCreateMenu, useUpdateMenu } from "@/hooks/queries";
-import { Button, Modal, Surface } from "@heroui/react";
+import { Alert, Button, Group, Modal, ScrollArea, Stack } from "@mantine/core";
+import { AlertCircle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { type MenuFormData, MenuFormFields } from "./menu-form-fields";
 
@@ -100,19 +96,17 @@ export function MenuFormDialog({
 
   const handleSubmit = async () => {
     setError("");
-
     if (!formData.menuName.trim()) {
       setError("请输入菜单名称");
       return;
     }
-
     try {
       const input = {
         parentId: formData.parentId,
         menuType: formData.menuType,
         menuName: formData.menuName,
         permission: formData.permission || undefined,
-        // 目录类型强制清空 path，按钮类型不提交 path
+        // WHY: 目录/按钮类型不需要路径
         path:
           formData.menuType === "D" || formData.menuType === "B"
             ? undefined
@@ -126,7 +120,6 @@ export function MenuFormDialog({
         isCache: formData.isCache,
         remark: formData.remark || undefined,
       };
-
       if (isEdit && menu) {
         await updateMenu.mutateAsync({ id: menu.id, input });
       } else {
@@ -144,42 +137,35 @@ export function MenuFormDialog({
     (formData.parentId === 0 ? "根目录" : `ID: ${formData.parentId}`);
 
   return (
-    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-2xl">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>{isEdit ? "编辑菜单" : "新增菜单"}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="max-h-[60vh] overflow-y-auto p-6">
-              {error && (
-                <Surface className="mb-4 rounded-xl border border-danger-soft-hover bg-danger-soft p-3">
-                  <p className="text-sm text-danger">{error}</p>
-                </Surface>
-              )}
-
-              <MenuFormFields
-                formData={formData}
-                onChange={setFormData}
-                parentMenuName={parentMenuName}
-              />
-            </Modal.Body>
-            <Modal.Footer>
-              <Button
-                variant="secondary"
-                onPress={onClose}
-                isDisabled={isPending}
-              >
-                取消
-              </Button>
-              <Button onPress={handleSubmit} isDisabled={isPending}>
-                {isPending ? "提交中..." : "确定"}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+    <Modal
+      opened={open}
+      onClose={onClose}
+      title={isEdit ? "编辑菜单" : "新增菜单"}
+      size="lg"
+      centered
+    >
+      <Stack gap="md">
+        {error && (
+          <Alert color="red" icon={<AlertCircle size={16} />}>
+            {error}
+          </Alert>
+        )}
+        <ScrollArea.Autosize mah="60vh">
+          <MenuFormFields
+            formData={formData}
+            onChange={setFormData}
+            parentMenuName={parentMenuName}
+          />
+        </ScrollArea.Autosize>
+        <Group justify="flex-end">
+          <Button variant="default" onClick={onClose} disabled={isPending}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit} loading={isPending}>
+            确定
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
   );
 }

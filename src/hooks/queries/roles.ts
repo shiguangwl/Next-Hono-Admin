@@ -1,9 +1,4 @@
-/**
- * 角色 React Query Hooks
- */
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import type { ClientResponse } from 'hono/client'
 import { getApiClient, unwrapApiData } from '@/lib/client'
 import type {
   CreateRoleInput,
@@ -15,36 +10,8 @@ import type {
 } from '@/server/routes/roles/dtos'
 import { createResource } from './core'
 
-/**
- * 角色 API Client 类型
- */
-type RolesClient = {
-  $get: (args: { query: Record<string, string> }) => Promise<ClientResponse<unknown>>
-  $post: (args: { json: CreateRoleInput }) => Promise<ClientResponse<unknown>>
-  all: {
-    $get: () => Promise<ClientResponse<unknown>>
-  }
-  ':id': {
-    $get: (args: { param: { id: string } }) => Promise<ClientResponse<unknown>>
-    $put: (args: {
-      param: { id: string }
-      json: UpdateRoleInput
-    }) => Promise<ClientResponse<unknown>>
-    $delete: (args: { param: { id: string } }) => Promise<ClientResponse<unknown>>
-    menus: {
-      $put: (args: {
-        param: { id: string }
-        json: UpdateRoleMenusInput
-      }) => Promise<ClientResponse<unknown>>
-    }
-  }
-}
+const getClient = () => getApiClient().roles
 
-const getClient = () => (getApiClient() as unknown as { roles: RolesClient }).roles
-
-/**
- * 标准 CRUD Hooks
- */
 const roleResource = createResource<
   PaginatedRole,
   Role,
@@ -70,9 +37,6 @@ export const useCreateRole = roleResource.useCreate
 export const useUpdateRole = roleResource.useUpdate
 export const useDeleteRole = roleResource.useDelete
 
-/**
- * 获取所有角色（不分页，用于下拉选择）
- */
 export function useAllRoles() {
   return useQuery<Role[], Error>({
     queryKey: [...roleKeys.all, 'all'],
@@ -83,9 +47,6 @@ export function useAllRoles() {
   })
 }
 
-/**
- * 更新角色菜单权限
- */
 export function useUpdateRoleMenus() {
   const queryClient = useQueryClient()
 

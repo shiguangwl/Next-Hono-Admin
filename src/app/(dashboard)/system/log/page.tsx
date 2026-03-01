@@ -1,31 +1,24 @@
 "use client";
 
-/**
- * 操作日志页面
- * @description 操作日志列表、多条件筛选
- */
-
 import {
-  type ColumnDef,
-  DataTable,
-  Pagination,
-} from "@/components/ui/data-table";
-import { ConfirmDialog } from "@/components/ui/form-dialog";
-import { PageContainer, PageHeader } from "@/components/ui/page-header";
-import { StatusChip } from "@/components/ui/status-chip";
-import { useDeleteOperationLog, useOperationLogs } from "@/hooks/queries";
-import { ArrowsRotateRight, Xmark } from "@gravity-ui/icons";
-import {
+  ActionIcon,
   Button,
   Card,
-  Input,
-  Label,
-  ListBox,
+  Group,
   Select,
-  TextField,
-} from "@heroui/react";
+  SimpleGrid,
+  TextInput,
+} from "@mantine/core";
+import { RefreshCw, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { toast } from "sonner";
+
+import { type ColumnDef, DataTable } from "@/components/ui/data-table";
+import { ConfirmDialog } from "@/components/ui/form-dialog";
+import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
+import { StatusChip } from "@/components/ui/status-chip";
+import { useDeleteOperationLog, useOperationLogs } from "@/hooks/queries";
 import { LogDetailDialog, type OperationLog } from "./log-detail-dialog";
 
 export default function LogPage() {
@@ -118,128 +111,109 @@ export default function LogPage() {
       title: "操作",
       width: 120,
       render: (_, record) => (
-        <div className="flex items-center gap-1">
+        <Group gap={4}>
           <Button
-            variant="ghost"
-            size="sm"
-            onPress={() => setDetailLog(record)}
+            variant="subtle"
+            size="compact-sm"
+            onClick={() => setDetailLog(record)}
           >
             详情
           </Button>
-          <Button
-            variant="ghost"
+          <ActionIcon
+            variant="subtle"
+            color="red"
             size="sm"
-            onPress={() => setDeleteTarget(record)}
+            onClick={() => setDeleteTarget(record)}
           >
-            <Xmark className="size-4 text-danger" />
-          </Button>
-        </div>
+            <Trash2 size={14} />
+          </ActionIcon>
+        </Group>
       ),
     },
   ];
 
   return (
     <PageContainer>
-      {/* 页面标题 */}
       <PageHeader
         title="操作日志"
         breadcrumbs={[{ label: "系统管理" }, { label: "操作日志" }]}
         actions={
-          <Button variant="ghost" onPress={() => refetch()}>
-            <ArrowsRotateRight className="size-4" />
+          <Button
+            variant="subtle"
+            leftSection={<RefreshCw size={14} />}
+            onClick={() => refetch()}
+          >
             刷新
           </Button>
         }
       />
 
-      {/* 筛选栏 */}
-      <Card>
-        <Card.Content className="p-4">
-          <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-            <TextField
-              value={filters.adminName}
-              onChange={(v) => setFilters({ ...filters, adminName: v })}
-            >
-              <Label>管理员</Label>
-              <Input placeholder="请输入管理员名称" />
-            </TextField>
-
-            <TextField
-              value={filters.module}
-              onChange={(v) => setFilters({ ...filters, module: v })}
-            >
-              <Label>模块</Label>
-              <Input placeholder="请输入模块名称" />
-            </TextField>
-
-            <TextField
-              value={filters.operation}
-              onChange={(v) => setFilters({ ...filters, operation: v })}
-            >
-              <Label>操作类型</Label>
-              <Input placeholder="请输入操作类型" />
-            </TextField>
-
-            <Select
-              defaultSelectedKey={filters.status}
-              onSelectionChange={(key) =>
-                setFilters({ ...filters, status: key as "" | "0" | "1" })
-              }
-            >
-              <Label>状态</Label>
-              <Select.Trigger>
-                <Select.Value />
-                <Select.Indicator />
-              </Select.Trigger>
-              <Select.Popover>
-                <ListBox>
-                  <ListBox.Item id="" textValue="全部">
-                    全部
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                  <ListBox.Item id="1" textValue="成功">
-                    成功
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                  <ListBox.Item id="0" textValue="失败">
-                    失败
-                    <ListBox.ItemIndicator />
-                  </ListBox.Item>
-                </ListBox>
-              </Select.Popover>
-            </Select>
-
-            <TextField
-              type="datetime-local"
-              value={filters.startTime}
-              onChange={(v) => setFilters({ ...filters, startTime: v })}
-            >
-              <Label>开始时间</Label>
-              <Input />
-            </TextField>
-
-            <TextField
-              type="datetime-local"
-              value={filters.endTime}
-              onChange={(v) => setFilters({ ...filters, endTime: v })}
-            >
-              <Label>结束时间</Label>
-              <Input />
-            </TextField>
-
-            <div className="flex items-end gap-2 sm:col-span-2">
-              <Button variant="secondary" onPress={handleSearch}>
-                搜索
-              </Button>
-              <Button variant="ghost" onPress={handleReset}>
-                重置
-              </Button>
-            </div>
-          </div>
-        </Card.Content>
+      <Card padding="md">
+        <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
+          <TextInput
+            label="管理员"
+            placeholder="请输入管理员名称"
+            value={filters.adminName}
+            onChange={(e) =>
+              setFilters({ ...filters, adminName: e.currentTarget.value })
+            }
+          />
+          <TextInput
+            label="模块"
+            placeholder="请输入模块名称"
+            value={filters.module}
+            onChange={(e) =>
+              setFilters({ ...filters, module: e.currentTarget.value })
+            }
+          />
+          <TextInput
+            label="操作类型"
+            placeholder="请输入操作类型"
+            value={filters.operation}
+            onChange={(e) =>
+              setFilters({ ...filters, operation: e.currentTarget.value })
+            }
+          />
+          <Select
+            label="状态"
+            placeholder="全部"
+            data={[
+              { value: "", label: "全部" },
+              { value: "1", label: "成功" },
+              { value: "0", label: "失败" },
+            ]}
+            value={filters.status}
+            onChange={(v) =>
+              setFilters({ ...filters, status: (v ?? "") as "" | "0" | "1" })
+            }
+          />
+          <TextInput
+            label="开始时间"
+            type="datetime-local"
+            value={filters.startTime}
+            onChange={(e) =>
+              setFilters({ ...filters, startTime: e.currentTarget.value })
+            }
+          />
+          <TextInput
+            label="结束时间"
+            type="datetime-local"
+            value={filters.endTime}
+            onChange={(e) =>
+              setFilters({ ...filters, endTime: e.currentTarget.value })
+            }
+          />
+          <Group align="flex-end" gap="sm" style={{ gridColumn: "span 2" }}>
+            <Button variant="filled" onClick={handleSearch}>
+              搜索
+            </Button>
+            <Button variant="default" onClick={handleReset}>
+              重置
+            </Button>
+          </Group>
+        </SimpleGrid>
       </Card>
 
-      {/* 表格 */}
       <DataTable
         columns={columns}
         data={data?.items || []}
@@ -248,22 +222,19 @@ export default function LogPage() {
         emptyText="暂无日志数据"
       />
 
-      {/* 分页 */}
       {data && (
         <Pagination
-          current={page}
+          page={page}
           pageSize={pageSize}
           total={data.total}
-          onChange={setPage}
+          onPageChange={setPage}
         />
       )}
 
-      {/* 详情对话框 */}
       {detailLog && (
         <LogDetailDialog log={detailLog} onClose={() => setDetailLog(null)} />
       )}
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         title="删除日志"
         content="确定要删除这条日志吗？此操作不可恢复。"

@@ -1,29 +1,8 @@
-/**
- * CRUD Hooks 工厂
- * @description 创建标准 CRUD 操作的 React Query Hooks
- */
-
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
 import { getApiClient, unwrapApiData } from '@/lib/client'
 import { createQueryKeys } from './query-keys'
 import type { BasePaginationQuery, ResourceConfig } from './types'
 
-/**
- * 标准 CRUD Client 接口约束
- */
-interface StandardCrudClient {
-  $get: (args: { query: Record<string, string> }) => Promise<unknown>
-  $post: (args: { json: unknown }) => Promise<unknown>
-  ':id': {
-    $get: (args: { param: { id: string } }) => Promise<unknown>
-    $put: (args: { param: { id: string }; json: unknown }) => Promise<unknown>
-    $delete: (args: { param: { id: string } }) => Promise<unknown>
-  }
-}
-
-/**
- * 构建查询参数字符串
- */
 function buildQueryParams<T extends BasePaginationQuery>(
   params: T,
   defaultPageSize: number
@@ -42,9 +21,6 @@ function buildQueryParams<T extends BasePaginationQuery>(
   return query
 }
 
-/**
- * 创建标准 CRUD Hooks
- */
 export function createResource<
   TList,
   TDetail,
@@ -53,7 +29,15 @@ export function createResource<
   TQuery extends BasePaginationQuery = BasePaginationQuery,
 >(
   config: ResourceConfig<TQuery> & {
-    getClient: () => StandardCrudClient
+    getClient: () => {
+      $get: (args: { query: Record<string, string> }) => Promise<unknown>
+      $post: (args: { json: unknown }) => Promise<unknown>
+      ':id': {
+        $get: (args: { param: { id: string } }) => Promise<unknown>
+        $put: (args: { param: { id: string }; json: unknown }) => Promise<unknown>
+        $delete: (args: { param: { id: string } }) => Promise<unknown>
+      }
+    }
   }
 ) {
   const { resourceName, getClient, defaultPageSize = 20, messages = {} } = config
@@ -68,9 +52,6 @@ export function createResource<
 
   const keys = createQueryKeys(resourceName)
 
-  /**
-   * 列表查询 Hook
-   */
   function useList(params: TQuery = {} as TQuery) {
     return useQuery<TList, Error>({
       queryKey: keys.list(params as Record<string, unknown>),
@@ -83,9 +64,6 @@ export function createResource<
     })
   }
 
-  /**
-   * 详情查询 Hook
-   */
   function useDetail(id: number) {
     return useQuery<TDetail, Error>({
       queryKey: keys.detail(id),
@@ -98,9 +76,6 @@ export function createResource<
     })
   }
 
-  /**
-   * 创建 Mutation Hook
-   */
   function useCreate() {
     const queryClient = useQueryClient()
 
@@ -116,9 +91,6 @@ export function createResource<
     })
   }
 
-  /**
-   * 更新 Mutation Hook
-   */
   function useUpdate() {
     const queryClient = useQueryClient()
 
@@ -138,9 +110,6 @@ export function createResource<
     })
   }
 
-  /**
-   * 删除 Mutation Hook
-   */
   function useDelete() {
     const queryClient = useQueryClient()
 
@@ -156,26 +125,19 @@ export function createResource<
     })
   }
 
-  return {
-    keys,
-    useList,
-    useDetail,
-    useCreate,
-    useUpdate,
-    useDelete,
-  }
+  return { keys, useList, useDetail, useCreate, useUpdate, useDelete }
 }
 
-/**
- * 创建只读资源 Hooks（仅 list + delete）
- */
 export function createReadonlyResource<
   TList,
   TQuery extends BasePaginationQuery = BasePaginationQuery,
 >(
   config: ResourceConfig<TQuery> & {
-    getClient: () => Pick<StandardCrudClient, '$get'> & {
-      ':id': Pick<StandardCrudClient[':id'], '$delete'>
+    getClient: () => {
+      $get: (args: { query: Record<string, string> }) => Promise<unknown>
+      ':id': {
+        $delete: (args: { param: { id: string } }) => Promise<unknown>
+      }
     }
   }
 ) {
@@ -215,9 +177,5 @@ export function createReadonlyResource<
     })
   }
 
-  return {
-    keys,
-    useList,
-    useDelete,
-  }
+  return { keys, useList, useDelete }
 }

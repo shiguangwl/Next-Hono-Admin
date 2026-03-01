@@ -1,37 +1,43 @@
-'use client'
+"use client";
 
-/**
- * 后台布局
- * @description 后台管理系统主布局，包含侧边栏和顶部导航
- */
+import { AppShell } from "@mantine/core";
+import { useDisclosure } from "@mantine/hooks";
+import { type ReactNode, useState } from "react";
 
-import { type ReactNode, useState } from 'react'
-import { AuthGuard } from '@/components/auth-guard'
-import { AppHeader } from '@/components/layout/app-header'
-import { AppSidebar } from '@/components/layout/app-sidebar'
+import { AuthGuard } from "@/components/auth-guard";
+import { AppHeader } from "@/components/layout/app-header";
+import { AppSidebar } from "@/components/layout/app-sidebar";
 
 interface DashboardLayoutProps {
-  children: ReactNode
+  children: ReactNode;
 }
 
 export default function DashboardLayout({ children }: DashboardLayoutProps) {
-  const [collapsed, setCollapsed] = useState(false)
+  const [collapsed, setCollapsed] = useState(false);
+  const [mobileOpened, { toggle: toggleMobile }] = useDisclosure();
 
   return (
     <AuthGuard redirectTo="/login">
-      <div className="flex h-screen overflow-hidden bg-background">
-        {/* 侧边栏 */}
-        <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
+      <AppShell
+        header={{ height: 60 }}
+        navbar={{
+          width: collapsed ? 72 : 260,
+          breakpoint: "sm",
+          collapsed: { mobile: !mobileOpened },
+        }}
+        padding="md"
+        transitionDuration={200}
+      >
+        <AppShell.Header>
+          <AppHeader mobileOpened={mobileOpened} onBurgerClick={toggleMobile} />
+        </AppShell.Header>
 
-        {/* 主内容区 */}
-        <div className="flex flex-1 flex-col overflow-hidden">
-          {/* 顶部导航 */}
-          <AppHeader />
+        <AppShell.Navbar>
+          <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />
+        </AppShell.Navbar>
 
-          {/* 页面内容 */}
-          <main className="flex-1 overflow-auto bg-background p-6">{children}</main>
-        </div>
-      </div>
+        <AppShell.Main>{children}</AppShell.Main>
+      </AppShell>
     </AuthGuard>
-  )
+  );
 }

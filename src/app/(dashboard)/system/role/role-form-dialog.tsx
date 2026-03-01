@@ -1,328 +1,286 @@
-'use client'
-
-/**
- * 角色表单对话框
- * @description 创建和编辑角色的表单对话框，集成权限分配功能
- */
+"use client";
 
 import {
   Button,
   Checkbox,
-  FieldError,
-  Input,
-  Label,
-  ListBox,
+  Group,
+  Loader,
   Modal,
+  NumberInput,
+  Paper,
+  ScrollArea,
   Select,
-  Spinner,
-  Surface,
-  TextArea,
-  TextField,
-} from '@heroui/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
+  SimpleGrid,
+  Stack,
+  Text,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
+import { useEffect, useMemo, useRef, useState } from "react";
+
 import {
   useCreateRole,
   useMenuTree,
   useRole,
   useUpdateRole,
   useUpdateRoleMenus,
-} from '@/hooks/queries'
-import { MenuTreeItem, type MenuTreeNode } from './menu-tree-item'
+} from "@/hooks/queries";
+import { MenuTreeItem, type MenuTreeNode } from "./menu-tree-item";
 
 type Role = {
-  id: number
-  roleName: string
-  sort: number
-  status: number
-  remark: string | null
-}
+  id: number;
+  roleName: string;
+  sort: number;
+  status: number;
+  remark: string | null;
+};
 
 interface RoleFormDialogProps {
-  open: boolean
-  role: Role | null
-  onClose: () => void
-  onSuccess: () => void
+  open: boolean;
+  role: Role | null;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
 interface FormData {
-  roleName: string
-  sort: number
-  status: number
-  remark: string
+  roleName: string;
+  sort: number;
+  status: number;
+  remark: string;
 }
 
 const initialFormData: FormData = {
-  roleName: '',
+  roleName: "",
   sort: 0,
   status: 1,
-  remark: '',
+  remark: "",
+};
+
+// WHY: 递归收集所有节点 ID，用于全选和默认展开
+function collectAllIds(nodes: MenuTreeNode[]): number[] {
+  return nodes.flatMap((n) => [
+    n.id,
+    ...(n.children ? collectAllIds(n.children) : []),
+  ]);
 }
 
-export function RoleFormDialog({ open, role, onClose, onSuccess }: RoleFormDialogProps) {
-  const isEdit = !!role
-  const [formData, setFormData] = useState<FormData>(initialFormData)
-  const [checkedMenuIds, setCheckedMenuIds] = useState<number[]>([])
-  const [expandedIds, setExpandedIds] = useState<number[]>([])
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
-  const expandedInitializedRef = useRef(false)
+// WHY: 递归收集节点及其所有后代 ID，用于级联勾选
+function getDescendantIds(node: MenuTreeNode): number[] {
+  return [node.id, ...(node.children?.flatMap(getDescendantIds) ?? [])];
+}
 
-  const { data: menuTreeData, isLoading: menuLoading } = useMenuTree()
-  const menuTree = (menuTreeData as MenuTreeNode[] | undefined) || []
-  const { data: roleDetailData, isLoading: roleLoading } = useRole(role?.id || 0)
-  const roleDetail = (roleDetailData as { menuIds?: number[] } | undefined) || null
-  const createRole = useCreateRole()
-  const updateRole = useUpdateRole()
-  const updateRoleMenus = useUpdateRoleMenus()
+export function RoleFormDialog({
+  open,
+  role,
+  onClose,
+  onSuccess,
+}: RoleFormDialogProps) {
+  const isEdit = !!role;
+  const [formData, setFormData] = useState<FormData>(initialFormData);
+  const [checkedMenuIds, setCheckedMenuIds] = useState<number[]>([]);
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
+  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>(
+    {},
+  );
+  const expandedInitRef = useRef(false);
 
-  const allMenuIds = useMemo(() => {
-    const ids: number[] = []
-    const collect = (nodes: MenuTreeNode[]) => {
-      for (const node of nodes) {
-        ids.push(node.id)
-        if (node.children) collect(node.children)
-      }
-    }
-    collect(menuTree)
-    return ids
-  }, [menuTree])
+  const { data: menuTreeData, isLoading: menuLoading } = useMenuTree();
+  const menuTree = (menuTreeData as MenuTreeNode[] | undefined) || [];
+  const { data: roleDetailData, isLoading: roleLoading } = useRole(
+    role?.id || 0,
+  );
+  const roleDetail = roleDetailData as { menuIds?: number[] } | undefined;
+  const createRole = useCreateRole();
+  const updateRole = useUpdateRole();
+  const updateRoleMenus = useUpdateRoleMenus();
+
+  const allMenuIds = useMemo(() => collectAllIds(menuTree), [menuTree]);
 
   useEffect(() => {
-    if (open) {
-      if (role && roleDetail) {
-        setFormData({
-          roleName: role.roleName,
-          sort: role.sort,
-          status: role.status,
-          remark: role.remark || '',
-        })
-        setCheckedMenuIds(roleDetail.menuIds || [])
-      } else if (!role) {
-        setFormData(initialFormData)
-        setCheckedMenuIds([])
-      }
-      setErrors({})
+    if (!open) return;
+    if (role && roleDetail) {
+      setFormData({
+        roleName: role.roleName,
+        sort: role.sort,
+        status: role.status,
+        remark: role.remark || "",
+      });
+      setCheckedMenuIds(roleDetail.menuIds || []);
+    } else if (!role) {
+      setFormData(initialFormData);
+      setCheckedMenuIds([]);
     }
-  }, [open, role, roleDetail])
+    setErrors({});
+  }, [open, role, roleDetail]);
 
   useEffect(() => {
     if (!open) {
-      expandedInitializedRef.current = false
-      return
+      expandedInitRef.current = false;
+      return;
     }
-    if (!expandedInitializedRef.current && allMenuIds.length > 0) {
-      setExpandedIds(allMenuIds)
-      expandedInitializedRef.current = true
+    if (!expandedInitRef.current && allMenuIds.length > 0) {
+      setExpandedIds(allMenuIds);
+      expandedInitRef.current = true;
     }
-  }, [open, allMenuIds])
+  }, [open, allMenuIds]);
 
   const validate = (): boolean => {
-    const newErrors: Partial<Record<keyof FormData, string>> = {}
-    if (!formData.roleName.trim()) {
-      newErrors.roleName = '请输入角色名称'
-    }
-    setErrors(newErrors)
-    return Object.keys(newErrors).length === 0
-  }
+    const e: typeof errors = {};
+    if (!formData.roleName.trim()) e.roleName = "请输入角色名称";
+    setErrors(e);
+    return Object.keys(e).length === 0;
+  };
 
   const handleSubmit = async () => {
-    if (!validate()) return
-
+    if (!validate()) return;
     try {
       if (isEdit && role) {
         await updateRole.mutateAsync({
           id: role.id,
-          input: {
-            roleName: formData.roleName,
-            sort: formData.sort,
-            status: formData.status,
-            remark: formData.remark || undefined,
-          },
-        })
+          input: { ...formData, remark: formData.remark || undefined },
+        });
         await updateRoleMenus.mutateAsync({
           id: role.id,
           input: { menuIds: checkedMenuIds },
-        })
+        });
       } else {
         await createRole.mutateAsync({
-          roleName: formData.roleName,
-          sort: formData.sort,
-          status: formData.status,
+          ...formData,
           remark: formData.remark || undefined,
           menuIds: checkedMenuIds,
-        })
+        });
       }
-      onSuccess()
+      onSuccess();
     } catch (err) {
-      setErrors({ roleName: err instanceof Error ? err.message : '操作失败' })
+      setErrors({ roleName: err instanceof Error ? err.message : "操作失败" });
     }
-  }
+  };
 
-  const toggleExpand = (id: number) => {
-    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
-  }
+  const toggleExpand = (id: number) =>
+    setExpandedIds((p) =>
+      p.includes(id) ? p.filter((i) => i !== id) : [...p, id],
+    );
 
   const toggleCheck = (node: MenuTreeNode) => {
-    const getDescendantIds = (n: MenuTreeNode): number[] => {
-      const ids = [n.id]
-      if (n.children) {
-        for (const child of n.children) {
-          ids.push(...getDescendantIds(child))
-        }
-      }
-      return ids
-    }
+    const ids = getDescendantIds(node);
+    setCheckedMenuIds((p) =>
+      p.includes(node.id)
+        ? p.filter((id) => !ids.includes(id))
+        : [...new Set([...p, ...ids])],
+    );
+  };
 
-    const descendantIds = getDescendantIds(node)
-    const isChecked = checkedMenuIds.includes(node.id)
+  const handleSelectAll = () =>
+    setCheckedMenuIds(
+      checkedMenuIds.length === allMenuIds.length ? [] : allMenuIds,
+    );
 
-    if (isChecked) {
-      setCheckedMenuIds((prev) => prev.filter((id) => !descendantIds.includes(id)))
-    } else {
-      setCheckedMenuIds((prev) => [...new Set([...prev, ...descendantIds])])
-    }
-  }
-
-  const handleSelectAll = () => {
-    if (checkedMenuIds.length === allMenuIds.length) {
-      setCheckedMenuIds([])
-    } else {
-      setCheckedMenuIds(allMenuIds)
-    }
-  }
-
-  const isPending = createRole.isPending || updateRole.isPending || updateRoleMenus.isPending
-  const isLoading = menuLoading || (isEdit && roleLoading)
+  const isPending =
+    createRole.isPending || updateRole.isPending || updateRoleMenus.isPending;
+  const isDataLoading = menuLoading || (isEdit && roleLoading);
 
   return (
-    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-2xl">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>{isEdit ? '编辑角色' : '新增角色'}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="max-h-[60vh] overflow-y-auto p-6">
-              <div className="space-y-6">
-                {/* 基本信息 */}
-                <div>
-                  <h4 className="mb-4 font-medium text-foreground">基本信息</h4>
-                  <div className="space-y-4">
-                    {/* 角色名称 */}
-                    <TextField
-                      isRequired
-                      isInvalid={!!errors.roleName}
-                      value={formData.roleName}
-                      onChange={(v) => setFormData({ ...formData, roleName: v })}
-                    >
-                      <Label>角色名称</Label>
-                      <Input placeholder="请输入角色名称" />
-                      {errors.roleName && <FieldError>{errors.roleName}</FieldError>}
-                    </TextField>
+    <Modal
+      opened={open}
+      onClose={onClose}
+      title={isEdit ? "编辑角色" : "新增角色"}
+      size="lg"
+      centered
+    >
+      <Stack gap="md">
+        <TextInput
+          label="角色名称"
+          placeholder="请输入角色名称"
+          required
+          value={formData.roleName}
+          onChange={(e) =>
+            setFormData({ ...formData, roleName: e.currentTarget.value })
+          }
+          error={errors.roleName}
+        />
 
-                    {/* 排序和状态 */}
-                    <div className="grid grid-cols-2 gap-4">
-                      <TextField
-                        type="number"
-                        value={String(formData.sort)}
-                        onChange={(v) => setFormData({ ...formData, sort: Number(v) })}
-                      >
-                        <Label>排序</Label>
-                        <Input placeholder="请输入排序值" />
-                      </TextField>
+        <SimpleGrid cols={2}>
+          <NumberInput
+            label="排序"
+            placeholder="排序值"
+            value={formData.sort}
+            onChange={(v) => setFormData({ ...formData, sort: Number(v) })}
+          />
+          <Select
+            label="状态"
+            value={String(formData.status)}
+            onChange={(v) => setFormData({ ...formData, status: Number(v) })}
+            data={[
+              { value: "1", label: "正常" },
+              { value: "0", label: "禁用" },
+            ]}
+          />
+        </SimpleGrid>
 
-                      <Select
-                        selectedKey={String(formData.status)}
-                        onSelectionChange={(key) =>
-                          setFormData({ ...formData, status: Number(key) })
-                        }
-                      >
-                        <Label>状态</Label>
-                        <Select.Trigger>
-                          <Select.Value />
-                          <Select.Indicator />
-                        </Select.Trigger>
-                        <Select.Popover>
-                          <ListBox>
-                            <ListBox.Item id="1" textValue="正常">
-                              正常
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                            <ListBox.Item id="0" textValue="禁用">
-                              禁用
-                              <ListBox.ItemIndicator />
-                            </ListBox.Item>
-                          </ListBox>
-                        </Select.Popover>
-                      </Select>
-                    </div>
+        <Textarea
+          label="备注"
+          placeholder="请输入备注"
+          rows={2}
+          value={formData.remark}
+          onChange={(e) =>
+            setFormData({ ...formData, remark: e.currentTarget.value })
+          }
+        />
 
-                    {/* 备注 */}
-                    <TextField
-                      value={formData.remark}
-                      onChange={(v) => setFormData({ ...formData, remark: v })}
-                    >
-                      <Label>备注</Label>
-                      <TextArea placeholder="请输入备注" rows={3} />
-                    </TextField>
-                  </div>
-                </div>
+        <div>
+          <Text size="sm" fw={500} mb="xs">
+            权限分配
+          </Text>
+          {isDataLoading ? (
+            <Group justify="center" py="xl">
+              <Loader />
+            </Group>
+          ) : (
+            <>
+              <Paper withBorder p="xs" radius="md" mb="xs">
+                <Group>
+                  <Checkbox
+                    label="全选/取消全选"
+                    size="xs"
+                    checked={
+                      checkedMenuIds.length === allMenuIds.length &&
+                      allMenuIds.length > 0
+                    }
+                    onChange={handleSelectAll}
+                  />
+                  <Text size="xs" c="dimmed">
+                    (已选 {checkedMenuIds.length}/{allMenuIds.length})
+                  </Text>
+                </Group>
+              </Paper>
+              <Paper withBorder radius="md" p="xs">
+                <ScrollArea.Autosize mah={256}>
+                  {menuTree.map((node) => (
+                    <MenuTreeItem
+                      key={node.id}
+                      node={node}
+                      checkedIds={checkedMenuIds}
+                      expandedIds={expandedIds}
+                      onToggleCheck={toggleCheck}
+                      onToggleExpand={toggleExpand}
+                      level={0}
+                    />
+                  ))}
+                </ScrollArea.Autosize>
+              </Paper>
+            </>
+          )}
+        </div>
 
-                {/* 权限分配 */}
-                <div>
-                  <h4 className="font-medium text-foreground">权限分配</h4>
-                  {isLoading ? (
-                    <div className="flex items-center justify-center">
-                      <Spinner size="lg" />
-                    </div>
-                  ) : (
-                    <>
-                      <Surface className="flex items-center gap-3 rounded-xl p-3">
-                        <Checkbox
-                          isSelected={
-                            checkedMenuIds.length === allMenuIds.length && allMenuIds.length > 0
-                          }
-                          onChange={handleSelectAll}
-                        >
-                          <Checkbox.Control>
-                            <Checkbox.Indicator />
-                          </Checkbox.Control>
-                        </Checkbox>
-                        <span className="text-sm font-medium">全选/取消全选</span>
-                        <span className="text-sm text-muted">
-                          (已选 {checkedMenuIds.length}/{allMenuIds.length})
-                        </span>
-                      </Surface>
-
-                      <Surface className="max-h-64 overflow-y-auto rounded-xl p-2">
-                        {menuTree.map((node: MenuTreeNode) => (
-                          <MenuTreeItem
-                            key={node.id}
-                            node={node}
-                            checkedIds={checkedMenuIds}
-                            expandedIds={expandedIds}
-                            onToggleCheck={toggleCheck}
-                            onToggleExpand={toggleExpand}
-                            level={0}
-                          />
-                        ))}
-                      </Surface>
-                    </>
-                  )}
-                </div>
-              </div>
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onClose} isDisabled={isPending}>
-                取消
-              </Button>
-              <Button onPress={handleSubmit} isDisabled={isPending}>
-                {isPending ? '提交中...' : '确定'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+        <Group justify="flex-end" mt="md">
+          <Button variant="default" onClick={onClose} disabled={isPending}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit} loading={isPending}>
+            确定
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
-  )
+  );
 }

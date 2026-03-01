@@ -1,143 +1,56 @@
-import { z } from '@hono/zod-openapi'
+import { z } from 'zod'
 import { createPaginatedSchema, PaginationQuerySchema } from '../shared'
 
-export const ConfigTypeSchema = z.enum(['string', 'boolean', 'number', 'json', 'array']).openapi({
-  description: '配置类型',
-  example: 'string',
-})
+export const ConfigTypeSchema = z.enum(['string', 'boolean', 'number', 'json', 'array'])
 
-export const ConfigSchema = z
-  .object({
-    id: z.number().openapi({ description: '配置 ID', example: 1 }),
-    configKey: z.string().max(100).openapi({ description: '配置键', example: 'site.allow_reg' }),
-    configValue: z.string().nullable().openapi({ description: '配置值（原始字符串或 JSON 串）' }),
-    configType: ConfigTypeSchema,
-    configGroup: z.string().max(50).openapi({ description: '配置分组', example: 'security' }),
-    configName: z.string().max(100).openapi({ description: '配置名称', example: '是否允许注册' }),
-    remark: z.string().nullable().openapi({ description: '配置说明' }),
-    isSystem: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .openapi({ description: '是否系统配置：1-是 0-否', example: 0 }),
-    status: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .openapi({ description: '状态：1-启用 0-停用', example: 1 }),
-    createdAt: z.string().openapi({ description: '创建时间', example: '2024-01-01T00:00:00.000Z' }),
-    updatedAt: z.string().openapi({ description: '更新时间', example: '2024-01-01T00:00:00.000Z' }),
-  })
-  .openapi('SysConfig')
+export const ConfigSchema = z.object({
+  id: z.number(),
+  configKey: z.string().max(100),
+  configValue: z.string().nullable(),
+  configType: ConfigTypeSchema,
+  configGroup: z.string().max(50),
+  configName: z.string().max(100),
+  remark: z.string().nullable(),
+  isSystem: z.number().int().min(0).max(1),
+  status: z.number().int().min(0).max(1),
+  createdAt: z.string(),
+  updatedAt: z.string(),
+})
 
 export const ConfigQuerySchema = PaginationQuerySchema.extend({
-  group: z.string().optional().openapi({ description: '配置分组', example: 'security' }),
-  status: z.coerce
-    .number()
-    .int()
-    .min(0)
-    .max(1)
-    .optional()
-    .openapi({ description: '状态：1-启用 0-停用', example: 1 }),
+  group: z.string().optional(),
+  status: z.coerce.number().int().min(0).max(1).optional(),
 })
 
-export const CreateConfigInputSchema = z
-  .object({
-    configKey: z
-      .string()
-      .min(1)
-      .max(100)
-      .openapi({ description: '配置键', example: 'site.allow_reg' }),
-    configValue: z
-      .string()
-      .nullable()
-      .optional()
-      .openapi({ description: '配置值（原始字符串或 JSON 串）' }),
-    configType: ConfigTypeSchema.default('string'),
-    configGroup: z
-      .string()
-      .max(50)
-      .default('general')
-      .openapi({ description: '配置分组', example: 'security' }),
-    configName: z.string().max(100).openapi({ description: '配置名称', example: '是否允许注册' }),
-    remark: z.string().max(255).nullable().optional().openapi({ description: '配置说明' }),
-    isSystem: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .optional()
-      .default(0)
-      .openapi({ description: '是否系统配置：1-是 0-否', example: 0 }),
-    status: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .optional()
-      .default(1)
-      .openapi({ description: '状态：1-启用 0-停用', example: 1 }),
-  })
-  .openapi('CreateConfigInput')
+export const CreateConfigInputSchema = z.object({
+  configKey: z.string().min(1).max(100),
+  configValue: z.string().nullable().optional(),
+  configType: ConfigTypeSchema.default('string'),
+  configGroup: z.string().max(50).default('general'),
+  configName: z.string().max(100),
+  remark: z.string().max(255).nullable().optional(),
+  isSystem: z.number().int().min(0).max(1).optional().default(0),
+  status: z.number().int().min(0).max(1).optional().default(1),
+})
 
-export const UpdateConfigInputSchema = z
-  .object({
-    configKey: z
-      .string()
-      .max(100)
-      .optional()
-      .openapi({ description: '配置键', example: 'site.allow_reg' }),
-    configValue: z
-      .string()
-      .nullable()
-      .optional()
-      .openapi({ description: '配置值（原始字符串或 JSON 串）' }),
-    configType: ConfigTypeSchema.optional(),
-    configGroup: z
-      .string()
-      .max(50)
-      .optional()
-      .openapi({ description: '配置分组', example: 'security' }),
-    configName: z
-      .string()
-      .max(100)
-      .optional()
-      .openapi({ description: '配置名称', example: '是否允许注册' }),
-    remark: z.string().max(255).nullable().optional().openapi({ description: '配置说明' }),
-    isSystem: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .optional()
-      .openapi({ description: '是否系统配置：1-是 0-否', example: 0 }),
-    status: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .optional()
-      .openapi({ description: '状态：1-启用 0-停用', example: 1 }),
-  })
-  .openapi('UpdateConfigInput')
+export const UpdateConfigInputSchema = z.object({
+  configKey: z.string().max(100).optional(),
+  configValue: z.string().nullable().optional(),
+  configType: ConfigTypeSchema.optional(),
+  configGroup: z.string().max(50).optional(),
+  configName: z.string().max(100).optional(),
+  remark: z.string().max(255).nullable().optional(),
+  isSystem: z.number().int().min(0).max(1).optional(),
+  status: z.number().int().min(0).max(1).optional(),
+})
 
-export const UpdateConfigValueInputSchema = z
-  .object({
-    configValue: z.string().nullable().openapi({ description: '配置值（原始字符串或 JSON 串）' }),
-    configType: ConfigTypeSchema.optional(),
-    status: z
-      .number()
-      .int()
-      .min(0)
-      .max(1)
-      .optional()
-      .openapi({ description: '状态：1-启用 0-停用', example: 1 }),
-  })
-  .openapi('UpdateConfigValueInput')
+export const UpdateConfigValueInputSchema = z.object({
+  configValue: z.string().nullable(),
+  configType: ConfigTypeSchema.optional(),
+  status: z.number().int().min(0).max(1).optional(),
+})
 
-export const PaginatedConfigSchema = createPaginatedSchema(ConfigSchema, 'PaginatedConfig')
+export const PaginatedConfigSchema = createPaginatedSchema(ConfigSchema)
 
 export type Config = z.infer<typeof ConfigSchema>
 export type PaginatedConfig = z.infer<typeof PaginatedConfigSchema>

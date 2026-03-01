@@ -1,38 +1,26 @@
 "use client";
 
-/**
- * 用户管理页面
- * @description 管理员列表、创建、编辑、删除
- */
+import {
+  ActionIcon,
+  Button,
+  Group,
+  Paper,
+  PasswordInput,
+  TextInput,
+  Tooltip,
+} from "@mantine/core";
+import { KeyRound, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
 import { PermissionGuard } from "@/components/permission-guard";
-import {
-  type ColumnDef,
-  DataTable,
-  Pagination,
-} from "@/components/ui/data-table";
+import { type ColumnDef, DataTable } from "@/components/ui/data-table";
 import { ConfirmDialog, FormDialog } from "@/components/ui/form-dialog";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
 import { EnableStatusChip } from "@/components/ui/status-chip";
 import { useAdmins, useDeleteAdmin, useResetPassword } from "@/hooks/queries";
 import { SUPER_ADMIN_ID } from "@/lib/utils";
-import {
-  ArrowsRotateRight,
-  Key,
-  Pencil,
-  Plus,
-  TrashBin,
-} from "@gravity-ui/icons";
-import {
-  Button,
-  Card,
-  FieldError,
-  Input,
-  Label,
-  TextField,
-} from "@heroui/react";
-import { useState } from "react";
-import { toast } from "sonner";
 import { AdminFormDialog } from "./admin-form-dialog";
 
 type Admin = {
@@ -143,94 +131,92 @@ export default function AdminPage() {
       title: "操作",
       width: 150,
       render: (_, record) => (
-        <div className="flex items-center gap-1">
+        <Group gap={4}>
           {record.id !== SUPER_ADMIN_ID && (
             <>
               <PermissionGuard permission="system:admin:update">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
-                  onPress={() => handleEdit(record)}
-                  aria-label="编辑"
-                >
-                  <Pencil className="size-4" />
-                </Button>
+                <Tooltip label="编辑">
+                  <ActionIcon
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => handleEdit(record)}
+                  >
+                    <Pencil size={14} />
+                  </ActionIcon>
+                </Tooltip>
               </PermissionGuard>
               <PermissionGuard permission="system:admin:delete">
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  isIconOnly
-                  onPress={() => setDeleteTarget(record)}
-                  aria-label="删除"
-                >
-                  <TrashBin className="size-4 text-danger" />
-                </Button>
+                <Tooltip label="删除">
+                  <ActionIcon
+                    variant="subtle"
+                    color="red"
+                    size="sm"
+                    onClick={() => setDeleteTarget(record)}
+                  >
+                    <Trash2 size={14} />
+                  </ActionIcon>
+                </Tooltip>
               </PermissionGuard>
             </>
           )}
           <PermissionGuard permission="system:admin:resetPwd">
-            <Button
-              variant="ghost"
-              size="sm"
-              isIconOnly
-              onPress={() => {
-                setResetPasswordId(record.id);
-                setNewPassword("");
-                setPasswordError("");
-              }}
-              aria-label="重置密码"
-            >
-              <Key className="size-4" />
-            </Button>
+            <Tooltip label="重置密码">
+              <ActionIcon
+                variant="subtle"
+                size="sm"
+                onClick={() => {
+                  setResetPasswordId(record.id);
+                  setNewPassword("");
+                  setPasswordError("");
+                }}
+              >
+                <KeyRound size={14} />
+              </ActionIcon>
+            </Tooltip>
           </PermissionGuard>
-        </div>
+        </Group>
       ),
     },
   ];
 
   return (
     <PageContainer>
-      {/* 页面标题 */}
       <PageHeader
         title="用户管理"
         breadcrumbs={[{ label: "系统管理" }, { label: "用户管理" }]}
         actions={
           <PermissionGuard permission="system:admin:create">
-            <Button onPress={handleCreate}>
-              <Plus className="size-4" />
+            <Button leftSection={<Plus size={16} />} onClick={handleCreate}>
               新增管理员
             </Button>
           </PermissionGuard>
         }
       />
 
-      {/* 搜索栏 */}
-      <Card>
-        <Card.Content className="p-4">
-          <div className="flex items-end gap-4">
-            <TextField className="max-w-xs flex-1">
-              <Label>关键词</Label>
-              <Input
-                value={keyword}
-                onChange={(e) => setKeyword(e.target.value)}
-                onKeyDown={(e) => e.key === "Enter" && handleSearch()}
-                placeholder="搜索用户名或昵称"
-              />
-            </TextField>
-            <Button variant="secondary" onPress={handleSearch}>
-              搜索
-            </Button>
-            <Button variant="ghost" onPress={() => refetch()}>
-              <ArrowsRotateRight className="size-4" />
-              刷新
-            </Button>
-          </div>
-        </Card.Content>
-      </Card>
+      <Paper withBorder p="md" radius="md">
+        <Group>
+          <TextInput
+            style={{ flex: 1, maxWidth: 300 }}
+            label="关键词"
+            placeholder="搜索用户名或昵称"
+            value={keyword}
+            onChange={(e) => setKeyword(e.currentTarget.value)}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
+          />
+          <Button variant="default" onClick={handleSearch} mt="auto">
+            搜索
+          </Button>
+          <Button
+            variant="subtle"
+            leftSection={<RefreshCw size={14} />}
+            onClick={() => refetch()}
+            mt="auto"
+          >
+            刷新
+          </Button>
+        </Group>
+      </Paper>
 
-      {/* 表格 */}
       <DataTable
         columns={columns}
         data={data?.items || []}
@@ -239,17 +225,15 @@ export default function AdminPage() {
         emptyText="暂无管理员数据"
       />
 
-      {/* 分页 */}
       {data && (
         <Pagination
-          current={page}
+          page={page}
           pageSize={pageSize}
           total={data.total}
-          onChange={setPage}
+          onPageChange={setPage}
         />
       )}
 
-      {/* 表单对话框 */}
       <AdminFormDialog
         open={dialogOpen}
         admin={editingAdmin}
@@ -260,7 +244,6 @@ export default function AdminPage() {
         }}
       />
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         title="删除管理员"
         content={`确定要删除管理员 "${deleteTarget?.username}" 吗？此操作不可恢复。`}
@@ -272,7 +255,6 @@ export default function AdminPage() {
         isDanger
       />
 
-      {/* 重置密码对话框 */}
       <FormDialog
         title="重置密码"
         description="请输入新密码"
@@ -287,17 +269,14 @@ export default function AdminPage() {
         submitText="确定"
         size="sm"
       >
-        <TextField
-          isRequired
-          isInvalid={!!passwordError}
-          type="password"
+        <PasswordInput
+          label="新密码"
+          placeholder="请输入新密码（至少6位）"
+          required
           value={newPassword}
-          onChange={setNewPassword}
-        >
-          <Label>新密码</Label>
-          <Input placeholder="请输入新密码（至少6位）" />
-          {passwordError && <FieldError>{passwordError}</FieldError>}
-        </TextField>
+          onChange={(e) => setNewPassword(e.currentTarget.value)}
+          error={passwordError || undefined}
+        />
       </FormDialog>
     </PageContainer>
   );

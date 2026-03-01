@@ -1,220 +1,206 @@
-'use client'
+"use client";
 
-/**
- * 角色菜单权限分配对话框
- * @description 为角色分配菜单权限
- */
+import {
+  Alert,
+  Button,
+  Checkbox,
+  Group,
+  Loader,
+  Modal,
+  Paper,
+  ScrollArea,
+  Stack,
+  Text,
+} from "@mantine/core";
+import { useEffect, useMemo, useRef, useState } from "react";
 
-import { Button, Checkbox, Modal, Spinner, Surface } from '@heroui/react'
-import { useEffect, useMemo, useRef, useState } from 'react'
-import { useMenuTree, useRole, useUpdateRoleMenus } from '@/hooks/queries'
-import { MenuTreeItem, type MenuTreeNode } from './menu-tree-item'
+import { useMenuTree, useRole, useUpdateRoleMenus } from "@/hooks/queries";
+import { MenuTreeItem, type MenuTreeNode } from "./menu-tree-item";
 
-type Role = {
-  id: number
-  roleName: string
-}
+type Role = { id: number; roleName: string };
 
 interface RoleMenuDialogProps {
-  open: boolean
-  role: Role | null
-  onClose: () => void
-  onSuccess: () => void
+  open: boolean;
+  role: Role | null;
+  onClose: () => void;
+  onSuccess: () => void;
 }
 
-export function RoleMenuDialog({ open, role, onClose, onSuccess }: RoleMenuDialogProps) {
-  const [checkedIds, setCheckedIds] = useState<number[]>([])
-  const [expandedIds, setExpandedIds] = useState<number[]>([])
-  const [error, setError] = useState('')
-  const expandedInitializedRef = useRef(false)
+function collectAllIds(nodes: MenuTreeNode[]): number[] {
+  return nodes.flatMap((n) => [
+    n.id,
+    ...(n.children ? collectAllIds(n.children) : []),
+  ]);
+}
 
-  const { data: menuTree, isLoading: menuLoading } = useMenuTree()
-  const { data: roleDetail, isLoading: roleLoading } = useRole(role?.id || 0)
-  const updateRoleMenus = useUpdateRoleMenus()
+function getDescendantIds(node: MenuTreeNode): number[] {
+  return [node.id, ...(node.children?.flatMap(getDescendantIds) ?? [])];
+}
 
-  const allMenuIds = useMemo(() => {
-    const ids: number[] = []
-    const collect = (nodes: MenuTreeNode[]) => {
-      for (const node of nodes) {
-        ids.push(node.id)
-        if (node.children) collect(node.children)
+// WHY: 构建子→父映射，勾选时自动选中所有祖先节点
+function buildParentMap(nodes: MenuTreeNode[]): Map<number, number> {
+  const map = new Map<number, number>();
+  const walk = (list: MenuTreeNode[]) => {
+    for (const n of list) {
+      if (n.children) {
+        for (const c of n.children) map.set(c.id, n.id);
+        walk(n.children);
       }
     }
-    if (menuTree) collect(menuTree)
-    return ids
-  }, [menuTree])
+  };
+  walk(nodes);
+  return map;
+}
 
-  // 构建父节点映射表
-  const parentMap = useMemo(() => {
-    const map = new Map<number, number>()
-    const buildMap = (nodes: MenuTreeNode[]) => {
-      for (const node of nodes) {
-        if (node.children) {
-          for (const child of node.children) {
-            map.set(child.id, node.id)
-          }
-          buildMap(node.children)
-        }
-      }
-    }
-    if (menuTree) buildMap(menuTree)
-    return map
-  }, [menuTree])
+function getAncestorIds(id: number, parentMap: Map<number, number>): number[] {
+  const ids: number[] = [];
+  let cur: number | undefined = id;
+  while (cur !== undefined) {
+    const pid = parentMap.get(cur);
+    if (pid !== undefined) {
+      ids.push(pid);
+      cur = pid;
+    } else cur = undefined;
+  }
+  return ids;
+}
+
+export function RoleMenuDialog({
+  open,
+  role,
+  onClose,
+  onSuccess,
+}: RoleMenuDialogProps) {
+  const [checkedIds, setCheckedIds] = useState<number[]>([]);
+  const [expandedIds, setExpandedIds] = useState<number[]>([]);
+  const [error, setError] = useState("");
+  const expandedInitRef = useRef(false);
+
+  const { data: menuTree, isLoading: menuLoading } = useMenuTree();
+  const { data: roleDetail, isLoading: roleLoading } = useRole(role?.id || 0);
+  const updateRoleMenus = useUpdateRoleMenus();
+
+  const allMenuIds = useMemo(
+    () => (menuTree ? collectAllIds(menuTree) : []),
+    [menuTree],
+  );
+  const parentMap = useMemo(
+    () => (menuTree ? buildParentMap(menuTree) : new Map()),
+    [menuTree],
+  );
 
   useEffect(() => {
-    if (open && roleDetail?.menuIds) {
-      setCheckedIds(roleDetail.menuIds)
-    } else if (open) {
-      setCheckedIds([])
-    }
-    setError('')
-  }, [open, roleDetail])
+    if (open && roleDetail?.menuIds) setCheckedIds(roleDetail.menuIds);
+    else if (open) setCheckedIds([]);
+    setError("");
+  }, [open, roleDetail]);
 
   useEffect(() => {
     if (!open) {
-      expandedInitializedRef.current = false
-      return
+      expandedInitRef.current = false;
+      return;
     }
-    if (menuTree && !expandedInitializedRef.current) {
-      setExpandedIds(allMenuIds)
-      expandedInitializedRef.current = true
+    if (menuTree && !expandedInitRef.current) {
+      setExpandedIds(allMenuIds);
+      expandedInitRef.current = true;
     }
-  }, [open, menuTree, allMenuIds])
+  }, [open, menuTree, allMenuIds]);
 
   const handleSubmit = async () => {
-    if (!role) return
-    setError('')
-
+    if (!role) return;
+    setError("");
     try {
       await updateRoleMenus.mutateAsync({
         id: role.id,
         input: { menuIds: checkedIds },
-      })
-      onSuccess()
+      });
+      onSuccess();
     } catch (err) {
-      setError(err instanceof Error ? err.message : '操作失败')
+      setError(err instanceof Error ? err.message : "操作失败");
     }
-  }
+  };
 
-  const toggleExpand = (id: number) => {
-    setExpandedIds((prev) => (prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]))
-  }
+  const toggleExpand = (id: number) =>
+    setExpandedIds((p) =>
+      p.includes(id) ? p.filter((i) => i !== id) : [...p, id],
+    );
 
   const toggleCheck = (node: MenuTreeNode) => {
-    const getDescendantIds = (n: MenuTreeNode): number[] => {
-      const ids = [n.id]
-      if (n.children) {
-        for (const child of n.children) {
-          ids.push(...getDescendantIds(child))
-        }
-      }
-      return ids
-    }
+    const descIds = getDescendantIds(node);
+    const ancIds = getAncestorIds(node.id, parentMap);
+    setCheckedIds((p) =>
+      p.includes(node.id)
+        ? p.filter((id) => !descIds.includes(id))
+        : [...new Set([...p, ...descIds, ...ancIds])],
+    );
+  };
 
-    // 获取所有父节点 ID
-    const getAncestorIds = (id: number): number[] => {
-      const ids: number[] = []
-      let currentId: number | undefined = id
-      while (currentId !== undefined) {
-        const parentId = parentMap.get(currentId)
-        if (parentId !== undefined) {
-          ids.push(parentId)
-          currentId = parentId
-        } else {
-          currentId = undefined
-        }
-      }
-      return ids
-    }
+  const handleSelectAll = () =>
+    setCheckedIds(checkedIds.length === allMenuIds.length ? [] : allMenuIds);
 
-    const descendantIds = getDescendantIds(node)
-    const ancestorIds = getAncestorIds(node.id)
-    const isChecked = checkedIds.includes(node.id)
-
-    if (isChecked) {
-      // 取消勾选：移除当前节点和所有子节点
-      setCheckedIds((prev) => prev.filter((id) => !descendantIds.includes(id)))
-    } else {
-      // 勾选：添加当前节点、所有子节点和所有父节点
-      setCheckedIds((prev) => [...new Set([...prev, ...descendantIds, ...ancestorIds])])
-    }
-  }
-
-  const handleSelectAll = () => {
-    if (checkedIds.length === allMenuIds.length) {
-      setCheckedIds([])
-    } else {
-      setCheckedIds(allMenuIds)
-    }
-  }
-
-  const isLoading = menuLoading || roleLoading
-  const isPending = updateRoleMenus.isPending
+  const isLoading = menuLoading || roleLoading;
+  const isPending = updateRoleMenus.isPending;
 
   return (
-    <Modal isOpen={open} onOpenChange={(isOpen) => !isOpen && onClose()}>
-      <Modal.Backdrop>
-        <Modal.Container>
-          <Modal.Dialog className="sm:max-w-lg">
-            <Modal.CloseTrigger />
-            <Modal.Header>
-              <Modal.Heading>分配权限 - {role?.roleName}</Modal.Heading>
-            </Modal.Header>
-            <Modal.Body className="p-6">
-              {error && (
-                <Surface className="mb-4 rounded-xl border border-danger-soft-hover bg-danger-soft p-3">
-                  <p className="text-sm text-danger">{error}</p>
-                </Surface>
-              )}
+    <Modal
+      opened={open}
+      onClose={onClose}
+      title={`分配权限 - ${role?.roleName}`}
+      size="lg"
+      centered
+    >
+      <Stack gap="md">
+        {error && <Alert color="red">{error}</Alert>}
 
-              {isLoading ? (
-                <div className="flex items-center justify-center py-8">
-                  <Spinner size="lg" />
-                </div>
-              ) : (
-                <>
-                  <Surface className="flex items-center gap-3 rounded-xl p-3">
-                    <Checkbox
-                      isSelected={checkedIds.length === allMenuIds.length && allMenuIds.length > 0}
-                      onChange={handleSelectAll}
-                    >
-                      <Checkbox.Control>
-                        <Checkbox.Indicator />
-                      </Checkbox.Control>
-                    </Checkbox>
-                    <span className="text-sm font-medium">全选/取消全选</span>
-                    <span className="text-sm text-muted">
-                      (已选 {checkedIds.length}/{allMenuIds.length})
-                    </span>
-                  </Surface>
+        {isLoading ? (
+          <Group justify="center" py="xl">
+            <Loader />
+          </Group>
+        ) : (
+          <>
+            <Paper withBorder p="xs" radius="md">
+              <Group>
+                <Checkbox
+                  label="全选/取消全选"
+                  size="xs"
+                  checked={
+                    checkedIds.length === allMenuIds.length &&
+                    allMenuIds.length > 0
+                  }
+                  onChange={handleSelectAll}
+                />
+                <Text size="xs" c="dimmed">
+                  (已选 {checkedIds.length}/{allMenuIds.length})
+                </Text>
+              </Group>
+            </Paper>
+            <Paper withBorder radius="md" p="xs">
+              <ScrollArea.Autosize mah={320}>
+                {menuTree?.map((node: MenuTreeNode) => (
+                  <MenuTreeItem
+                    key={node.id}
+                    node={node}
+                    checkedIds={checkedIds}
+                    expandedIds={expandedIds}
+                    onToggleCheck={toggleCheck}
+                    onToggleExpand={toggleExpand}
+                    level={0}
+                  />
+                ))}
+              </ScrollArea.Autosize>
+            </Paper>
+          </>
+        )}
 
-                  <Surface className="max-h-80 overflow-y-auto rounded-xl p-2">
-                    {menuTree?.map((node: MenuTreeNode) => (
-                      <MenuTreeItem
-                        key={node.id}
-                        node={node}
-                        checkedIds={checkedIds}
-                        expandedIds={expandedIds}
-                        onToggleCheck={toggleCheck}
-                        onToggleExpand={toggleExpand}
-                        level={0}
-                      />
-                    ))}
-                  </Surface>
-                </>
-              )}
-            </Modal.Body>
-            <Modal.Footer>
-              <Button variant="secondary" onPress={onClose} isDisabled={isPending}>
-                取消
-              </Button>
-              <Button onPress={handleSubmit} isDisabled={isPending}>
-                {isPending ? '提交中...' : '确定'}
-              </Button>
-            </Modal.Footer>
-          </Modal.Dialog>
-        </Modal.Container>
-      </Modal.Backdrop>
+        <Group justify="flex-end" mt="md">
+          <Button variant="default" onClick={onClose} disabled={isPending}>
+            取消
+          </Button>
+          <Button onClick={handleSubmit} loading={isPending}>
+            确定
+          </Button>
+        </Group>
+      </Stack>
     </Modal>
-  )
+  );
 }

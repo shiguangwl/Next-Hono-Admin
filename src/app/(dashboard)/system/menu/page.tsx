@@ -1,23 +1,22 @@
 "use client";
 
-/**
- * 菜单管理页面
- * @description 菜单列表、创建、编辑、删除
- */
+import {
+  Button,
+  Card,
+  Center,
+  Group,
+  Loader,
+  Table,
+  Text,
+} from "@mantine/core";
+import { ChevronDown, ChevronUp, Plus, RefreshCw } from "lucide-react";
+import { useMemo, useState } from "react";
+import { toast } from "sonner";
 
 import { PermissionGuard } from "@/components/permission-guard";
 import { ConfirmDialog } from "@/components/ui/form-dialog";
 import { PageContainer, PageHeader } from "@/components/ui/page-header";
 import { useDeleteMenu, useMenuTree } from "@/hooks/queries";
-import {
-  ArrowsRotateRight,
-  ChevronDown,
-  ChevronUp,
-  Plus,
-} from "@gravity-ui/icons";
-import { Button, Card, Spinner } from "@heroui/react";
-import { useMemo, useState } from "react";
-import { toast } from "sonner";
 import { MenuFormDialog } from "./menu-form-dialog";
 import { type MenuTreeNode, MenuTreeRow } from "./menu-tree-row";
 
@@ -68,7 +67,7 @@ export default function MenuPage() {
 
   const toggleExpand = (id: number) => {
     setExpandedIds((prev) =>
-      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id]
+      prev.includes(id) ? prev.filter((i) => i !== id) : [...prev, id],
     );
   };
 
@@ -77,82 +76,86 @@ export default function MenuPage() {
 
   return (
     <PageContainer>
-      {/* 页面标题 */}
       <PageHeader
         title="菜单管理"
         breadcrumbs={[{ label: "系统管理" }, { label: "菜单管理" }]}
         actions={
-          <div className="flex items-center gap-2">
-            <Button variant="ghost" size="sm" onPress={expandAll}>
-              <ChevronDown className="size-4" />
+          <Group gap="xs">
+            <Button
+              variant="subtle"
+              size="xs"
+              leftSection={<ChevronDown size={14} />}
+              onClick={expandAll}
+            >
               展开全部
             </Button>
-            <Button variant="ghost" size="sm" onPress={collapseAll}>
-              <ChevronUp className="size-4" />
+            <Button
+              variant="subtle"
+              size="xs"
+              leftSection={<ChevronUp size={14} />}
+              onClick={collapseAll}
+            >
               折叠全部
             </Button>
-            <Button variant="ghost" size="sm" onPress={() => refetch()}>
-              <ArrowsRotateRight className="size-4" />
+            <Button
+              variant="subtle"
+              size="xs"
+              leftSection={<RefreshCw size={14} />}
+              onClick={() => refetch()}
+            >
               刷新
             </Button>
             <PermissionGuard permission="system:menu:create">
-              <Button onPress={() => handleCreate()}>
-                <Plus className="size-4" />
+              <Button
+                leftSection={<Plus size={14} />}
+                onClick={() => handleCreate()}
+              >
                 新增菜单
               </Button>
             </PermissionGuard>
-          </div>
+          </Group>
         }
       />
 
-      {/* 表格 */}
-      <Card>
-        <div className="overflow-x-auto">
-          <table className="w-full">
-            <thead>
-              <tr className="border-b border-separator bg-default/50">
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  菜单名称
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  类型
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  图标
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  权限标识
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  路径
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  排序
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  状态
-                </th>
-                <th className="px-4 py-3 text-left text-sm font-medium">
-                  操作
-                </th>
-              </tr>
-            </thead>
-            <tbody>
+      <Card withBorder padding={0}>
+        <Table.ScrollContainer minWidth={800}>
+          <Table>
+            <Table.Thead>
+              <Table.Tr>
+                <Table.Th>菜单名称</Table.Th>
+                <Table.Th>类型</Table.Th>
+                <Table.Th>图标</Table.Th>
+                <Table.Th>权限标识</Table.Th>
+                <Table.Th>路径</Table.Th>
+                <Table.Th>排序</Table.Th>
+                <Table.Th>状态</Table.Th>
+                <Table.Th>操作</Table.Th>
+              </Table.Tr>
+            </Table.Thead>
+            <Table.Tbody>
               {isLoading ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
-                    <div className="flex items-center justify-center gap-2">
-                      <Spinner size="sm" />
-                      <span className="text-sm text-muted">加载中...</span>
-                    </div>
-                  </td>
-                </tr>
+                <Table.Tr>
+                  <Table.Td colSpan={8}>
+                    <Center py="xl">
+                      <Group gap="xs">
+                        <Loader size="sm" />
+                        <Text size="sm" c="dimmed">
+                          加载中...
+                        </Text>
+                      </Group>
+                    </Center>
+                  </Table.Td>
+                </Table.Tr>
               ) : !menuTree?.length ? (
-                <tr>
-                  <td colSpan={8} className="px-4 py-12 text-center">
-                    <span className="text-sm text-muted">暂无菜单数据</span>
-                  </td>
-                </tr>
+                <Table.Tr>
+                  <Table.Td colSpan={8}>
+                    <Center py="xl">
+                      <Text size="sm" c="dimmed">
+                        暂无菜单数据
+                      </Text>
+                    </Center>
+                  </Table.Td>
+                </Table.Tr>
               ) : (
                 menuTree.map((menu: MenuTreeNode) => (
                   <MenuTreeRow
@@ -167,12 +170,11 @@ export default function MenuPage() {
                   />
                 ))
               )}
-            </tbody>
-          </table>
-        </div>
+            </Table.Tbody>
+          </Table>
+        </Table.ScrollContainer>
       </Card>
 
-      {/* 表单对话框 */}
       <MenuFormDialog
         open={dialogOpen}
         menu={editingMenu}
@@ -184,7 +186,6 @@ export default function MenuPage() {
         }}
       />
 
-      {/* 删除确认对话框 */}
       <ConfirmDialog
         title="删除菜单"
         content={`确定要删除菜单 "${deleteTarget?.menuName}" 吗？如果有子菜单，将一并删除。`}

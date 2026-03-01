@@ -1,9 +1,4 @@
-/**
- * 配置 React Query Hooks
- */
-
 import { useMutation, useQueryClient } from '@tanstack/react-query'
-import type { ClientResponse } from 'hono/client'
 import { getApiClient, unwrapApiData } from '@/lib/client'
 import type {
   Config,
@@ -13,24 +8,8 @@ import type {
 } from '@/server/routes/configs/dtos'
 import { createResource } from './core'
 
-/**
- * 配置 API Client 类型
- */
-type ConfigsClient = {
-  $get: (args: { query: Record<string, string> }) => Promise<ClientResponse<unknown>>
-  $post: (args: { json: unknown }) => Promise<ClientResponse<unknown>>
-  ':id': {
-    $get: (args: { param: { id: string } }) => Promise<ClientResponse<unknown>>
-    $put: (args: { param: { id: string }; json: unknown }) => Promise<ClientResponse<unknown>>
-    $delete: (args: { param: { id: string } }) => Promise<ClientResponse<unknown>>
-  }
-}
+const getClient = () => getApiClient().configs
 
-const getClient = () => (getApiClient() as unknown as { configs: ConfigsClient }).configs
-
-/**
- * 标准 CRUD Hooks
- */
 const configResource = createResource<
   PaginatedConfig,
   Config,
@@ -65,9 +44,6 @@ export const useCreateConfig = configResource.useCreate
 export const useUpdateConfig = configResource.useUpdate
 export const useDeleteConfig = configResource.useDelete
 
-/**
- * 更新配置值（简化版）
- */
 export function useUpdateConfigValue() {
   const queryClient = useQueryClient()
 

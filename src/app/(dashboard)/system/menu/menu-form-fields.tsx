@@ -1,22 +1,17 @@
 "use client";
 
-/**
- * 菜单表单字段组件
- * @description 菜单表单的各个字段组件
- */
-
 import { DynamicIcon } from "@/components/dynamic-icon";
 import { IconPicker } from "@/components/icon-picker";
 import {
   Button,
-  Input,
-  Label,
-  ListBox,
+  Group,
+  NumberInput,
   Select,
-  Surface,
-  TextArea,
-  TextField,
-} from "@heroui/react";
+  SimpleGrid,
+  Text,
+  Textarea,
+  TextInput,
+} from "@mantine/core";
 import { useState } from "react";
 
 export type MenuFormData = {
@@ -41,6 +36,32 @@ interface FormFieldProps {
   parentMenuName: string;
 }
 
+const menuTypeOptions = [
+  { value: "D", label: "目录" },
+  { value: "M", label: "菜单" },
+  { value: "B", label: "按钮" },
+];
+
+const statusOptions = [
+  { value: "1", label: "正常" },
+  { value: "0", label: "禁用" },
+];
+
+const visibleOptions = [
+  { value: "1", label: "显示" },
+  { value: "0", label: "隐藏" },
+];
+
+const yesNoOptions = [
+  { value: "0", label: "否" },
+  { value: "1", label: "是" },
+];
+
+const cacheOptions = [
+  { value: "1", label: "是" },
+  { value: "0", label: "否" },
+];
+
 export function MenuFormFields({
   formData,
   onChange,
@@ -48,263 +69,165 @@ export function MenuFormFields({
 }: FormFieldProps) {
   const [showIconPicker, setShowIconPicker] = useState(false);
 
+  const handleTypeChange = (val: string | null) => {
+    if (!val) return;
+    const newType = val as "D" | "M" | "B";
+    onChange({
+      ...formData,
+      menuType: newType,
+      path: newType === "D" || newType === "B" ? "" : formData.path,
+      component: newType === "B" ? "" : formData.component,
+    });
+  };
+
   return (
-    <div className="grid gap-4 sm:grid-cols-2">
-      {/* 上级菜单 */}
-      <div className="sm:col-span-2">
-        <TextField isDisabled value={parentMenuName}>
-          <Label>上级菜单</Label>
-          <Input />
-        </TextField>
-      </div>
+    <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
+      <TextInput
+        label="上级菜单"
+        value={parentMenuName}
+        disabled
+        style={{ gridColumn: "1 / -1" }}
+      />
 
-      {/* 菜单类型 */}
       <Select
-        selectedKey={formData.menuType}
-        onSelectionChange={(key) => {
-          const newType = key as "D" | "M" | "B";
-          onChange({
-            ...formData,
-            menuType: newType,
-            // 切换到目录或按钮类型时自动清空路径
-            path: newType === "D" || newType === "B" ? "" : formData.path,
-            // 切换到按钮类型时自动清空组件路径
-            component: newType === "B" ? "" : formData.component,
-          });
-        }}
-      >
-        <Label>
-          菜单类型 <span className="text-danger">*</span>
-        </Label>
-        <Select.Trigger>
-          <Select.Value />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            <ListBox.Item id="D" textValue="目录">
-              目录
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-            <ListBox.Item id="M" textValue="菜单">
-              菜单
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-            <ListBox.Item id="B" textValue="按钮">
-              按钮
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        label="菜单类型"
+        required
+        data={menuTypeOptions}
+        value={formData.menuType}
+        onChange={handleTypeChange}
+      />
 
-      {/* 菜单名称 */}
-      <TextField
-        isRequired
+      <TextInput
+        label="菜单名称"
+        required
+        placeholder="请输入菜单名称"
         value={formData.menuName}
-        onChange={(v) => onChange({ ...formData, menuName: v })}
-      >
-        <Label>菜单名称</Label>
-        <Input placeholder="请输入菜单名称" />
-      </TextField>
+        onChange={(e) =>
+          onChange({ ...formData, menuName: e.currentTarget.value })
+        }
+      />
 
-      {/* 权限标识 */}
-      <TextField
+      <TextInput
+        label="权限标识"
+        placeholder="如：system:admin:list"
         value={formData.permission}
-        onChange={(v) => onChange({ ...formData, permission: v })}
-      >
-        <Label>权限标识</Label>
-        <Input placeholder="如：system:admin:list" />
-      </TextField>
+        onChange={(e) =>
+          onChange({ ...formData, permission: e.currentTarget.value })
+        }
+      />
 
-      {/* 排序 */}
-      <TextField
-        type="number"
-        value={String(formData.sort)}
-        onChange={(v) => onChange({ ...formData, sort: Number(v) })}
-      >
-        <Label>排序</Label>
-        <Input placeholder="请输入排序值" />
-      </TextField>
+      <NumberInput
+        label="排序"
+        placeholder="请输入排序值"
+        value={formData.sort}
+        onChange={(val) => onChange({ ...formData, sort: Number(val) || 0 })}
+      />
 
-      {/* 路由路径 - 仅菜单类型可编辑，目录类型禁用 */}
       {formData.menuType !== "B" && (
-        <TextField
+        <TextInput
+          label="路由路径"
+          placeholder={
+            formData.menuType === "D"
+              ? "目录类型无需设置路径"
+              : "如：/system/admin"
+          }
           value={formData.path}
-          onChange={(v) => onChange({ ...formData, path: v })}
-          isDisabled={formData.menuType === "D"}
-        >
-          <Label>路由路径</Label>
-          <Input
-            placeholder={
-              formData.menuType === "D"
-                ? "目录类型无需设置路径"
-                : "如：/system/admin"
-            }
-          />
-          {formData.menuType === "D" && (
-            <p className="mt-1 text-xs text-muted">
-              目录仅用于菜单分组，无需配置路由路径
-            </p>
-          )}
-        </TextField>
+          disabled={formData.menuType === "D"}
+          description={
+            formData.menuType === "D"
+              ? "目录仅用于菜单分组，无需配置路由路径"
+              : undefined
+          }
+          onChange={(e) =>
+            onChange({ ...formData, path: e.currentTarget.value })
+          }
+        />
       )}
 
-      {/* 组件路径 - 仅菜单显示 */}
       {formData.menuType === "M" && (
-        <TextField
+        <TextInput
+          label="组件路径"
+          placeholder="如：system/admin/index"
           value={formData.component}
-          onChange={(v) => onChange({ ...formData, component: v })}
-        >
-          <Label>组件路径</Label>
-          <Input placeholder="如：system/admin/index" />
-        </TextField>
+          onChange={(e) =>
+            onChange({ ...formData, component: e.currentTarget.value })
+          }
+        />
       )}
 
-      {/* 图标 - 仅目录和菜单显示 */}
       {formData.menuType !== "B" && (
         <div>
-          <Label className="mb-2 block">图标</Label>
-          <Surface className="flex items-center gap-2 rounded-xl p-2">
-            <div className="flex flex-1 items-center gap-2 px-2">
-              <DynamicIcon name={formData.icon} className="size-5" />
-              <span className="text-sm text-muted">
-                {formData.icon || "未选择"}
-              </span>
-            </div>
+          <Text size="sm" fw={500} mb={4}>
+            图标
+          </Text>
+          <Group
+            gap="sm"
+            p="xs"
+            style={{
+              border: "1px solid var(--mantine-color-gray-3)",
+              borderRadius: "var(--mantine-radius-sm)",
+            }}
+          >
+            <DynamicIcon name={formData.icon} size={18} />
+            <Text size="sm" c="dimmed" style={{ flex: 1 }}>
+              {formData.icon || "未选择"}
+            </Text>
             <Button
-              variant="secondary"
-              size="sm"
-              onPress={() => setShowIconPicker(true)}
+              variant="light"
+              size="xs"
+              onClick={() => setShowIconPicker(true)}
             >
               选择
             </Button>
-          </Surface>
+          </Group>
         </div>
       )}
 
-      {/* 状态 */}
       <Select
-        selectedKey={String(formData.status)}
-        onSelectionChange={(key) =>
-          onChange({ ...formData, status: Number(key) })
-        }
-      >
-        <Label>状态</Label>
-        <Select.Trigger>
-          <Select.Value />
-          <Select.Indicator />
-        </Select.Trigger>
-        <Select.Popover>
-          <ListBox>
-            <ListBox.Item id="1" textValue="正常">
-              正常
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-            <ListBox.Item id="0" textValue="禁用">
-              禁用
-              <ListBox.ItemIndicator />
-            </ListBox.Item>
-          </ListBox>
-        </Select.Popover>
-      </Select>
+        label="状态"
+        data={statusOptions}
+        value={String(formData.status)}
+        onChange={(v) => onChange({ ...formData, status: Number(v) })}
+      />
 
-      {/* 显示状态 - 仅目录和菜单显示 */}
       {formData.menuType !== "B" && (
         <Select
-          selectedKey={String(formData.visible)}
-          onSelectionChange={(key) =>
-            onChange({ ...formData, visible: Number(key) })
-          }
-        >
-          <Label>显示状态</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item id="1" textValue="显示">
-                显示
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item id="0" textValue="隐藏">
-                隐藏
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
+          label="显示状态"
+          data={visibleOptions}
+          value={String(formData.visible)}
+          onChange={(v) => onChange({ ...formData, visible: Number(v) })}
+        />
       )}
 
-      {/* 是否外链 - 仅菜单显示 */}
       {formData.menuType === "M" && (
         <Select
-          selectedKey={String(formData.isExternal)}
-          onSelectionChange={(key) =>
-            onChange({ ...formData, isExternal: Number(key) })
-          }
-        >
-          <Label>是否外链</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item id="0" textValue="否">
-                否
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item id="1" textValue="是">
-                是
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
+          label="是否外链"
+          data={yesNoOptions}
+          value={String(formData.isExternal)}
+          onChange={(v) => onChange({ ...formData, isExternal: Number(v) })}
+        />
       )}
 
-      {/* 是否缓存 - 仅菜单显示 */}
       {formData.menuType === "M" && (
         <Select
-          selectedKey={String(formData.isCache)}
-          onSelectionChange={(key) =>
-            onChange({ ...formData, isCache: Number(key) })
-          }
-        >
-          <Label>是否缓存</Label>
-          <Select.Trigger>
-            <Select.Value />
-            <Select.Indicator />
-          </Select.Trigger>
-          <Select.Popover>
-            <ListBox>
-              <ListBox.Item id="1" textValue="是">
-                是
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-              <ListBox.Item id="0" textValue="否">
-                否
-                <ListBox.ItemIndicator />
-              </ListBox.Item>
-            </ListBox>
-          </Select.Popover>
-        </Select>
+          label="是否缓存"
+          data={cacheOptions}
+          value={String(formData.isCache)}
+          onChange={(v) => onChange({ ...formData, isCache: Number(v) })}
+        />
       )}
 
-      {/* 备注 */}
-      <div className="sm:col-span-2">
-        <TextField
-          value={formData.remark}
-          onChange={(v) => onChange({ ...formData, remark: v })}
-        >
-          <Label>备注</Label>
-          <TextArea placeholder="请输入备注" rows={3} />
-        </TextField>
-      </div>
+      <Textarea
+        label="备注"
+        placeholder="请输入备注"
+        rows={3}
+        value={formData.remark}
+        onChange={(e) =>
+          onChange({ ...formData, remark: e.currentTarget.value })
+        }
+        style={{ gridColumn: "1 / -1" }}
+      />
 
-      {/* 图标选择器弹窗 */}
       {showIconPicker && (
         <IconPicker
           value={formData.icon}
@@ -312,6 +235,6 @@ export function MenuFormFields({
           onClose={() => setShowIconPicker(false)}
         />
       )}
-    </div>
+    </SimpleGrid>
   );
 }

@@ -1,43 +1,22 @@
-/**
- * 动态图标组件
- * @description 根据图标名称动态渲染 lucide-react 图标
- */
-
-import * as LucideIcons from 'lucide-react'
+import * as LucideIcons from "lucide-react";
 
 interface DynamicIconProps {
-  name?: string | null
-  className?: string
-  size?: number
+  name?: string | null;
+  size?: number;
 }
 
-export function DynamicIcon({ name, className = 'h-5 w-5', size }: DynamicIconProps) {
+export function DynamicIcon({ name, size = 20 }: DynamicIconProps) {
   if (!name) {
-    return (
-      <LucideIcons.HelpCircle
-        className={className}
-        style={size ? { width: size, height: size } : undefined}
-      />
-    )
+    return <LucideIcons.HelpCircle size={size} />;
   }
 
-  // 获取对应的图标组件
-  const IconComponent = LucideIcons[name as keyof typeof LucideIcons] as React.ComponentType<{
-    className?: string
-    style?: React.CSSProperties
-  }>
+  const IconComponent = LucideIcons[
+    name as keyof typeof LucideIcons
+  ] as React.ComponentType<{ size?: number }>;
 
-  // 如果图标不存在，使用默认图标
   if (!IconComponent) {
-    return (
-      <LucideIcons.HelpCircle
-        className={className}
-        style={size ? { width: size, height: size } : undefined}
-      />
-    )
+    return <LucideIcons.HelpCircle size={size} />;
   }
 
-  return (
-    <IconComponent className={className} style={size ? { width: size, height: size } : undefined} />
-  )
+  return <IconComponent size={size} />;
 }

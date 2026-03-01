@@ -1,37 +1,31 @@
-'use client'
+"use client";
 
-/**
- * 菜单树节点组件
- * @description 用于角色权限分配的菜单树节点
- */
-
-import { ChevronRight } from '@gravity-ui/icons'
-import { Checkbox, Chip } from '@heroui/react'
-import { cn } from '@/lib/utils'
+import { Badge, Checkbox, Group, UnstyledButton } from "@mantine/core";
+import { ChevronRight } from "lucide-react";
 
 export type MenuTreeNode = {
-  id: number
-  parentId: number
-  menuType: 'D' | 'M' | 'B'
-  menuName: string
-  permission: string | null
-  children?: MenuTreeNode[]
-}
+  id: number;
+  parentId: number;
+  menuType: "D" | "M" | "B";
+  menuName: string;
+  permission: string | null;
+  children?: MenuTreeNode[];
+};
 
 interface MenuTreeItemProps {
-  node: MenuTreeNode
-  checkedIds: number[]
-  expandedIds: number[]
-  onToggleCheck: (node: MenuTreeNode) => void
-  onToggleExpand: (id: number) => void
-  level: number
+  node: MenuTreeNode;
+  checkedIds: number[];
+  expandedIds: number[];
+  onToggleCheck: (node: MenuTreeNode) => void;
+  onToggleExpand: (id: number) => void;
+  level: number;
 }
 
 const typeConfig = {
-  D: { label: '目录', color: 'default' as const },
-  M: { label: '菜单', color: 'accent' as const },
-  B: { label: '按钮', color: 'warning' as const },
-}
+  D: { label: "目录", color: "gray" as const },
+  M: { label: "菜单", color: "blue" as const },
+  B: { label: "按钮", color: "orange" as const },
+};
 
 export function MenuTreeItem({
   node,
@@ -41,60 +35,76 @@ export function MenuTreeItem({
   onToggleExpand,
   level,
 }: MenuTreeItemProps) {
-  const hasChildren = node.children && node.children.length > 0
-  const isExpanded = expandedIds.includes(node.id)
-  const isChecked = checkedIds.includes(node.id)
-  const config = typeConfig[node.menuType]
+  const hasChildren = node.children && node.children.length > 0;
+  const isExpanded = expandedIds.includes(node.id);
+  const isChecked = checkedIds.includes(node.id);
+  const config = typeConfig[node.menuType];
 
   return (
     <div>
-      <div
-        className="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-colors hover:bg-default/50"
-        style={{ paddingLeft: `${level * 20 + 8}px` }}
+      <Group
+        gap="xs"
+        wrap="nowrap"
+        py={4}
+        px="xs"
+        style={{
+          paddingLeft: level * 20 + 8,
+          borderRadius: "var(--mantine-radius-sm)",
+          cursor: "default",
+          "&:hover": { backgroundColor: "var(--mantine-color-gray-0)" },
+        }}
       >
         {hasChildren ? (
-          <button
-            type="button"
+          <UnstyledButton
             onClick={() => onToggleExpand(node.id)}
-            className="flex size-5 items-center justify-center rounded transition-colors hover:bg-default"
-            aria-label={isExpanded ? '收起' : '展开'}
+            style={{
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              width: 20,
+              height: 20,
+            }}
           >
             <ChevronRight
-              className={cn('size-4 transition-transform', isExpanded && 'rotate-90')}
+              size={14}
+              style={{
+                transition: "transform 150ms",
+                transform: isExpanded ? "rotate(90deg)" : "rotate(0deg)",
+              }}
             />
-          </button>
+          </UnstyledButton>
         ) : (
-          <span className="w-5" />
+          <span style={{ width: 20 }} />
         )}
 
-        <Checkbox isSelected={isChecked} onChange={() => onToggleCheck(node)}>
-          <Checkbox.Control>
-            <Checkbox.Indicator />
-          </Checkbox.Control>
-        </Checkbox>
+        <Checkbox
+          checked={isChecked}
+          onChange={() => onToggleCheck(node)}
+          size="xs"
+        />
 
-        <span className="flex-1 text-sm">{node.menuName}</span>
+        <span style={{ flex: 1, fontSize: "var(--mantine-font-size-sm)" }}>
+          {node.menuName}
+        </span>
 
-        <Chip size="sm" color={config.color} variant="soft">
+        <Badge size="xs" variant="light" color={config.color}>
           {config.label}
-        </Chip>
-      </div>
+        </Badge>
+      </Group>
 
-      {hasChildren && isExpanded && (
-        <div>
-          {node.children!.map((child) => (
-            <MenuTreeItem
-              key={child.id}
-              node={child}
-              checkedIds={checkedIds}
-              expandedIds={expandedIds}
-              onToggleCheck={onToggleCheck}
-              onToggleExpand={onToggleExpand}
-              level={level + 1}
-            />
-          ))}
-        </div>
-      )}
+      {hasChildren &&
+        isExpanded &&
+        node.children!.map((child) => (
+          <MenuTreeItem
+            key={child.id}
+            node={child}
+            checkedIds={checkedIds}
+            expandedIds={expandedIds}
+            onToggleCheck={onToggleCheck}
+            onToggleExpand={onToggleExpand}
+            level={level + 1}
+          />
+        ))}
     </div>
-  )
+  );
 }
