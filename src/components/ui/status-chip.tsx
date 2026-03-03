@@ -43,22 +43,3 @@ export function EnableStatusChip({
     </StatusChip>
   )
 }
-
-interface VisibleStatusChipProps {
-  visible: number | boolean
-  visibleText?: string
-  hiddenText?: string
-}
-
-export function VisibleStatusChip({
-  visible,
-  visibleText = '显示',
-  hiddenText = '隐藏',
-}: VisibleStatusChipProps) {
-  const isVisible = visible === 1 || visible === true
-  return (
-    <StatusChip status={isVisible ? 'success' : 'default'}>
-      {isVisible ? visibleText : hiddenText}
-    </StatusChip>
-  )
-}

@@ -45,7 +45,8 @@ export function buildMenuTree(menus: MenuTreeNode[]): MenuTreeNode[] {
 
   // 第二遍：建立父子关系
   for (const menu of menus) {
-    const node = menuMap.get(menu.id)!
+    const node = menuMap.get(menu.id)
+    if (!node) continue
     if (menu.parentId === 0) {
       roots.push(node)
     } else {

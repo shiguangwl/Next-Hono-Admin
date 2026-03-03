@@ -1,7 +1,6 @@
 'use client'
 
 import {
-  Anchor,
   Button,
   Card,
   Container,
@@ -61,24 +60,11 @@ export default function HomePage() {
             NextHonoAdmin
           </Text>
         </Group>
-        <Group gap="sm">
-          <Button component={Link} href="/login" variant="default">
-            登录
-          </Button>
-          <Button
-            component={Link}
-            href="/dashboard"
-            variant="gradient"
-            gradient={{ from: 'violet', to: 'indigo' }}
-          >
-            控制台
-          </Button>
-        </Group>
       </Group>
 
       <Container size="lg" py={80} flex={1}>
         <Stack align="center" gap={48}>
-          <Stack align="center" gap="md" maw={640}>
+          <Stack align="center" gap="md" maw={630}>
             <Title order={1} ta="center" fz={{ base: 32, sm: 48 }}>
               打造现代化的{' '}
               <Text
@@ -105,7 +91,7 @@ export default function HomePage() {
               </Button>
               <Button
                 component="a"
-                href="https://github.com"
+                href="https://github.com/shiguangwl/Next-Hono-Admin"
                 target="_blank"
                 rel="noopener noreferrer"
                 size="lg"
@@ -149,42 +135,10 @@ export default function HomePage() {
                 已经为你准备好了所有基础架构。专注于核心业务逻辑，而不必担心权限管理、数据库配置和
                 API 设计。
               </Text>
-              <Button component={Link} href="/dashboard" size="lg">
-                克隆项目
-              </Button>
             </Stack>
           </Card>
         </Stack>
       </Container>
-
-      <Group
-        component="footer"
-        justify="space-between"
-        py="md"
-        wrap="wrap"
-        style={{ borderTop: '1px solid var(--mantine-color-default-border)' }}
-      >
-        <Group gap="xs">
-          <Rocket size={16} />
-          <Text fw={600} size="sm">
-            NextHonoAdmin
-          </Text>
-        </Group>
-        <Group gap="lg">
-          <Anchor size="sm" c="dimmed">
-            使用协议
-          </Anchor>
-          <Anchor size="sm" c="dimmed">
-            隐私政策
-          </Anchor>
-          <Anchor size="sm" c="dimmed">
-            问题反馈
-          </Anchor>
-        </Group>
-        <Text size="xs" c="dimmed">
-          © 2026 NextHonoAdmin. All rights reserved.
-        </Text>
-      </Group>
     </Stack>
   )
 }

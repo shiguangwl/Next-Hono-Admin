@@ -132,7 +132,7 @@ export function MenuTreeRow({
       </Table.Tr>
       {hasChildren &&
         isExpanded &&
-        menu.children!.map((child) => (
+        menu.children?.map((child) => (
           <MenuTreeRow
             key={child.id}
             menu={child}

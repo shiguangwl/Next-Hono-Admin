@@ -67,7 +67,7 @@ export async function getAdminList(
     if (!roleMap.has(ar.adminId)) {
       roleMap.set(ar.adminId, [])
     }
-    roleMap.get(ar.adminId)!.push({ id: ar.roleId, roleName: ar.roleName })
+    roleMap.get(ar.adminId)?.push({ id: ar.roleId, roleName: ar.roleName })
   }
 
   const items = admins.map((admin) => ({

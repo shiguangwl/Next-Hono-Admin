@@ -82,7 +82,7 @@ export function MenuTreeItem({
 
       {hasChildren &&
         isExpanded &&
-        node.children!.map((child) => (
+        node.children?.map((child) => (
           <MenuTreeItem
             key={child.id}
             node={child}

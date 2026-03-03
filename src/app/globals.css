@@ -1,10 +1,34 @@
+@import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import "@mantine/core/styles.css";
+
+/* ===== 全局设计令牌 ===== */
+:root {
+  --app-header-bg: rgba(255, 255, 255, 0.85);
+  --app-sidebar-bg: #f8f9fc;
+  --app-sidebar-border: #e9ecef;
+  --app-main-bg: #f1f3f9;
+  --app-card-hover-shadow: 0 4px 20px rgba(0, 0, 0, 0.06);
+  --app-transition: 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+[data-mantine-color-scheme="dark"] {
+  --app-header-bg: rgba(24, 24, 32, 0.88);
+  --app-sidebar-bg: #16161e;
+  --app-sidebar-border: #2c2c3a;
+  --app-main-bg: #111118;
+  --app-card-hover-shadow: 0 4px 24px rgba(0, 0, 0, 0.3);
+}
 
 html {
   scroll-behavior: smooth;
 }
 
-/* 滚动条样式 */
+body {
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+/* ===== 滚动条 ===== */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -16,14 +40,135 @@ html {
 
 ::-webkit-scrollbar-thumb {
   border-radius: 3px;
-  background: var(--mantine-color-gray-4);
+  background: var(--mantine-color-gray-3);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-gray-5);
 }
 
 [data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb {
   background: var(--mantine-color-dark-4);
 }
 
-/* 震动动画 - 登录页错误提示 */
+[data-mantine-color-scheme="dark"] ::-webkit-scrollbar-thumb:hover {
+  background: var(--mantine-color-dark-3);
+}
+
+/* ===== AppShell 主内容区域背景 ===== */
+.mantine-AppShell-main {
+  background-color: var(--app-main-bg);
+  transition: background-color 0.3s ease;
+}
+
+/* ===== NavLink 增强 ===== */
+.mantine-NavLink-root {
+  margin-bottom: 2px;
+}
+
+.mantine-NavLink-root:hover {
+  transform: translateX(2px);
+}
+
+.mantine-NavLink-root[data-active] {
+  font-weight: 600;
+  box-shadow: inset 3px 0 0 0 var(--mantine-primary-color-filled);
+}
+
+/* ===== 表格增强 ===== */
+.mantine-Table-thead .mantine-Table-tr {
+  background-color: var(--mantine-color-gray-0);
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-thead .mantine-Table-tr {
+  background-color: var(--mantine-color-dark-7);
+}
+
+.mantine-Table-thead .mantine-Table-th {
+  font-weight: 700;
+  font-size: 0.8rem;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--mantine-color-dimmed);
+  padding-top: 12px;
+  padding-bottom: 12px;
+  border-bottom: 2px solid var(--mantine-color-gray-2);
+}
+
+[data-mantine-color-scheme="dark"] .mantine-Table-thead .mantine-Table-th {
+  border-bottom: 2px solid var(--mantine-color-dark-5);
+}
+
+.mantine-Table-tbody .mantine-Table-tr:hover {
+  background-color: var(--mantine-color-indigo-0) !important;
+}
+
+[data-mantine-color-scheme="dark"]
+  .mantine-Table-tbody
+  .mantine-Table-tr:hover {
+  background-color: rgba(99, 102, 241, 0.06) !important;
+}
+
+/* ===== Paper 卡片 hover 效果 ===== */
+.card-hover {
+  transition:
+    box-shadow var(--app-transition),
+    transform var(--app-transition);
+}
+
+.card-hover:hover {
+  box-shadow: var(--app-card-hover-shadow);
+  transform: translateY(-1px);
+}
+
+/* ===== 渐变统计卡片 ===== */
+.stat-card {
+  position: relative;
+  overflow: hidden;
+  transition:
+    box-shadow var(--app-transition),
+    transform var(--app-transition);
+}
+
+.stat-card::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  opacity: 0;
+  background: linear-gradient(
+    135deg,
+    rgba(255, 255, 255, 0.1),
+    rgba(255, 255, 255, 0)
+  );
+  transition: opacity var(--app-transition);
+}
+
+.stat-card:hover {
+  transform: translateY(-2px);
+  box-shadow: var(--app-card-hover-shadow);
+}
+
+.stat-card:hover::before {
+  opacity: 1;
+}
+
+/* ===== 页面进入动画 ===== */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-fade-in {
+  animation: fadeInUp 0.4s cubic-bezier(0.4, 0, 0.2, 1) both;
+}
+
+/* ===== 震动动画 - 登录页错误提示 ===== */
 @keyframes shake {
   0%,
   100% {
@@ -46,4 +191,56 @@ html {
 
 .animate-shake {
   animation: shake 0.5s cubic-bezier(0.36, 0.07, 0.19, 0.97);
+}
+
+/* ===== 脉冲光点动画 ===== */
+@keyframes pulse-glow {
+  0%,
+  100% {
+    opacity: 0.4;
+  }
+  50% {
+    opacity: 0.8;
+  }
+}
+
+.animate-pulse-glow {
+  animation: pulse-glow 3s ease-in-out infinite;
+}
+
+/* ===== 登录页装饰网格 ===== */
+.auth-decoration {
+  position: absolute;
+  inset: 0;
+  opacity: 0.06;
+  background-image: radial-gradient(
+    circle at 1px 1px,
+    rgba(255, 255, 255, 0.5) 1px,
+    transparent 1px
+  );
+  background-size: 40px 40px;
+  pointer-events: none;
+}
+
+/* ===== 欢迎横幅渐变 ===== */
+.welcome-banner {
+  position: relative;
+  overflow: hidden;
+  border: none;
+}
+
+.welcome-banner::after {
+  content: "";
+  position: absolute;
+  top: -50%;
+  right: -20%;
+  width: 280px;
+  height: 280px;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle,
+    rgba(255, 255, 255, 0.12),
+    transparent 70%
+  );
+  pointer-events: none;
 }

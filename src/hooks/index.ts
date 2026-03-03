@@ -6,3 +6,4 @@
 export * from './queries'
 export * from './use-auth'
 export * from './use-permission'
+export * from './use-theme'

@@ -48,7 +48,11 @@ const admins = new Hono<Env>()
   .post(
     '/',
     requirePermission('system:admin:create'),
-    auditLog({ module: '用户管理', operation: '创建', description: '创建管理员' }),
+    auditLog({
+      module: '用户管理',
+      operation: '创建',
+      description: '创建管理员',
+    }),
     zValidator('json', CreateAdminInputSchema),
     async (c) => {
       const body = c.req.valid('json')
@@ -59,7 +63,11 @@ const admins = new Hono<Env>()
   .put(
     '/:id',
     requirePermission('system:admin:update'),
-    auditLog({ module: '用户管理', operation: '更新', description: '更新管理员信息' }),
+    auditLog({
+      module: '用户管理',
+      operation: '更新',
+      description: '更新管理员信息',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', UpdateAdminInputSchema),
     async (c) => {
@@ -72,11 +80,18 @@ const admins = new Hono<Env>()
   .delete(
     '/:id',
     requirePermission('system:admin:delete'),
-    auditLog({ module: '用户管理', operation: '删除', description: '删除管理员' }),
+    auditLog({
+      module: '用户管理',
+      operation: '删除',
+      description: '删除管理员',
+    }),
     zValidator('param', IdParamSchema),
     async (c) => {
       const { id } = c.req.valid('param')
-      const currentAdmin = c.get('admin')!
+      const currentAdmin = c.get('admin')
+      if (!currentAdmin) {
+        return R.fail('UNAUTHORIZED', '未获取到管理员信息')
+      }
       await deleteAdmin(id, currentAdmin.adminId)
       return R.success('删除成功')
     }
@@ -84,7 +99,11 @@ const admins = new Hono<Env>()
   .put(
     '/:id/reset-password',
     requirePermission('system:admin:resetPwd'),
-    auditLog({ module: '用户管理', operation: '重置密码', description: '重置管理员密码' }),
+    auditLog({
+      module: '用户管理',
+      operation: '重置密码',
+      description: '重置管理员密码',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', ResetPasswordInputSchema),
     async (c) => {
@@ -97,7 +116,11 @@ const admins = new Hono<Env>()
   .put(
     '/:id/roles',
     requirePermission('system:admin:assignRole'),
-    auditLog({ module: '用户管理', operation: '分配角色', description: '更新管理员角色' }),
+    auditLog({
+      module: '用户管理',
+      operation: '分配角色',
+      description: '更新管理员角色',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', UpdateAdminRolesInputSchema),
     async (c) => {

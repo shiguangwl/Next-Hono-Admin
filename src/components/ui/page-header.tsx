@@ -61,11 +61,3 @@ export function PageHeader({ title, description, breadcrumbs = [], actions }: Pa
 export function PageContainer({ children }: { children: ReactNode }) {
   return <Stack gap="lg">{children}</Stack>
 }
-
-export function PageSection({ children }: { children: ReactNode }) {
-  return (
-    <Stack gap="md" component="section">
-      {children}
-    </Stack>
-  )
-}

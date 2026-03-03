@@ -17,14 +17,21 @@ const auth = new Hono<Env>()
       c.req.header('x-real-ip') ||
       undefined
 
-    const result = await login({ username: body.username, password: body.password, ip })
+    const result = await login({
+      username: body.username,
+      password: body.password,
+      ip,
+    })
     return R.ok(result, '登录成功')
   })
   .post('/logout', async () => {
     return R.success('登出成功')
   })
   .get('/info', requireAuth, async (c) => {
-    const adminPayload = c.get('admin')!
+    const adminPayload = c.get('admin')
+    if (!adminPayload) {
+      return R.fail('UNAUTHORIZED', '未获取到管理员信息')
+    }
     const admin = await getAdminById(adminPayload.adminId)
     const permissions = await getAdminPermissions(adminPayload.adminId)
     const menus = await getAdminMenuTree(adminPayload.adminId)

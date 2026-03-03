@@ -20,7 +20,7 @@ const roleResource = createResource<
   RoleQuery
 >({
   resourceName: 'roles',
-  getClient: getClient as any,
+  getClient: getClient as never,
   messages: {
     list: '获取角色列表失败',
     detail: '获取角色详情失败',

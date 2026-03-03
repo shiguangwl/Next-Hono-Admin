@@ -105,7 +105,19 @@ async function getRequestParams(c: {
  * 过滤敏感字段
  */
 function sanitizeBody(body: Record<string, unknown>): Record<string, unknown> {
-  const sensitiveFields = ['password', 'newPassword', 'oldPassword', 'token', 'secret']
+  const sensitiveFields = [
+    'password',
+    'newPassword',
+    'oldPassword',
+    'token',
+    'accessToken',
+    'refreshToken',
+    'secret',
+    'apiKey',
+    'authorization',
+    'creditCard',
+    'ssn',
+  ]
   const result: Record<string, unknown> = {}
 
   for (const [key, value] of Object.entries(body)) {

@@ -1,5 +1,4 @@
 import { type ClientResponse, hc } from 'hono/client'
-import { env } from '@/env'
 import type { AppType } from '@/server/types'
 
 export type HonoClient = ReturnType<typeof hc<AppType>>
@@ -24,13 +23,11 @@ export type ApiSuccessResponse<T> = {
   data: T
 }
 
-export async function unwrapApiData<T>(
-  response: Pick<ClientResponse<unknown>, 'ok' | 'json'>,
-  fallbackMessage: string
-): Promise<T> {
-  const payload = await response.json().catch(() => null)
+export async function unwrapApiData<T>(response: unknown, fallbackMessage: string): Promise<T> {
+  const res = response as Pick<ClientResponse<unknown>, 'ok' | 'json'>
+  const payload = await res.json().catch(() => null)
 
-  if (!response.ok) {
+  if (!res.ok) {
     if (isRecord(payload) && typeof payload.message === 'string' && payload.message.trim()) {
       throw new Error(payload.message)
     }

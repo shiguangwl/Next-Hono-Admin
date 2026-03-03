@@ -26,7 +26,7 @@ export interface BasePaginationQuery {
 /**
  * 资源配置
  */
-export interface ResourceConfig<TQuery extends BasePaginationQuery = BasePaginationQuery> {
+export interface ResourceConfig<_TQuery extends BasePaginationQuery = BasePaginationQuery> {
   /** 资源名称 */
   resourceName: string
   /** 默认分页大小 */

@@ -1,8 +1,7 @@
 'use client'
 
 import { Button, Group, Modal, Stack, Text } from '@mantine/core'
-import { useDisclosure } from '@mantine/hooks'
-import { type ReactNode, useCallback, useState } from 'react'
+import type { ReactNode } from 'react'
 
 interface FormDialogProps {
   title: string
@@ -91,29 +90,4 @@ export function ConfirmDialog({
       </Stack>
     </Modal>
   )
-}
-
-export function useFormDialog<T = undefined>() {
-  const [opened, { open, close }] = useDisclosure(false)
-  const [data, setData] = useState<T | undefined>(undefined)
-
-  const openWithData = useCallback(
-    (initialData?: T) => {
-      setData(initialData)
-      open()
-    },
-    [open]
-  )
-
-  const closeAndReset = useCallback(() => {
-    close()
-    setData(undefined)
-  }, [close])
-
-  return {
-    isOpen: opened,
-    data,
-    open: openWithData,
-    close: closeAndReset,
-  }
 }

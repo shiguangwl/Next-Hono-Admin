@@ -2,7 +2,7 @@ import type { MiddlewareHandler } from 'hono'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
 import { requirePermission } from '@/server/middleware/rbac'
-import type { AuditConfig, CrudMiddlewareConfig, CrudMiddlewares } from './types'
+import type { CrudMiddlewareConfig, CrudMiddlewares } from './types'
 
 /**
  * 创建 CRUD 操作的中间件数组

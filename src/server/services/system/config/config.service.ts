@@ -2,7 +2,7 @@
  * 系统配置服务
  */
 
-import { and, eq } from 'drizzle-orm'
+import { and, count, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysConfig } from '@/db/schema'
 import { ConflictError, NotFoundError } from '@/lib/errors'
@@ -191,7 +191,7 @@ export async function listConfigs(options: ConfigQuery): Promise<PaginatedResult
       .limit(pageSize)
       .offset((page - 1) * pageSize),
     db
-      .select({ count: sysConfig.id })
+      .select({ count: count() })
       .from(sysConfig)
       .where(where as never)
       .then((rows) => rows[0]),

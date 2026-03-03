@@ -9,12 +9,11 @@
 
 ## 项目简介
 
-NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，提供后台系统常见能力：认证、权限、审计、日志、CRUD、OpenAPI 文档与可复用的 Hooks/路由工厂，方便快速扩展业务模块。
+NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，提供后台系统常见能力：认证、权限、审计、日志、CRUD 与可复用的 Hooks/路由工厂，方便快速扩展业务模块。
 
 ## 功能概览
 
 - JWT 认证、RBAC 权限（菜单/按钮）
-- OpenAPI 文档与 Swagger UI
 - 请求级上下文、结构化日志、审计日志
 - CRUD 路由工厂 + React Query Hooks 工厂
 - MySQL + Drizzle ORM（类型安全 Schema）
@@ -22,8 +21,8 @@ NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，
 
 ## 技术栈
 
-- Frontend: Next.js App Router、React 19、@tanstack/react-query、Zustand、TailwindCSS 4、HeroUI 3
-- Backend: Hono、@hono/zod-openapi、Drizzle ORM、MySQL2、Zod
+- Frontend: Next.js App Router、React 19、Mantine 7、@tanstack/react-query、Zustand
+- Backend: Hono、Drizzle ORM、MySQL2、Zod
 - 工具链: Biome、pnpm、Docker
 
 ## 快速开始
@@ -84,10 +83,7 @@ pnpm dev
 - 操作日志：`/api/operation-logs`
 - 系统配置：`/api/configs`
 
-OpenAPI/Swagger：
-
-- OpenAPI JSON: `/api/doc`
-- Swagger UI: `/api/swagger`
+> 当前版本未集成 OpenAPI 自动文档生成。如需要，可通过 `@hono/zod-openapi` 扩展。
 
 ## 项目结构
 
@@ -138,16 +134,17 @@ docker compose logs -f app
 
 ## 文档索引
 
-- [01-架构设计](./docs/01-架构设计.md)
-- [02-服务端分层](./docs/02-服务端分层.md)
-- [03-数据库配置](./docs/03-数据库配置.md)
-- [04-认证与权限](./docs/04-认证与权限.md)
-- [05-客户端集成](./docs/05-客户端集成.md)
-- [06-错误处理](./docs/06-错误处理.md)
-- [07-日志系统](./docs/07-日志系统.md)
-- [08-部署指南](./docs/08-部署指南.md)
-- [09-最佳实践](./docs/09-最佳实践.md)
-- [10-前端开发规范](./docs/10-前端开发规范.md)
+- [00-AI 开发指引](./docs/00-AI开发指引.md)
+- [01-项目概览](./docs/01-项目概览.md)
+- [02-目录结构](./docs/02-目录结构.md)
+- [03-架构设计](./docs/03-架构设计.md)
+- [04-数据库设计](./docs/04-数据库设计.md)
+- [05-服务端开发](./docs/05-服务端开发.md)
+- [06-客户端开发](./docs/06-客户端开发.md)
+- [07-认证与权限](./docs/07-认证与权限.md)
+- [08-错误处理](./docs/08-错误处理.md)
+- [09-新增模块指南](./docs/09-新增模块指南.md)
+- [10-部署与运维](./docs/10-部署与运维.md)
 
 ## 开源协议
 

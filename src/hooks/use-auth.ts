@@ -5,6 +5,7 @@
 
 import { create } from 'zustand'
 import { createJSONStorage, persist } from 'zustand/middleware'
+import { useShallow } from 'zustand/react/shallow'
 import { type ClientResponse, createClient, unwrapApiData } from '@/lib/client'
 
 /**
@@ -225,21 +226,22 @@ export const useAuthStore = create<AuthStore>()(
  * @description 提供认证状态和操作方法
  */
 export function useAuth() {
-  const store = useAuthStore()
+  const store = useAuthStore(
+    useShallow((s) => ({
+      token: s.token,
+      admin: s.admin,
+      permissions: s.permissions,
+      menus: s.menus,
+      initialized: s.initialized,
+      loading: s.loading,
+      login: s.login,
+      logout: s.logout,
+      refreshAuth: s.refreshAuth,
+    }))
+  )
 
   return {
-    // 状态
-    token: store.token,
-    admin: store.admin,
-    permissions: store.permissions,
-    menus: store.menus,
+    ...store,
     isAuthenticated: !!store.token && !!store.admin,
-    initialized: store.initialized,
-    loading: store.loading,
-
-    // 操作
-    login: store.login,
-    logout: store.logout,
-    refreshAuth: store.refreshAuth,
   }
 }

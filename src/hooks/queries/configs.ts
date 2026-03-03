@@ -27,7 +27,7 @@ const configResource = createResource<
   ConfigQuery
 >({
   resourceName: 'configs',
-  getClient: getClient as any,
+  getClient: getClient as never,
   messages: {
     list: '获取配置列表失败',
     detail: '获取配置详情失败',

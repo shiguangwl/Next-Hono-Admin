@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query'
-import { getApiClient, unwrapApiData } from '@/lib/client'
+import { unwrapApiData } from '@/lib/client'
 import { createQueryKeys } from './query-keys'
 import type { BasePaginationQuery, ResourceConfig } from './types'
 
@@ -59,7 +59,7 @@ export function createResource<
         const client = getClient()
         const query = buildQueryParams(params, defaultPageSize)
         const response = await client.$get({ query })
-        return unwrapApiData<TList>(response as any, listMsg)
+        return unwrapApiData<TList>(response, listMsg)
       },
     })
   }
@@ -69,8 +69,10 @@ export function createResource<
       queryKey: keys.detail(id),
       queryFn: async () => {
         const client = getClient()
-        const response = await client[':id'].$get({ param: { id: String(id) } })
-        return unwrapApiData<TDetail>(response as any, detailMsg)
+        const response = await client[':id'].$get({
+          param: { id: String(id) },
+        })
+        return unwrapApiData<TDetail>(response, detailMsg)
       },
       enabled: id > 0,
     })
@@ -83,7 +85,7 @@ export function createResource<
       mutationFn: async (input: TCreateInput) => {
         const client = getClient()
         const response = await client.$post({ json: input })
-        return unwrapApiData<TDetail>(response as any, createMsg)
+        return unwrapApiData<TDetail>(response, createMsg)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })
@@ -101,7 +103,7 @@ export function createResource<
           param: { id: String(id) },
           json: input,
         })
-        return unwrapApiData<TDetail>(response as any, updateMsg)
+        return unwrapApiData<TDetail>(response, updateMsg)
       },
       onSuccess: (_, { id }) => {
         queryClient.invalidateQueries({ queryKey: keys.all })
@@ -116,8 +118,10 @@ export function createResource<
     return useMutation({
       mutationFn: async (id: number) => {
         const client = getClient()
-        const response = await client[':id'].$delete({ param: { id: String(id) } })
-        return unwrapApiData<null>(response as any, deleteMsg)
+        const response = await client[':id'].$delete({
+          param: { id: String(id) },
+        })
+        return unwrapApiData<null>(response, deleteMsg)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })
@@ -157,7 +161,7 @@ export function createReadonlyResource<
         const client = getClient()
         const query = buildQueryParams(params, defaultPageSize)
         const response = await client.$get({ query })
-        return unwrapApiData<TList>(response as any, listMsg)
+        return unwrapApiData<TList>(response, listMsg)
       },
     })
   }
@@ -168,8 +172,10 @@ export function createReadonlyResource<
     return useMutation({
       mutationFn: async (id: number) => {
         const client = getClient()
-        const response = await client[':id'].$delete({ param: { id: String(id) } })
-        return unwrapApiData<null>(response as any, deleteMsg)
+        const response = await client[':id'].$delete({
+          param: { id: String(id) },
+        })
+        return unwrapApiData<null>(response, deleteMsg)
       },
       onSuccess: () => {
         queryClient.invalidateQueries({ queryKey: keys.all })

@@ -9,6 +9,36 @@ import { BusinessError, ConflictError, ErrorCode, NotFoundError } from '@/lib/er
 import { buildMenuTree, toMenuVo } from './menu.utils'
 import type { CreateMenuInput, MenuQuery, MenuTreeNode, MenuVo, UpdateMenuInput } from './models'
 
+const MAX_MENU_DEPTH = 20
+
+/** 检测祖先环路：确认 targetParentId 不是 menuId 的后代 */
+async function assertNoAncestorCycle(menuId: number, targetParentId: number): Promise<void> {
+  let currentId = targetParentId
+  const visited = new Set<number>()
+
+  for (let depth = 0; depth < MAX_MENU_DEPTH; depth++) {
+    if (currentId === 0) return
+    if (currentId === menuId) {
+      throw new BusinessError(
+        '不能将菜单移动到自身的子级下，这会导致环路',
+        ErrorCode.INVALID_PARENT
+      )
+    }
+    if (visited.has(currentId)) return
+    visited.add(currentId)
+
+    const row = await db
+      .select({ parentId: sysMenu.parentId })
+      .from(sysMenu)
+      .where(eq(sysMenu.id, currentId))
+      .limit(1)
+      .then((rows) => rows[0])
+
+    if (!row) return
+    currentId = row.parentId
+  }
+}
+
 /** 获取菜单列表（扁平） */
 export async function getMenuList(options: MenuQuery = {}): Promise<MenuVo[]> {
   const { menuType, status } = options
@@ -126,7 +156,7 @@ export async function updateMenu(id: number, input: UpdateMenuInput): Promise<Me
     }
   }
 
-  // 如果更新父级，检查有效性
+  // WHY: 仅防 parentId === self 不够，需沿祖先链检测环路（A→B→C→A）
   if (input.parentId !== undefined && input.parentId !== 0) {
     if (input.parentId === id) {
       throw new BusinessError('不能将菜单设置为自己的子菜单', ErrorCode.INVALID_PARENT)
@@ -142,6 +172,9 @@ export async function updateMenu(id: number, input: UpdateMenuInput): Promise<Me
     if (!parent) {
       throw new NotFoundError('Parent Menu', input.parentId)
     }
+
+    // 检测祖先环路：确保 parentId 不是当前菜单的后代
+    await assertNoAncestorCycle(id, input.parentId)
   }
 
   await db

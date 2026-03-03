@@ -66,9 +66,13 @@ export async function login(input: LoginInput): Promise<LoginResultVo> {
     .limit(1)
     .then((rows) => rows[0])
 
+  if (!updatedAdmin) {
+    throw new BusinessError('管理员信息更新异常', ErrorCode.INTERNAL_ERROR)
+  }
+
   return {
     token,
-    admin: toAdminVo(updatedAdmin!),
+    admin: toAdminVo(updatedAdmin),
     permissions,
     menus,
   }

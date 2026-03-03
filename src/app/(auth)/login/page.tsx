@@ -5,6 +5,7 @@ import {
   Box,
   Button,
   Center,
+  Paper,
   PasswordInput,
   Stack,
   Text,
@@ -75,25 +76,26 @@ export default function LoginPage() {
   }
 
   return (
-    <Box w="100%" maw={380} mx="auto">
-      <Center hiddenFrom="lg" mb="xl">
-        <Stack align="center" gap="xs">
-          <ThemeIcon size={56} radius="lg" variant="filled">
-            <Shield size={28} />
-          </ThemeIcon>
-          <Title order={4}>后台管理系统</Title>
-        </Stack>
-      </Center>
-
-      <Stack gap="lg">
-        <Box ta={{ base: 'center', lg: 'left' }}>
-          <Title order={2} mb={4}>
-            登录账号
-          </Title>
-          <Text size="sm" c="dimmed">
-            请输入您的管理员凭据以继续
-          </Text>
-        </Box>
+    <Box w="100%" maw={420} mx="auto">
+      <Paper radius="xl" p={40} withBorder shadow="xl" style={{ backdropFilter: 'blur(10px)' }}>
+        <Center mb="xl">
+          <Stack align="center" gap="xs">
+            <ThemeIcon
+              size={56}
+              radius="lg"
+              variant="gradient"
+              gradient={{ from: 'indigo', to: 'violet' }}
+            >
+              <Shield size={28} />
+            </ThemeIcon>
+            <Title order={2} fw={800} mt="sm">
+              后台管理系统
+            </Title>
+            <Text size="sm" c="dimmed">
+              请输入您的管理员凭据以继续
+            </Text>
+          </Stack>
+        </Center>
 
         <form onSubmit={handleSubmit}>
           <Stack gap="md">
@@ -101,9 +103,11 @@ export default function LoginPage() {
               <Alert
                 icon={<AlertTriangle size={18} />}
                 color="red"
+                variant="light"
+                radius="md"
+                className="animate-shake"
                 title={error.title}
                 withCloseButton
-                closeButtonLabel="关闭"
                 onClose={() => setError(null)}
               >
                 {error.description}
@@ -113,6 +117,7 @@ export default function LoginPage() {
             <TextInput
               label="用户名"
               placeholder="请输入用户名"
+              size="md"
               required
               autoComplete="username"
               disabled={loading}
@@ -124,6 +129,7 @@ export default function LoginPage() {
             <PasswordInput
               label="密码"
               placeholder="请输入密码"
+              size="md"
               required
               autoComplete="current-password"
               disabled={loading}
@@ -132,16 +138,24 @@ export default function LoginPage() {
               error={fieldErrors.password}
             />
 
-            <Button type="submit" fullWidth loading={loading} mt="xs" size="md">
+            <Button
+              type="submit"
+              fullWidth
+              loading={loading}
+              mt="lg"
+              size="md"
+              variant="gradient"
+              gradient={{ from: 'indigo', to: 'violet' }}
+            >
               登录
             </Button>
           </Stack>
         </form>
 
-        <Text size="xs" c="dimmed" ta="center">
-          登录即表示您同意我们的服务条款和隐私政策
+        <Text size="xs" c="dimmed" ta="center" mt="xl">
+          © {new Date().getFullYear()} NextHonoAdmin. All rights reserved.
         </Text>
-      </Stack>
+      </Paper>
     </Box>
   )
 }
