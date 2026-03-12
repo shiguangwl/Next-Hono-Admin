@@ -1,103 +1,72 @@
-/**
- * CSRF 中间件
- * @description 防止跨站请求伪造攻击
- */
+import { env } from "@/env";
+import { ForbiddenError } from "@/lib/errors";
+import type { Env } from "@/server/context";
+import { createMiddleware } from "hono/factory";
 
-import { createMiddleware } from 'hono/factory'
-import { env } from '@/env'
-import { ForbiddenError } from '@/lib/errors'
-import type { Env } from '@/server/context'
+const SAFE_METHODS = ["GET", "HEAD", "OPTIONS"];
 
-/** 安全的 HTTP 方法（不需要 CSRF 验证） */
-const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
-
-/** CSRF Token Header 名称 */
-const _CSRF_HEADER = 'X-CSRF-Token'
-
-/**
- * 构建允许的 Origin 列表
- */
-function getAllowedOrigins(): string[] {
-  const origins: string[] = []
-
-  // 开发环境允许 localhost
-  if (env.NODE_ENV === 'development') {
-    origins.push(
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://127.0.0.1:3002'
-    )
+// WHY: 优先使用 CORS_ORIGINS 白名单；
+// 未配置时回退为 Origin ⇔ Host 动态匹配。
+function isOriginAllowed(origin: string, host: string): boolean {
+  if (env.CORS_ORIGINS.length > 0) {
+    return env.CORS_ORIGINS.some(
+      (allowed) => origin === allowed || origin.startsWith(`${allowed}/`),
+    );
   }
 
-  // 生产环境从平台环境变量获取
-  if (env.NODE_ENV === 'production') {
-    if (process.env.VERCEL_URL) {
-      origins.push(`https://${process.env.VERCEL_URL}`)
-    }
-    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-      origins.push(`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`)
-    }
+  // WHY: 从 Origin URL 中提取 host 部分，与请求的 Host 头对比
+  // 同源请求的 Origin host 必然等于 Host 头（含端口）
+  try {
+    const originHost = new URL(origin).host;
+    return originHost === host;
+  } catch {
+    return false;
   }
-
-  return origins
 }
 
-/**
- * CSRF 中间件
- * @description 验证非安全方法的请求是否来自可信来源
- *
- * 验证策略：
- * 1. 安全方法（GET/HEAD/OPTIONS）跳过验证
- * 2. 检查 Origin 是否在白名单中
- * 3. 若无 Origin，检查 Referer 是否在白名单中
- * 4. 若都没有，拒绝请求（防止 CSRF 攻击）
- */
+function isRefererAllowed(referer: string, host: string): boolean {
+  if (env.CORS_ORIGINS.length > 0) {
+    return env.CORS_ORIGINS.some((allowed) => referer.startsWith(allowed));
+  }
+
+  try {
+    const refererHost = new URL(referer).host;
+    return refererHost === host;
+  } catch {
+    return false;
+  }
+}
+
 export const csrfMiddleware = createMiddleware<Env>(async (c, next) => {
-  const method = c.req.method.toUpperCase()
+  const method = c.req.method.toUpperCase();
 
-  // 安全方法跳过验证
   if (SAFE_METHODS.includes(method)) {
-    return next()
+    return next();
   }
 
-  // 获取请求来源
-  const origin = c.req.header('Origin')
-  const referer = c.req.header('Referer')
-  const allowedOrigins = getAllowedOrigins()
+  const origin = c.req.header("Origin");
+  const referer = c.req.header("Referer");
+  const host = c.req.header("Host");
 
-  // 验证 Origin
+  if (!host) {
+    throw new ForbiddenError("CSRF validation failed: missing Host header");
+  }
+
   if (origin) {
-    const isAllowed = allowedOrigins.some(
-      (allowed) => origin === allowed || origin.startsWith(`${allowed}/`)
-    )
-    if (!isAllowed) {
-      throw new ForbiddenError('CSRF validation failed: invalid origin')
+    if (!isOriginAllowed(origin, host)) {
+      throw new ForbiddenError("CSRF validation failed: origin mismatch");
     }
-    return next()
+    return next();
   }
 
-  // 验证 Referer（当 Origin 不存在时）
   if (referer) {
-    const isAllowed = allowedOrigins.some((allowed) => referer.startsWith(allowed))
-    if (!isAllowed) {
-      throw new ForbiddenError('CSRF validation failed: invalid referer')
+    if (!isRefererAllowed(referer, host)) {
+      throw new ForbiddenError("CSRF validation failed: referer mismatch");
     }
-    return next()
+    return next();
   }
 
-  // 既没有 Origin 也没有 Referer，拒绝请求
-  throw new ForbiddenError('CSRF validation failed: missing origin and referer')
-})
-
-/**
- * 生成 CSRF Token
- * @description 生成一个随机的 CSRF Token
- */
-export function generateCsrfToken(): string {
-  const array = new Uint8Array(32)
-  crypto.getRandomValues(array)
-  return Array.from(array, (byte) => byte.toString(16).padStart(2, '0')).join('')
-}
+  throw new ForbiddenError(
+    "CSRF validation failed: missing origin and referer",
+  );
+});

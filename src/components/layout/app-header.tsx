@@ -98,7 +98,7 @@ export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
       <Group gap="xs">
         <Burger opened={mobileOpened} onClick={onBurgerClick} hiddenFrom="sm" size="sm" />
 
-        <Link href="/" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
+        <Link href="/dashboard" style={{ textDecoration: 'none', color: 'inherit', display: 'flex' }}>
           <Group gap="xs" visibleFrom="sm" mr="lg" style={{ cursor: 'pointer' }}>
             <ThemeIcon
               size={32}

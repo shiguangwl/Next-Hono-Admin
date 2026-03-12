@@ -2,42 +2,45 @@
  * 管理员服务
  */
 
-import { and, count, eq, inArray, like, sql } from 'drizzle-orm'
-import { db } from '@/db'
-import { sysAdmin, sysAdminRole, sysRole } from '@/db/schema'
-import { hashPassword } from '@/lib/auth'
+import { db } from "@/db";
+import { sysAdmin, sysAdminRole, sysRole } from "@/db/schema";
+import { hashPassword } from "@/lib/auth";
 import {
   BusinessError,
   ConflictError,
   ErrorCode,
   handleDatabaseError,
   NotFoundError,
-} from '@/lib/errors'
-import { SUPER_ADMIN_ID } from '@/lib/utils'
-import { invalidatePermissionCache } from '@/server/utils/permission-cache'
-import type { PaginatedResult, PaginationQuery } from '../../../utils/shared'
-import { revokeSessionsByAdminId } from '../auth'
-import { toAdminVo } from './admin.utils'
-import type { AdminVo, CreateAdminInput, UpdateAdminInput } from './models'
+} from "@/lib/errors";
+import { SUPER_ADMIN_ID } from "@/lib/utils";
+import { invalidatePermissionCache } from "@/server/utils/permission-cache";
+import { and, count, eq, inArray, like, sql } from "drizzle-orm";
+import type { PaginatedResult, PaginationQuery } from "../../../utils/shared";
+import { revokeSessionsByAdminId } from "../auth";
+import { toAdminVo } from "./admin.utils";
+import type { AdminVo, CreateAdminInput, UpdateAdminInput } from "./models";
 
 /** 获取管理员列表（分页） */
 export async function getAdminList(
-  options: PaginationQuery = {}
+  options: PaginationQuery = {},
 ): Promise<PaginatedResult<AdminVo>> {
-  const { page = 1, pageSize = 20, keyword, status } = options
-  const offset = (page - 1) * pageSize
+  const { page = 1, pageSize = 20, keyword, status } = options;
+  const offset = (page - 1) * pageSize;
 
-  const conditions = []
+  const conditions = [];
   if (keyword) {
-    conditions.push(like(sysAdmin.username, `%${keyword}%`))
+    conditions.push(like(sysAdmin.username, `%${keyword}%`));
   }
   if (status !== undefined) {
-    conditions.push(eq(sysAdmin.status, status))
+    conditions.push(eq(sysAdmin.status, status));
   }
 
-  const whereClause = conditions.length > 0 ? and(...conditions) : undefined
+  const whereClause = conditions.length > 0 ? and(...conditions) : undefined;
 
-  const [{ total }] = await db.select({ total: count() }).from(sysAdmin).where(whereClause)
+  const [{ total }] = await db
+    .select({ total: count() })
+    .from(sysAdmin)
+    .where(whereClause);
 
   const admins = await db
     .select()
@@ -45,10 +48,10 @@ export async function getAdminList(
     .where(whereClause)
     .orderBy(sql`${sysAdmin.id} DESC`)
     .limit(pageSize)
-    .offset(offset)
+    .offset(offset);
 
   // 获取管理员角色
-  const adminIds = admins.map((a) => a.id)
+  const adminIds = admins.map((a) => a.id);
   const adminRoles =
     adminIds.length > 0
       ? await db
@@ -60,21 +63,21 @@ export async function getAdminList(
           .from(sysAdminRole)
           .innerJoin(sysRole, eq(sysAdminRole.roleId, sysRole.id))
           .where(inArray(sysAdminRole.adminId, adminIds))
-      : []
+      : [];
 
   // 组装结果
-  const roleMap = new Map<number, { id: number; roleName: string }[]>()
+  const roleMap = new Map<number, { id: number; roleName: string }[]>();
   for (const ar of adminRoles) {
     if (!roleMap.has(ar.adminId)) {
-      roleMap.set(ar.adminId, [])
+      roleMap.set(ar.adminId, []);
     }
-    roleMap.get(ar.adminId)?.push({ id: ar.roleId, roleName: ar.roleName })
+    roleMap.get(ar.adminId)?.push({ id: ar.roleId, roleName: ar.roleName });
   }
 
   const items = admins.map((admin) => ({
     ...toAdminVo(admin),
     roles: roleMap.get(admin.id) || [],
-  }))
+  }));
 
   return {
     items,
@@ -82,7 +85,7 @@ export async function getAdminList(
     page,
     pageSize,
     totalPages: Math.ceil(total / pageSize),
-  }
+  };
 }
 
 /** 获取管理员详情 */
@@ -92,10 +95,10 @@ export async function getAdminById(id: number): Promise<AdminVo> {
     .from(sysAdmin)
     .where(eq(sysAdmin.id, id))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (!admin) {
-    throw new NotFoundError('Admin', id)
+    throw new NotFoundError("Admin", id);
   }
 
   const roles = await db
@@ -105,12 +108,12 @@ export async function getAdminById(id: number): Promise<AdminVo> {
     })
     .from(sysAdminRole)
     .innerJoin(sysRole, eq(sysAdminRole.roleId, sysRole.id))
-    .where(eq(sysAdminRole.adminId, id))
+    .where(eq(sysAdminRole.adminId, id));
 
   return {
     ...toAdminVo(admin),
     roles,
-  }
+  };
 }
 
 /** 创建管理员 */
@@ -120,55 +123,65 @@ export async function createAdmin(input: CreateAdminInput): Promise<AdminVo> {
     .from(sysAdmin)
     .where(eq(sysAdmin.username, input.username))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (existing) {
-    throw new ConflictError(`用户名 ${input.username} 已存在`)
+    throw new ConflictError(`用户名 ${input.username} 已存在`);
   }
 
-  const hashedPassword = await hashPassword(input.password)
+  const hashedPassword = await hashPassword(input.password);
 
   try {
     const result = await db.transaction(async (tx) => {
       const [insertResult] = await tx.insert(sysAdmin).values({
         username: input.username,
         password: hashedPassword,
-        nickname: input.nickname || '',
+        nickname: input.nickname || "",
         status: input.status ?? 1,
         remark: input.remark,
-      })
+      });
 
-      const adminId = insertResult.insertId
+      const adminId = insertResult.insertId;
 
       if (input.roleIds?.length) {
         await tx.insert(sysAdminRole).values(
           input.roleIds.map((roleId) => ({
             adminId: Number(adminId),
             roleId,
-          }))
-        )
+          })),
+        );
       }
 
-      return Number(adminId)
-    })
+      return Number(adminId);
+    });
 
-    return getAdminById(result)
+    return getAdminById(result);
   } catch (err) {
-    throw handleDatabaseError(err)
+    throw handleDatabaseError(err);
   }
 }
 
 /** 更新管理员 */
-export async function updateAdmin(id: number, input: UpdateAdminInput): Promise<AdminVo> {
+export async function updateAdmin(
+  id: number,
+  input: UpdateAdminInput,
+): Promise<AdminVo> {
+  if (id === SUPER_ADMIN_ID && input.status === 0) {
+    throw new BusinessError(
+      "不能禁用超级管理员",
+      ErrorCode.CANNOT_MODIFY_SUPER_ADMIN,
+    );
+  }
+
   const existing = await db
     .select({ id: sysAdmin.id })
     .from(sysAdmin)
     .where(eq(sysAdmin.id, id))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (!existing) {
-    throw new NotFoundError('Admin', id)
+    throw new NotFoundError("Admin", id);
   }
 
   await db
@@ -178,24 +191,30 @@ export async function updateAdmin(id: number, input: UpdateAdminInput): Promise<
       status: input.status,
       remark: input.remark,
     })
-    .where(eq(sysAdmin.id, id))
+    .where(eq(sysAdmin.id, id));
 
   if (input.status === 0) {
-    await revokeSessionsByAdminId(id)
+    await revokeSessionsByAdminId(id);
   }
 
-  invalidatePermissionCache(id)
-  return getAdminById(id)
+  invalidatePermissionCache(id);
+  return getAdminById(id);
 }
 
 /** 删除管理员 */
-export async function deleteAdmin(id: number, currentAdminId: number): Promise<void> {
+export async function deleteAdmin(
+  id: number,
+  currentAdminId: number,
+): Promise<void> {
   if (id === SUPER_ADMIN_ID) {
-    throw new BusinessError('不能删除超级管理员账号', ErrorCode.CANNOT_DELETE_SUPER_ADMIN)
+    throw new BusinessError(
+      "不能删除超级管理员账号",
+      ErrorCode.CANNOT_DELETE_SUPER_ADMIN,
+    );
   }
 
   if (id === currentAdminId) {
-    throw new BusinessError('不能删除自己的账号', ErrorCode.CANNOT_DELETE_SELF)
+    throw new BusinessError("不能删除自己的账号", ErrorCode.CANNOT_DELETE_SELF);
   }
 
   const existing = await db
@@ -203,44 +222,63 @@ export async function deleteAdmin(id: number, currentAdminId: number): Promise<v
     .from(sysAdmin)
     .where(eq(sysAdmin.id, id))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (!existing) {
-    throw new NotFoundError('Admin', id)
+    throw new NotFoundError("Admin", id);
   }
 
   await db.transaction(async (tx) => {
-    await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id))
-    await tx.delete(sysAdmin).where(eq(sysAdmin.id, id))
-  })
+    await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id));
+    await tx.delete(sysAdmin).where(eq(sysAdmin.id, id));
+  });
 
-  await revokeSessionsByAdminId(id)
-  invalidatePermissionCache(id)
+  await revokeSessionsByAdminId(id);
+  invalidatePermissionCache(id);
 }
 
 /** 重置密码 */
-export async function resetPassword(id: number, newPassword: string): Promise<void> {
+export async function resetPassword(
+  id: number,
+  newPassword: string,
+): Promise<void> {
+  if (id === SUPER_ADMIN_ID) {
+    throw new BusinessError(
+      "不能重置超级管理员密码",
+      ErrorCode.CANNOT_MODIFY_SUPER_ADMIN,
+    );
+  }
+
   const existing = await db
     .select({ id: sysAdmin.id })
     .from(sysAdmin)
     .where(eq(sysAdmin.id, id))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (!existing) {
-    throw new NotFoundError('Admin', id)
+    throw new NotFoundError("Admin", id);
   }
 
-  const hashedPassword = await hashPassword(newPassword)
+  const hashedPassword = await hashPassword(newPassword);
 
-  await db.update(sysAdmin).set({ password: hashedPassword }).where(eq(sysAdmin.id, id))
-  await revokeSessionsByAdminId(id)
+  await db
+    .update(sysAdmin)
+    .set({ password: hashedPassword })
+    .where(eq(sysAdmin.id, id));
+  await revokeSessionsByAdminId(id);
 }
 
 /** 更新管理员角色 */
-export async function updateAdminRoles(id: number, roleIds: number[]): Promise<void> {
+export async function updateAdminRoles(
+  id: number,
+  roleIds: number[],
+): Promise<void> {
   if (id === SUPER_ADMIN_ID) {
-    throw new BusinessError('不能修改超级管理员的角色', ErrorCode.CANNOT_MODIFY_SUPER_ADMIN_ROLES)
+    throw new BusinessError(
+      "不能修改超级管理员的角色",
+      ErrorCode.CANNOT_MODIFY_SUPER_ADMIN_ROLES,
+    );
   }
 
   const existing = await db
@@ -248,19 +286,21 @@ export async function updateAdminRoles(id: number, roleIds: number[]): Promise<v
     .from(sysAdmin)
     .where(eq(sysAdmin.id, id))
     .limit(1)
-    .then((rows) => rows[0])
+    .then((rows) => rows[0]);
 
   if (!existing) {
-    throw new NotFoundError('Admin', id)
+    throw new NotFoundError("Admin", id);
   }
 
   await db.transaction(async (tx) => {
-    await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id))
+    await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id));
 
     if (roleIds.length > 0) {
-      await tx.insert(sysAdminRole).values(roleIds.map((roleId) => ({ adminId: id, roleId })))
+      await tx
+        .insert(sysAdminRole)
+        .values(roleIds.map((roleId) => ({ adminId: id, roleId })));
     }
-  })
+  });
 
-  invalidatePermissionCache(id)
+  invalidatePermissionCache(id);
 }

@@ -3,23 +3,32 @@
  */
 
 export {
+  ErrorSchema,
+  IdParamSchema,
+  SuccessSchema,
+  ValidationErrorDetailsSchema,
+  ValidationIssueSchema,
   createDataResponseSchema,
   type ErrorResponse,
-  ErrorSchema,
   type IdParam,
-  IdParamSchema,
   type SuccessResponse,
-  SuccessSchema,
   type ValidationErrorDetails,
-  ValidationErrorDetailsSchema,
   type ValidationIssue,
-  ValidationIssueSchema,
-} from './common'
+} from "./common";
 
 export {
+  MenuTreeNodeSchema,
+  MenuTypeEnum,
+  RoleBriefSchema,
+  type MenuTreeNode,
+  type MenuTreeNodeDto,
+  type RoleBrief,
+} from "./entities";
+
+export {
+  PaginationMetaSchema,
+  PaginationQuerySchema,
   createPaginatedSchema,
   type PaginationMeta,
-  PaginationMetaSchema,
   type PaginationQuery,
-  PaginationQuerySchema,
-} from './pagination'
+} from "./pagination";
