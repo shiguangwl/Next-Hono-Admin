@@ -1,5 +1,11 @@
-import { createEnv } from '@t3-oss/env-nextjs'
-import { z } from 'zod'
+import { createEnv } from "@t3-oss/env-nextjs";
+import { z } from "zod";
+
+// WHY: env.ts 被 next.config.mjs 直接 import，此时 tsconfig paths 别名不可用，必须内联定义
+// SYNC: 与 lib/utils/constants.ts、middleware.ts 保持一致
+const DEFAULT_SESSION_COOKIE_NAME = "auth_session";
+
+const DEFAULT_SESSION_TTL_DAYS = 7;
 
 export const env = createEnv({
   /**
@@ -8,33 +14,60 @@ export const env = createEnv({
   server: {
     // 数据库配置
     DATABASE_URL: z.string().url(),
-    DATABASE_MAX_CONNECTIONS: z.coerce.number().int().positive().optional().default(10),
-    DATABASE_IDLE_TIMEOUT: z.coerce.number().int().positive().optional().default(20),
-    DATABASE_CONNECT_TIMEOUT: z.coerce.number().int().positive().optional().default(10),
+    DATABASE_MAX_CONNECTIONS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .default(10),
+    DATABASE_IDLE_TIMEOUT: z.coerce
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .default(20),
+    DATABASE_CONNECT_TIMEOUT: z.coerce
+      .number()
+      .int()
+      .positive()
+      .optional()
+      .default(10),
     AUTO_DB_MIGRATE: z
-      .enum(['true', 'false'])
+      .enum(["true", "false"])
       .optional()
-      .default('false')
-      .transform((v) => v === 'true'),
+      .default("false")
+      .transform((v) => v === "true"),
     AUTO_DB_SEED: z
-      .enum(['true', 'false'])
+      .enum(["true", "false"])
       .optional()
-      .default('false')
-      .transform((v) => v === 'true'),
+      .default("false")
+      .transform((v) => v === "true"),
 
-    // JWT 配置
-    JWT_SECRET: z.string().min(32, 'JWT_SECRET must be at least 32 characters'),
-    JWT_EXPIRES_IN: z
+    // 会话配置
+    SESSION_COOKIE_NAME: z
       .string()
-      .regex(
-        /^\d+(\.\d+)?\s*(ms|milliseconds?|s|secs?|seconds?|m|mins?|minutes?|h|hrs?|hours?|d|days?|w|weeks?|y|yrs?|years?)$/i,
-        'JWT_EXPIRES_IN must be a valid time span (e.g., 60, 1h, 7d, 2 days)'
-      )
+      .min(1)
       .optional()
-      .default('7d'),
+      .default(DEFAULT_SESSION_COOKIE_NAME),
+    SESSION_TTL_DAYS: z.coerce
+      .number()
+      .int()
+      .positive()
+      .max(30)
+      .optional()
+      .default(DEFAULT_SESSION_TTL_DAYS),
+
+    // CORS 配置
+    CORS_ORIGINS: z
+      .string()
+      .optional()
+      .default("")
+      .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
 
     // 运行环境
-    NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+    NODE_ENV: z
+      .enum(["development", "production", "test"])
+      .default("development"),
   },
 
   /**
@@ -53,8 +86,9 @@ export const env = createEnv({
     DATABASE_CONNECT_TIMEOUT: process.env.DATABASE_CONNECT_TIMEOUT,
     AUTO_DB_MIGRATE: process.env.AUTO_DB_MIGRATE,
     AUTO_DB_SEED: process.env.AUTO_DB_SEED,
-    JWT_SECRET: process.env.JWT_SECRET,
-    JWT_EXPIRES_IN: process.env.JWT_EXPIRES_IN,
+    SESSION_COOKIE_NAME: process.env.SESSION_COOKIE_NAME,
+    SESSION_TTL_DAYS: process.env.SESSION_TTL_DAYS,
+    CORS_ORIGINS: process.env.CORS_ORIGINS,
     NODE_ENV: process.env.NODE_ENV,
   },
 
@@ -62,4 +96,4 @@ export const env = createEnv({
    * 跳过验证（仅用于构建时无环境变量的场景）
    */
   skipValidation: !!process.env.SKIP_ENV_VALIDATION,
-})
+});

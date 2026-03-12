@@ -20,6 +20,8 @@ export interface Variables {
   requestId: string
   /** 当前登录的管理员信息，未登录时为 null */
   admin: AdminPayload | null
+  /** 当前会话 ID，未登录时为 null */
+  sessionId: number | null
   /** 当前管理员的权限标识列表，未登录时为 null，超级管理员为 ['*'] */
   permissions: string[] | null
 }

@@ -15,19 +15,29 @@
     "db:push": "drizzle-kit push",
     "db:migrate": "drizzle-kit migrate",
     "db:studio": "drizzle-kit studio",
-    "db:seed": "TZ=Asia/Shanghai tsx src/db/seed.ts"
+    "db:seed": "TZ=Asia/Shanghai tsx src/db/seed.ts",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hono/zod-validator": "^0.7.6",
     "@mantine/core": "^7.17.6",
     "@mantine/hooks": "^7.17.6",
+    "@opentelemetry/api": "^1.9.0",
+    "@opentelemetry/auto-instrumentations-node": "^0.71.0",
+    "@opentelemetry/exporter-logs-otlp-http": "^0.213.0",
+    "@opentelemetry/exporter-metrics-otlp-http": "^0.213.0",
+    "@opentelemetry/exporter-trace-otlp-http": "^0.213.0",
+    "@opentelemetry/resources": "^2.6.0",
+    "@opentelemetry/sdk-logs": "^0.213.0",
+    "@opentelemetry/sdk-metrics": "^2.6.0",
+    "@opentelemetry/sdk-node": "^0.213.0",
+    "@opentelemetry/semantic-conventions": "^1.40.0",
     "@t3-oss/env-nextjs": "^0.13.10",
     "@tanstack/react-query": "^5.62.0",
     "bcryptjs": "^3.0.3",
     "drizzle-orm": "^0.45.1",
     "drizzle-zod": "^0.8.3",
     "hono": "^4.6.14",
-    "jsonwebtoken": "^9.0.2",
     "lucide-react": "^0.562.0",
     "mysql2": "^3.11.5",
     "next": "16.1.1",
@@ -43,7 +53,6 @@
   "devDependencies": {
     "@biomejs/biome": "^2.3.11",
     "@types/bcryptjs": "^3.0.0",
-    "@types/jsonwebtoken": "^9.0.7",
     "@types/ms": "^2.1.0",
     "@types/node": "^25.0.3",
     "@types/react": "^19.0.2",
@@ -52,11 +61,18 @@
     "dotenv": "^17.2.3",
     "drizzle-kit": "^0.31.8",
     "fast-check": "^4.5.3",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.3.3",
     "postcss": "^8.4.49",
     "postcss-preset-mantine": "^1.17.0",
     "postcss-simple-vars": "^7.0.1",
     "tsx": "^4.19.2",
     "typescript": "^5.7.2",
     "vitest": "^4.0.16"
+  },
+  "lint-staged": {
+    "*": [
+      "biome check --write --no-errors-on-unmatched"
+    ]
   }
 }

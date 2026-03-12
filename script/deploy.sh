@@ -7,6 +7,7 @@
 #   ./deploy.sh                           # 使用默认配置 .deploy.env
 #   ./deploy.sh --config .deploy.prod.env # 指定配置文件
 #   ./deploy.sh --dry-run                 # 预演模式
+#   ./deploy.sh --rollback                # 回滚到上一版本
 #   ./deploy.sh --help                    # 显示帮助
 # ============================================
 
@@ -18,6 +19,16 @@ SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 PROJECT_DIR="$(dirname "$SCRIPT_DIR")"
 CONFIG_FILE="${SCRIPT_DIR}/.deploy.env"
 DRY_RUN=false
+ROLLBACK=false
+
+# M8: 临时文件追踪 + 中断清理
+TEMP_FILES=()
+cleanup_on_exit() {
+    for f in "${TEMP_FILES[@]}"; do
+        rm -f "$f" 2>/dev/null
+    done
+}
+trap cleanup_on_exit EXIT INT TERM
 
 # 加载库文件
 source "${SCRIPT_DIR}/lib/common.sh"
@@ -34,6 +45,7 @@ show_help() {
 选项:
   -c, --config FILE    指定配置文件路径 (默认: .deploy.env)
   -d, --dry-run        预演模式，不实际执行部署
+  -r, --rollback       回滚到上一次成功部署的版本
   -h, --help           显示此帮助信息
 
 配置文件格式请参考 .deploy.env.example
@@ -42,6 +54,7 @@ show_help() {
   $(basename "$0")                              # 使用默认配置
   $(basename "$0") --config .deploy.staging.env # 使用 staging 配置
   $(basename "$0") --dry-run                    # 预演模式
+  $(basename "$0") --rollback                   # 回滚到上一版本
 EOF
     exit 0
 }
@@ -56,6 +69,10 @@ parse_args() {
                 ;;
             -d|--dry-run)
                 DRY_RUN=true
+                shift
+                ;;
+            -r|--rollback)
+                ROLLBACK=true
                 shift
                 ;;
             -h|--help)
@@ -125,16 +142,55 @@ prepare_remote() {
     log_info "上传 compose 配置: $COMPOSE_FILE"
     scp_cmd "$compose_path" "$REMOTE_DIR/docker-compose.yml" || log_error "上传 docker-compose.yml 失败"
 
-    # 上传环境配置文件
+    # 上传环境配置文件并设置安全权限
     IFS=',' read -ra env_array <<< "$ENV_FILES"
     for env_file in "${env_array[@]}"; do
         env_file=$(echo "$env_file" | xargs)
         local env_path="${PROJECT_DIR}/${env_file}"
         log_info "上传环境配置: $env_file"
         scp_cmd "$env_path" "$REMOTE_DIR/" || log_error "上传 $env_file 失败"
+        ssh_cmd "chmod 600 $REMOTE_DIR/$env_file" || log_warn "设置 $env_file 权限失败"
     done
 
     log_info "远程部署文件准备完成"
+}
+
+# M6: 保存当前部署版本（回滚用）
+save_deploy_tag() {
+    ssh_cmd "echo '$IMAGE_TAG' > $REMOTE_DIR/.last_deploy_tag" 2>/dev/null || true
+}
+
+# M6: 读取上一次部署版本
+get_last_deploy_tag() {
+    ssh_cmd "cat $REMOTE_DIR/.last_deploy_tag 2>/dev/null" 2>/dev/null || echo ""
+}
+
+# M6: 回滚到上一版本
+rollback() {
+    log_info "开始回滚..."
+
+    local last_tag
+    last_tag=$(get_last_deploy_tag)
+
+    if [[ -z "$last_tag" ]]; then
+        log_error "没有找到上一次部署记录，无法回滚"
+    fi
+
+    if [[ "$last_tag" == "$IMAGE_TAG" ]]; then
+        log_error "上一次部署版本与当前版本相同: $last_tag"
+    fi
+
+    log_info "回滚到版本: $IMAGE_NAME:$last_tag"
+
+    # 验证远程镜像存在
+    if ! ssh_cmd "docker image inspect $IMAGE_NAME:$last_tag >/dev/null 2>&1"; then
+        log_error "回滚目标镜像不存在: $IMAGE_NAME:$last_tag"
+    fi
+
+    # 切换到旧版本
+    IMAGE_TAG="$last_tag"
+    deploy
+    check_status
 }
 
 # 执行部署
@@ -146,17 +202,14 @@ deploy() {
 
     log_info "部署应用..."
 
-    # 停止旧容器
     local project_opt=""
     [[ -n "$COMPOSE_PROJECT_NAME" ]] && project_opt="-p $COMPOSE_PROJECT_NAME"
-    
-    ssh_cmd "cd $REMOTE_DIR && docker compose $project_opt down --remove-orphans 2>/dev/null || true"
 
-    # 启动新容器（注入环境变量）
+    # 使用 up -d 直接替换（Docker Compose 自动停旧启新），而非先 down 再 up
     local env_vars="IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG APP_PORT=$APP_PORT CONTAINER_NAME=$CONTAINER_NAME"
     [[ -n "$COMPOSE_PROJECT_NAME" ]] && env_vars="$env_vars COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
-    
-    ssh_cmd "cd $REMOTE_DIR && $env_vars docker compose $project_opt up -d --pull never" || log_error "部署失败"
+
+    ssh_cmd "cd $REMOTE_DIR && $env_vars docker compose $project_opt up -d --pull never --remove-orphans" || log_error "部署失败"
 }
 
 # 检查状态
@@ -195,21 +248,38 @@ main() {
 
     local script_start=$(date +%s)
 
-    if $DRY_RUN; then
+    if $ROLLBACK; then
+        show_title "⏪ 回滚部署"
+        load_config
+        check_ssh_dependencies
+        test_ssh_connection
+        rollback
+    elif $DRY_RUN; then
         show_title "🔍 部署预演模式 (Dry Run)"
+        load_config
+        check_docker_dependencies
+        check_ssh_dependencies
+        test_ssh_connection
+        build_image
+        push_image
+        prepare_remote
+        deploy
+        cleanup_old_images
+        check_status
     else
         show_title "🚀 通用远程部署脚本"
+        load_config
+        check_docker_dependencies
+        check_ssh_dependencies
+        test_ssh_connection
+        build_image
+        push_image
+        prepare_remote
+        deploy
+        save_deploy_tag
+        cleanup_old_images
+        check_status
     fi
-
-    load_config
-    check_docker_dependencies
-    check_ssh_dependencies
-    build_image
-    push_image
-    prepare_remote
-    deploy
-    cleanup_old_images
-    check_status
 
     local script_end=$(date +%s)
     local total_duration=$((script_end - script_start))
@@ -218,6 +288,8 @@ main() {
     show_separator "$GREEN"
     if $DRY_RUN; then
         log_info "🔍 预演完成（未实际执行任何操作）"
+    elif $ROLLBACK; then
+        log_info "⏪ 回滚完成！"
     else
         log_info "🎉 部署完成！"
     fi
@@ -230,4 +302,3 @@ main() {
 }
 
 main "$@"
-

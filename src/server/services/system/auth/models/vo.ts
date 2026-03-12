@@ -7,7 +7,7 @@ import type { MenuTreeNode } from '@/server/services/system/menu'
 
 /** 登录结果 */
 export interface LoginResultVo {
-  token: string
+  sessionToken: string
   admin: AdminVo
   permissions: string[]
   menus: MenuTreeNode[]

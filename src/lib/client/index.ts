@@ -1,11 +1,8 @@
 import { type ClientResponse, hc } from 'hono/client'
+import type { ValidationErrorDetails } from '@/lib/errors/types'
 import type { AppType } from '@/server/types'
 
 export type HonoClient = ReturnType<typeof hc<AppType>>
-
-export interface ClientOptions {
-  token?: string | null
-}
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === 'object' && value !== null
@@ -14,7 +11,15 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 export type ApiErrorResponse = {
   code: string
   message: string
-  details?: unknown
+  details?:
+    | ValidationErrorDetails
+    | Record<string, unknown>
+    | Array<unknown>
+    | string
+    | number
+    | boolean
+    | null
+  requestId?: string
 }
 
 export type ApiSuccessResponse<T> = {
@@ -54,45 +59,20 @@ function getBaseUrl(): string {
   return 'http://localhost:3000'
 }
 
-function getStoredToken(): string | null {
-  if (typeof window === 'undefined') {
-    return null
-  }
-  try {
-    const authStorage = localStorage.getItem('auth-storage')
-    if (authStorage) {
-      const parsed = JSON.parse(authStorage)
-      return parsed?.state?.token || null
-    }
-  } catch {
-    // 解析失败时返回 null
-  }
-  return null
-}
-
-function createHeaders(token: string | null): Record<string, string> {
-  const headers: Record<string, string> = {
-    'Content-Type': 'application/json',
-  }
-  if (token) {
-    headers.Authorization = `Bearer ${token}`
-  }
-  return headers
-}
-
-function resolveToken(tokenOption: string | null | undefined): string | null {
-  if (tokenOption === undefined) {
-    return getStoredToken()
-  }
-  return tokenOption
-}
-
-export function createClient(options?: ClientOptions): HonoClient {
+// WHY: 保留 token 参数供非浏览器 API 客户端使用 Bearer 认证
+export function createClient(token?: string): HonoClient {
   const baseUrl = getBaseUrl()
-  const token = resolveToken(options?.token)
 
   return hc<AppType>(`${baseUrl}/api`, {
-    headers: () => createHeaders(token),
+    headers: () => {
+      const headers: Record<string, string> = {
+        'Content-Type': 'application/json',
+      }
+      if (token) {
+        headers.Authorization = `Bearer ${token}`
+      }
+      return headers
+    },
   })
 }
 

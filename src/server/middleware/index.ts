@@ -15,8 +15,6 @@ export {
 export { corsMiddleware } from './cors'
 // CSRF
 export { csrfMiddleware, generateCsrfToken } from './csrf'
-// JWT 认证
-export { jwtAuth, requireAuth } from './jwt-auth'
 // 速率限制
 export {
   apiRateLimit,
@@ -35,3 +33,5 @@ export {
   requireAnyPermission,
   requirePermission,
 } from './rbac'
+// 会话认证
+export { createSessionAuth, requireAuth, sessionAuth } from './session-auth'

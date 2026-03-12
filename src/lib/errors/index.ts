@@ -11,12 +11,7 @@ export { handleDatabaseError } from './database'
 // 错误处理器
 export { type ErrorResponse, mapErrorToResponse } from './handler'
 // 错误监控
-export {
-  ConsoleMonitor,
-  type ErrorMonitor,
-  getErrorMonitor,
-  setErrorMonitor,
-} from './monitor'
+export { addErrorMonitor, type ErrorMonitor, reportError } from './monitor'
 // 错误类型
 export {
   AppError,
@@ -30,4 +25,7 @@ export {
   RateLimitError,
   UnauthorizedError,
   ValidationError,
+  type ValidationErrorDetails,
+  type ValidationIssue,
+  type ValidationIssueSource,
 } from './types'

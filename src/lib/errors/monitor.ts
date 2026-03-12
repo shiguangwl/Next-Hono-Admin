@@ -1,74 +1,66 @@
 /**
- * 错误监控接口
- * @description 支持 Sentry、DataDog 等第三方监控系统集成
+ * 错误监控模块
+ * @description 消费者模式：支持注册多个 monitor 并行处理（日志落地、远程上报等）
  */
+
+import { logger } from '@/lib/logging'
 
 /**
  * 错误监控接口
  */
 export interface ErrorMonitor {
-  /**
-   * 捕获错误
-   * @param error - 错误对象
-   * @param context - 上下文信息（如 requestId、userId 等）
-   */
   captureError(error: Error, context?: Record<string, unknown>): void
-
-  /**
-   * 捕获消息
-   * @param message - 消息内容
-   * @param level - 消息级别
-   */
-  captureMessage(message: string, level: 'info' | 'warn' | 'error'): void
 }
 
 /**
- * 控制台监控实现（开发环境）
+ * 默认日志监控实现
+ * @description 使用结构化 logger 记录错误，保证错误始终有落地记录
  */
-export class ConsoleMonitor implements ErrorMonitor {
+class LoggerMonitor implements ErrorMonitor {
   captureError(error: Error, context?: Record<string, unknown>): void {
-    console.error('[ErrorMonitor]', error, context)
-  }
-
-  captureMessage(message: string, level: 'info' | 'warn' | 'error'): void {
-    console[level]('[ErrorMonitor]', message)
+    logger.error(error.message, { err: error, ...context })
   }
 }
 
-/** 当前错误监控实例 */
-let errorMonitor: ErrorMonitor | null = null
-
 /**
- * 设置错误监控实例
+ * 注册错误监控消费者
  * @param monitor - 错误监控实例
  *
  * @example
  * ```ts
  * // 生产环境集成 Sentry
  * import * as Sentry from '@sentry/node'
- * import { setErrorMonitor } from '@/lib/errors'
+ * import { addErrorMonitor } from '@/lib/errors'
  *
  * class SentryMonitor implements ErrorMonitor {
  *   captureError(error: Error, context?: Record<string, unknown>): void {
  *     Sentry.captureException(error, { extra: context })
  *   }
- *
- *   captureMessage(message: string, level: 'info' | 'warning' | 'error'): void {
- *     Sentry.captureMessage(message, level)
- *   }
  * }
  *
  * Sentry.init({ dsn: env.SENTRY_DSN })
- * setErrorMonitor(new SentryMonitor())
+ * addErrorMonitor(new SentryMonitor())
  * ```
  */
-export function setErrorMonitor(monitor: ErrorMonitor): void {
-  errorMonitor = monitor
+
+// 默认注册 LoggerMonitor，确保即使未配置任何外部监控，错误也有日志落地
+const monitors: ErrorMonitor[] = [new LoggerMonitor()]
+
+export function addErrorMonitor(monitor: ErrorMonitor): void {
+  monitors.push(monitor)
 }
 
 /**
- * 获取错误监控实例
+ * 通知所有监控消费者
+ * @param error - 错误对象
+ * @param context - 上下文信息（requestId、errorCode 等）
  */
-export function getErrorMonitor(): ErrorMonitor | null {
-  return errorMonitor
+export function reportError(error: Error, context?: Record<string, unknown>): void {
+  for (const m of monitors) {
+    try {
+      m.captureError(error, context)
+    } catch {
+      // WHY: 防止 monitor 自身异常导致错误处理链中断
+    }
+  }
 }

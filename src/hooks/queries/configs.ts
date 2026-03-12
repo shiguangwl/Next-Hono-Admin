@@ -3,7 +3,9 @@ import { getApiClient, unwrapApiData } from '@/lib/client'
 import type {
   Config,
   ConfigQuery,
+  CreateConfigInput,
   PaginatedConfig,
+  UpdateConfigInput,
   UpdateConfigValueInput,
 } from '@/server/routes/configs/dtos'
 import { createResource } from './core'
@@ -13,17 +15,8 @@ const getClient = () => getApiClient().configs
 const configResource = createResource<
   PaginatedConfig,
   Config,
-  {
-    configKey: string
-    configValue: string | null
-    configType: string
-    configGroup: string
-    configName: string
-    remark?: string | null
-    isSystem?: number
-    status?: number
-  },
-  Partial<Config>,
+  CreateConfigInput,
+  UpdateConfigInput,
   ConfigQuery
 >({
   resourceName: 'configs',

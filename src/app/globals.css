@@ -99,14 +99,12 @@ body {
   border-bottom: 2px solid var(--mantine-color-dark-5);
 }
 
-.mantine-Table-tbody .mantine-Table-tr:hover {
-  background-color: var(--mantine-color-indigo-0) !important;
+.mantine-Table-tbody .mantine-Table-tr.mantine-Table-tr:hover {
+  background-color: var(--mantine-color-indigo-0);
 }
 
-[data-mantine-color-scheme="dark"]
-  .mantine-Table-tbody
-  .mantine-Table-tr:hover {
-  background-color: rgba(99, 102, 241, 0.06) !important;
+[data-mantine-color-scheme="dark"] .mantine-Table-tbody .mantine-Table-tr.mantine-Table-tr:hover {
+  background-color: rgba(99, 102, 241, 0.06);
 }
 
 /* ===== Paper 卡片 hover 效果 ===== */
@@ -135,11 +133,7 @@ body {
   position: absolute;
   inset: 0;
   opacity: 0;
-  background: linear-gradient(
-    135deg,
-    rgba(255, 255, 255, 0.1),
-    rgba(255, 255, 255, 0)
-  );
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
   transition: opacity var(--app-transition);
 }
 
@@ -237,10 +231,6 @@ body {
   width: 280px;
   height: 280px;
   border-radius: 50%;
-  background: radial-gradient(
-    circle,
-    rgba(255, 255, 255, 0.12),
-    transparent 70%
-  );
+  background: radial-gradient(circle, rgba(255, 255, 255, 0.12), transparent 70%);
   pointer-events: none;
 }

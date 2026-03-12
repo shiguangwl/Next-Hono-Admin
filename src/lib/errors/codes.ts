@@ -58,9 +58,6 @@ export const ErrorCode = {
   /** 数据库操作失败 (500) */
   DATABASE_ERROR: 'DATABASE_ERROR',
 
-  /** 外部服务调用失败 (500) */
-  EXTERNAL_SERVICE_ERROR: 'EXTERNAL_SERVICE_ERROR',
-
   /** HTTP错误（兼容HTTPException，逐步淘汰） */
   HTTP_ERROR: 'HTTP_ERROR',
 } as const

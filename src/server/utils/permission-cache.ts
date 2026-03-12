@@ -1,4 +1,5 @@
 const CACHE_TTL = 5 * 60 * 1000
+const MAX_CACHE_SIZE = 1000
 
 interface PermissionCacheEntry {
   permissions: string[]
@@ -17,7 +18,16 @@ export async function getCachedPermissions(
   }
 
   const permissions = await fetchPermissions(adminId)
-  permissionCache.set(adminId, { permissions, expireAt: Date.now() + CACHE_TTL })
+
+  if (permissionCache.size >= MAX_CACHE_SIZE) {
+    const firstKey = permissionCache.keys().next().value
+    if (firstKey !== undefined) permissionCache.delete(firstKey)
+  }
+
+  permissionCache.set(adminId, {
+    permissions,
+    expireAt: Date.now() + CACHE_TTL,
+  })
   return permissions
 }
 

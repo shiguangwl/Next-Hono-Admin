@@ -43,3 +43,5 @@ drizzle/meta
 # Testing
 coverage
 .ace-tool/
+
+.agent/

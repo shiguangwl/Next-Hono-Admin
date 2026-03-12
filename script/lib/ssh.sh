@@ -2,29 +2,33 @@
 # SSH 和 SCP 操作封装
 
 # SSH 连接选项
-_ssh_opts="-o StrictHostKeyChecking=no -o ConnectTimeout=30 -o ServerAliveInterval=60"
+# accept-new: 首次连接自动接受并记录主机密钥，后续连接严格校验（防 MITM）
+_ssh_opts="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 -o ServerAliveInterval=60"
 
-# 执行远程 SSH 命令
-ssh_cmd() {
-    local cmd=$1
+# 构建 SSH 认证参数
+_build_ssh_auth() {
     if [[ -n "${SSH_PASSWORD:-}" ]]; then
-        sshpass -p "$SSH_PASSWORD" ssh $_ssh_opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
-    elif [[ -n "${SSH_KEY_PATH:-}" ]]; then
-        ssh $_ssh_opts -i "$SSH_KEY_PATH" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
-    else
-        ssh $_ssh_opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
+        echo "sshpass -p $SSH_PASSWORD"
     fi
 }
 
-# 通过管道传输数据到远程执行
-ssh_pipe() {
+# 构建 SSH 密钥参数
+_build_ssh_key_opt() {
+    if [[ -n "${SSH_KEY_PATH:-}" ]]; then
+        echo "-i $SSH_KEY_PATH"
+    fi
+}
+
+# 执行远程 SSH 命令（也支持管道输入）
+ssh_cmd() {
     local cmd=$1
+    local key_opt
+    key_opt=$(_build_ssh_key_opt)
+
     if [[ -n "${SSH_PASSWORD:-}" ]]; then
         sshpass -p "$SSH_PASSWORD" ssh $_ssh_opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
-    elif [[ -n "${SSH_KEY_PATH:-}" ]]; then
-        ssh $_ssh_opts -i "$SSH_KEY_PATH" -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
     else
-        ssh $_ssh_opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
+        ssh $_ssh_opts $key_opt -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
     fi
 }
 
@@ -32,12 +36,13 @@ ssh_pipe() {
 scp_cmd() {
     local src=$1
     local dest=$2
+    local key_opt
+    key_opt=$(_build_ssh_key_opt)
+
     if [[ -n "${SSH_PASSWORD:-}" ]]; then
         sshpass -p "$SSH_PASSWORD" scp $_ssh_opts -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
-    elif [[ -n "${SSH_KEY_PATH:-}" ]]; then
-        scp $_ssh_opts -i "$SSH_KEY_PATH" -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
     else
-        scp $_ssh_opts -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
+        scp $_ssh_opts $key_opt -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
     fi
 }
 

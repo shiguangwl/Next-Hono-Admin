@@ -1,61 +1,15 @@
-/**
- * CORS 中间件
- * @description 处理跨域资源共享
- */
+// WHY: 生产环境通过 CORS_ORIGINS 环境变量配置允许的来源；未配置时回退为反射模式（兼容开发环境）
 
 import { cors } from 'hono/cors'
 import { env } from '@/env'
 
-/**
- * 构建允许的 Origin 列表
- */
-function getAllowedOrigins(): string[] {
-  const origins: string[] = []
-
-  // 开发环境允许 localhost
-  if (env.NODE_ENV === 'development') {
-    origins.push(
-      'http://localhost:3000',
-      'http://localhost:3001',
-      'http://localhost:3002',
-      'http://127.0.0.1:3000',
-      'http://127.0.0.1:3001',
-      'http://127.0.0.1:3002'
-    )
-  }
-
-  // 生产环境从平台环境变量获取
-  if (env.NODE_ENV === 'production') {
-    if (process.env.VERCEL_URL) {
-      origins.push(`https://${process.env.VERCEL_URL}`)
-    }
-    if (process.env.RAILWAY_PUBLIC_DOMAIN) {
-      origins.push(`https://${process.env.RAILWAY_PUBLIC_DOMAIN}`)
-    }
-  }
-
-  return origins
+function resolveOrigin(requestOrigin: string): string | null {
+  if (env.CORS_ORIGINS.length === 0) return requestOrigin
+  return env.CORS_ORIGINS.includes(requestOrigin) ? requestOrigin : null
 }
 
-/**
- * CORS 中间件配置
- */
 export const corsMiddleware = cors({
-  origin: (origin) => {
-    const allowedOrigins = getAllowedOrigins()
-
-    // 允许白名单中的来源
-    if (allowedOrigins.includes(origin)) {
-      return origin
-    }
-
-    // 开发环境允许所有来源
-    if (env.NODE_ENV === 'development') {
-      return origin
-    }
-
-    return null
-  },
+  origin: (origin) => resolveOrigin(origin) ?? '',
   allowMethods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
   allowHeaders: [
     'Content-Type',
@@ -71,5 +25,5 @@ export const corsMiddleware = cors({
     'X-RateLimit-Reset',
   ],
   credentials: true,
-  maxAge: 86400, // 24 小时
+  maxAge: 86400,
 })

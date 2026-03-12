@@ -4,6 +4,7 @@
 
 export * from './admin'
 export * from './admin-role'
+export * from './admin-session'
 export * from './menu'
 export * from './operation-log'
 // 关联关系

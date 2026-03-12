@@ -37,24 +37,26 @@ transfer_image() {
     log_progress "正在压缩镜像..."
 
     local temp_file="/tmp/docker-image-$$.tar.gz"
+    # 注册到全局临时文件列表（由 deploy.sh 的 trap 负责清理）
+    TEMP_FILES+=("$temp_file")
+
     docker save "$IMAGE_NAME:$IMAGE_TAG" | gzip -1 > "$temp_file"
 
     local compressed_size=$(get_file_size "$temp_file")
     local formatted_size=$(format_size "$compressed_size")
-    
+
     log_progress "开始传输镜像 [压缩后大小: $formatted_size]"
     echo ""
 
     local start_time=$(date +%s)
     local transfer_status=0
 
-    # 使用 pv 显示进度（如果可用）
     if command -v pv &>/dev/null; then
         pv -s "$compressed_size" -p -t -e -a -N "传输进度" "$temp_file" | \
-            ssh_pipe "gunzip | docker load" || transfer_status=$?
+            ssh_cmd "gunzip | docker load" || transfer_status=$?
     else
         log_warn "传输中（无进度显示）..."
-        cat "$temp_file" | ssh_pipe "gunzip | docker load" || transfer_status=$?
+        cat "$temp_file" | ssh_cmd "gunzip | docker load" || transfer_status=$?
     fi
 
     local end_time=$(date +%s)
@@ -96,7 +98,9 @@ cleanup_old_images() {
 
     log_info "清理旧镜像版本（保留最近 $IMAGE_RETENTION_COUNT 个）..."
 
-    ssh_cmd "docker images $IMAGE_NAME --format '{{.Tag}}' | grep -v '^latest$' | grep -v '^$IMAGE_TAG$' | tail -n +$IMAGE_RETENTION_COUNT | xargs -r -I {} docker rmi $IMAGE_NAME:{} 2>/dev/null || true"
+    # 按创建时间倒序排列，排除 latest 和当前 tag，跳过前 N 个（保留），删除其余
+    local skip_count=$((IMAGE_RETENTION_COUNT + 1))
+    ssh_cmd "docker images $IMAGE_NAME --format '{{.CreatedAt}}\t{{.Tag}}' | sort -r | awk '{print \$2}' | grep -v '^latest$' | grep -v '^${IMAGE_TAG}$' | tail -n +${skip_count} | xargs -r -I {} docker rmi $IMAGE_NAME:{} 2>/dev/null || true"
 
     log_info "清理未使用的镜像..."
     ssh_cmd "docker image prune -f 2>/dev/null || true"
@@ -105,10 +109,8 @@ cleanup_old_images() {
 # 检查 Docker 依赖
 check_docker_dependencies() {
     command -v docker &>/dev/null || log_error "本地未安装 Docker"
-    
-    # pv（可选，用于进度显示）
+
     if ! command -v pv &>/dev/null; then
         log_warn "未安装 pv，将使用备用进度显示"
     fi
 }
-

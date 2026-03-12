@@ -1,16 +1,16 @@
-"use client";
+'use client'
 
-import { Box, Code, Group, ScrollArea, Text, ThemeIcon } from "@mantine/core";
-import type { ReactNode } from "react";
+import { Box, Code, Group, ScrollArea, Text, ThemeIcon } from '@mantine/core'
+import type { ReactNode } from 'react'
 
 export function Section({
   title,
   icon,
   children,
 }: {
-  title: string;
-  icon: ReactNode;
-  children: ReactNode;
+  title: string
+  icon: ReactNode
+  children: ReactNode
 }) {
   return (
     <Box>
@@ -24,7 +24,7 @@ export function Section({
       </Group>
       <Box pl={32}>{children}</Box>
     </Box>
-  );
+  )
 }
 
 export function InfoRow({
@@ -32,13 +32,13 @@ export function InfoRow({
   label,
   value,
 }: {
-  icon: ReactNode;
-  label: string;
-  value: ReactNode;
+  icon: ReactNode
+  label: string
+  value: ReactNode
 }) {
   return (
     <Group gap="xs" wrap="nowrap">
-      <Box c="dimmed" style={{ display: "flex", alignItems: "center" }}>
+      <Box c="dimmed" style={{ display: 'flex', alignItems: 'center' }}>
         {icon}
       </Box>
       <Text size="xs" c="dimmed" span>
@@ -48,7 +48,7 @@ export function InfoRow({
         {value}
       </Text>
     </Group>
-  );
+  )
 }
 
 export function DetailValue({
@@ -57,10 +57,10 @@ export function DetailValue({
   isLongText,
   icon,
 }: {
-  label: string;
-  value: ReactNode;
-  isLongText?: boolean;
-  icon?: ReactNode;
+  label: string
+  value: ReactNode
+  isLongText?: boolean
+  icon?: ReactNode
 }) {
   return (
     <Box>
@@ -69,22 +69,22 @@ export function DetailValue({
       </Text>
       <Group gap={4} wrap="wrap">
         {icon && (
-          <Box c="dimmed" style={{ display: "flex" }}>
+          <Box c="dimmed" style={{ display: 'flex' }}>
             {icon}
           </Box>
         )}
         <Text
           size="sm"
           style={{
-            wordBreak: isLongText ? "break-all" : "normal",
-            overflowWrap: "anywhere",
+            wordBreak: isLongText ? 'break-all' : 'normal',
+            overflowWrap: 'anywhere',
           }}
         >
-          {value || "-"}
+          {value || '-'}
         </Text>
       </Group>
     </Box>
-  );
+  )
 }
 
 export function CodeBlock({
@@ -93,15 +93,15 @@ export function CodeBlock({
   color,
   icon,
 }: {
-  label: string;
-  value: string;
-  color?: string;
-  icon?: ReactNode;
+  label: string
+  value: string
+  color?: string
+  icon?: ReactNode
 }) {
-  let displayValue = value;
+  let displayValue = value
   try {
-    const parsed = JSON.parse(value);
-    displayValue = JSON.stringify(parsed, null, 2);
+    const parsed = JSON.parse(value)
+    displayValue = JSON.stringify(parsed, null, 2)
   } catch {
     // Keep as is
   }
@@ -118,15 +118,15 @@ export function CodeBlock({
         <Code
           block
           style={{
-            whiteSpace: "pre-wrap",
-            wordBreak: "break-all",
+            whiteSpace: 'pre-wrap',
+            wordBreak: 'break-all',
             backgroundColor: color,
-            fontSize: "var(--mantine-font-size-xs)",
+            fontSize: 'var(--mantine-font-size-xs)',
           }}
         >
           {displayValue}
         </Code>
       </ScrollArea.Autosize>
     </Box>
-  );
+  )
 }

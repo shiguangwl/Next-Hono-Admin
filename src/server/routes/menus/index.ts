@@ -1,9 +1,8 @@
-import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
-import { requireAuth } from '@/server/middleware/jwt-auth'
 import { requirePermission } from '@/server/middleware/rbac'
+import { requireAuth } from '@/server/middleware/session-auth'
 import {
   createMenu,
   deleteMenu,
@@ -13,6 +12,7 @@ import {
   updateMenu,
 } from '@/server/services'
 import { R } from '@/server/utils/response'
+import { zValidator } from '@/server/utils/validator'
 import { IdParamSchema } from '../shared'
 import { CreateMenuInputSchema, MenuQuerySchema, UpdateMenuInputSchema } from './dtos'
 
@@ -24,7 +24,10 @@ const menus = new Hono<Env>()
     zValidator('query', MenuQuerySchema),
     async (c) => {
       const query = c.req.valid('query')
-      const result = await getMenuList({ menuType: query.menuType, status: query.status })
+      const result = await getMenuList({
+        menuType: query.menuType,
+        status: query.status,
+      })
       return R.ok(result)
     }
   )
@@ -34,7 +37,10 @@ const menus = new Hono<Env>()
     zValidator('query', MenuQuerySchema),
     async (c) => {
       const query = c.req.valid('query')
-      const result = await getMenuTree({ menuType: query.menuType, status: query.status })
+      const result = await getMenuTree({
+        menuType: query.menuType,
+        status: query.status,
+      })
       return R.ok(result)
     }
   )
@@ -51,7 +57,11 @@ const menus = new Hono<Env>()
   .post(
     '/',
     requirePermission('system:menu:create'),
-    auditLog({ module: '菜单管理', operation: '创建', description: '创建菜单' }),
+    auditLog({
+      module: '菜单管理',
+      operation: '创建',
+      description: '创建菜单',
+    }),
     zValidator('json', CreateMenuInputSchema),
     async (c) => {
       const body = c.req.valid('json')
@@ -62,7 +72,11 @@ const menus = new Hono<Env>()
   .put(
     '/:id',
     requirePermission('system:menu:update'),
-    auditLog({ module: '菜单管理', operation: '更新', description: '更新菜单信息' }),
+    auditLog({
+      module: '菜单管理',
+      operation: '更新',
+      description: '更新菜单信息',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', UpdateMenuInputSchema),
     async (c) => {
@@ -75,7 +89,11 @@ const menus = new Hono<Env>()
   .delete(
     '/:id',
     requirePermission('system:menu:delete'),
-    auditLog({ module: '菜单管理', operation: '删除', description: '删除菜单' }),
+    auditLog({
+      module: '菜单管理',
+      operation: '删除',
+      description: '删除菜单',
+    }),
     zValidator('param', IdParamSchema),
     async (c) => {
       const { id } = c.req.valid('param')

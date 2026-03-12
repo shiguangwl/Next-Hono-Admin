@@ -3,12 +3,12 @@
 # ============================================
 # Base: Node.js with pnpm
 # ============================================
-FROM node:23-alpine AS base
+FROM node:22-alpine AS base
 
 # 安装 pnpm
 ENV PNPM_HOME="/pnpm"
 ENV PATH="$PNPM_HOME:$PATH"
-RUN corepack enable && corepack prepare pnpm@latest --activate
+RUN corepack enable && corepack prepare pnpm@10.12.1 --activate
 
 # ============================================
 # Dependencies: 安装依赖

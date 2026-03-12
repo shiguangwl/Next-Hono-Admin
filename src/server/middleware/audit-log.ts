@@ -107,15 +107,15 @@ async function getRequestParams(c: {
 function sanitizeBody(body: Record<string, unknown>): Record<string, unknown> {
   const sensitiveFields = [
     'password',
-    'newPassword',
-    'oldPassword',
+    'newpassword',
+    'oldpassword',
     'token',
-    'accessToken',
-    'refreshToken',
+    'accesstoken',
+    'refreshtoken',
     'secret',
-    'apiKey',
+    'apikey',
     'authorization',
-    'creditCard',
+    'creditcard',
     'ssn',
   ]
   const result: Record<string, unknown> = {}
@@ -133,69 +133,12 @@ function sanitizeBody(body: Record<string, unknown>): Record<string, unknown> {
   return result
 }
 
-/**
- * 操作日志中间件工厂
- * @param options - 日志选项
- * @description 记录操作日志，支持异步记录不阻塞主业务流程
- */
-export function auditLog(options: AuditOptions) {
+function createAuditLogCore(options: AuditOptions, recorder: LogRecorder) {
   return createMiddleware<Env>(async (c, next) => {
     const startTime = Date.now()
     const admin = c.get('admin')
 
-    // 预先获取请求参数（在 next() 之前，因为 body 只能读取一次）
-    const requestParams = await getRequestParams(c)
-
-    let responseStatus = 1
-    let errorMsg: string | null = null
-
-    try {
-      await next()
-      responseStatus = c.res.status >= 400 ? 0 : 1
-    } catch (error) {
-      responseStatus = 0
-      errorMsg = error instanceof Error ? error.message : String(error)
-      throw error
-    } finally {
-      const executionTime = Date.now() - startTime
-
-      const logData: OperationLogData = {
-        adminId: admin?.adminId ?? null,
-        adminName: admin?.username ?? null,
-        module: options.module,
-        operation: options.operation,
-        description: options.description ?? null,
-        method: `${c.req.method} ${c.req.path}`,
-        requestMethod: c.req.method,
-        requestUrl: c.req.url,
-        requestParams,
-        ip: getClientIp(c),
-        userAgent: c.req.header('user-agent') ?? null,
-        executionTime,
-        status: responseStatus,
-        errorMsg,
-      }
-
-      // 异步记录日志，不阻塞响应
-      setImmediate(() => {
-        currentLogRecorder(logData).catch((err) => {
-          logger.error('Failed to record audit log', { err })
-        })
-      })
-    }
-  })
-}
-
-/**
- * 创建带自定义记录器的操作日志中间件
- * @param options - 日志选项
- * @param recorder - 自定义日志记录函数
- */
-export function createAuditLog(options: AuditOptions, recorder: LogRecorder) {
-  return createMiddleware<Env>(async (c, next) => {
-    const startTime = Date.now()
-    const admin = c.get('admin')
-
+    // WHY: body 只能读取一次，必须在 next() 之前获取
     const requestParams = await getRequestParams(c)
 
     let responseStatus = 1
@@ -235,4 +178,21 @@ export function createAuditLog(options: AuditOptions, recorder: LogRecorder) {
       })
     }
   })
+}
+
+/**
+ * 操作日志中间件（使用全局日志记录器）
+ * @param options - 日志选项
+ */
+export function auditLog(options: AuditOptions) {
+  return createAuditLogCore(options, currentLogRecorder)
+}
+
+/**
+ * 创建带自定义记录器的操作日志中间件
+ * @param options - 日志选项
+ * @param recorder - 自定义日志记录函数
+ */
+export function createAuditLog(options: AuditOptions, recorder: LogRecorder) {
+  return createAuditLogCore(options, recorder)
 }

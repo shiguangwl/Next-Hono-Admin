@@ -7,25 +7,22 @@
   },
   "files": {
     "ignoreUnknown": true,
-    "includes": [
-      "**",
-      "!**/node_modules",
-      "!**/.next",
-      "!**/drizzle",
-      "!**/*.config.js",
-      "!**/*.config.mjs",
-      "!**/globals.css",
-      "!**/dist",
-      "!**/.turbo"
-    ]
+    "includes": ["**", "!**/drizzle", "!**/.turbo"]
   },
   "formatter": {
     "enabled": true,
     "indentStyle": "space",
     "indentWidth": 2,
-    "lineWidth": 100
+    "lineWidth": 100,
+    "lineEnding": "lf"
+  },
+  "css": {
+    "linter": {
+      "enabled": true
+    }
   },
   "assist": {
+    "enabled": true,
     "actions": {
       "source": { "organizeImports": "on" }
     }
@@ -36,7 +33,7 @@
       "recommended": true,
       "suspicious": {
         "noExplicitAny": "warn",
-        "noUnknownAtRules": "off"
+        "noUnknownAtRules": "error"
       },
       "style": {
         "noNonNullAssertion": "warn"
@@ -50,7 +47,7 @@
       },
       "correctness": {
         "noUnusedImports": "error",
-        "noUnusedVariables": "warn"
+        "noUnusedVariables": "error"
       }
     }
   },
@@ -69,7 +66,7 @@
   },
   "overrides": [
     {
-      "includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx"],
+      "includes": ["**/*.test.ts", "**/*.spec.ts", "**/*.test.tsx", "**/*.spec.tsx"],
       "linter": {
         "rules": {
           "suspicious": { "noExplicitAny": "off" }

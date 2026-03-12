@@ -8,9 +8,8 @@ out
 dist
 
 # Development
-.env
-.env.local
-.env.*.local
+.env*
+!.env.example
 *.log
 
 # IDE
@@ -27,6 +26,13 @@ dist
 tests
 coverage
 vitest.config.ts
+
+# Scripts & Config
+script
+.husky
+biome.json
+.agent
+.agents
 
 # Docs
 docs

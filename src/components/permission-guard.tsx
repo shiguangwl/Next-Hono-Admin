@@ -6,13 +6,17 @@ import type { ReactNode } from 'react'
 
 import { usePermission } from '@/hooks/use-permission'
 
-interface PermissionGuardProps {
+type PermissionGuardBase = {
   children: ReactNode
-  permission?: string
-  anyPermissions?: string[]
-  allPermissions?: string[]
   fallback?: ReactNode
 }
+
+type PermissionGuardProps = PermissionGuardBase &
+  (
+    | { permission: string; anyPermissions?: never; allPermissions?: never }
+    | { permission?: never; anyPermissions: string[]; allPermissions?: never }
+    | { permission?: never; anyPermissions?: never; allPermissions: string[] }
+  )
 
 export function PermissionGuard({
   children,

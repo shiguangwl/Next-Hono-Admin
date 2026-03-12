@@ -13,7 +13,7 @@ NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，
 
 ## 功能概览
 
-- JWT 认证、RBAC 权限（菜单/按钮）
+- 服务端会话认证、RBAC 权限（菜单/按钮）
 - 请求级上下文、结构化日志、审计日志
 - CRUD 路由工厂 + React Query Hooks 工厂
 - MySQL + Drizzle ORM（类型安全 Schema）
@@ -43,8 +43,8 @@ pnpm install
 - `DATABASE_CONNECT_TIMEOUT`
 - `AUTO_DB_MIGRATE`
 - `AUTO_DB_SEED`
-- `JWT_SECRET`（至少 32 字符）
-- `JWT_EXPIRES_IN`（如 7d / 1h / 30m）
+- `SESSION_COOKIE_NAME`
+- `SESSION_TTL_DAYS`
 - `NODE_ENV`
 
 建议：

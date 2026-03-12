@@ -1,10 +1,11 @@
 /**
  * 日志工具
- * @description 基于 Pino 的结构化日志，支持 requestId 上下文
+ * @description 基于 Pino 的结构化日志，支持 requestId 上下文和 OTel trace 关联
  */
 
 import pino from 'pino'
 import { env } from '@/env'
+import { getTraceContext } from '@/lib/telemetry'
 import { getRequestContext } from './context'
 
 /**
@@ -25,6 +26,11 @@ function createLogger() {
         pid: bindings.pid,
         hostname: bindings.hostname,
       }),
+    },
+
+    // WHY: OTel 启用时自动注入 traceId/spanId，使日志与链路追踪关联
+    mixin() {
+      return getTraceContext() ?? {}
     },
 
     // 时间戳格式

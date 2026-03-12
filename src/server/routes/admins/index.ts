@@ -1,9 +1,9 @@
-import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
+import { UnauthorizedError } from '@/lib/errors'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
-import { requireAuth } from '@/server/middleware/jwt-auth'
 import { requirePermission } from '@/server/middleware/rbac'
+import { requireAuth } from '@/server/middleware/session-auth'
 import {
   createAdmin,
   deleteAdmin,
@@ -14,6 +14,7 @@ import {
   updateAdminRoles,
 } from '@/server/services'
 import { R } from '@/server/utils/response'
+import { zValidator } from '@/server/utils/validator'
 import { IdParamSchema } from '../shared'
 import {
   AdminQuerySchema,
@@ -90,7 +91,7 @@ const admins = new Hono<Env>()
       const { id } = c.req.valid('param')
       const currentAdmin = c.get('admin')
       if (!currentAdmin) {
-        return R.fail('UNAUTHORIZED', '未获取到管理员信息')
+        throw new UnauthorizedError('未获取到管理员信息')
       }
       await deleteAdmin(id, currentAdmin.adminId)
       return R.success('删除成功')

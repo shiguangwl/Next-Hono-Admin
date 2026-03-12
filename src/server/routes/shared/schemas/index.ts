@@ -10,6 +10,10 @@ export {
   IdParamSchema,
   type SuccessResponse,
   SuccessSchema,
+  type ValidationErrorDetails,
+  ValidationErrorDetailsSchema,
+  type ValidationIssue,
+  ValidationIssueSchema,
 } from './common'
 
 export {

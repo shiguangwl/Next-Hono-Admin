@@ -66,7 +66,7 @@ export const LoginInputSchema = z.object({
 })
 
 export const LoginResultSchema = z.object({
-  token: z.string(),
+  sessionToken: z.string(),
   admin: AdminInfoSchema,
   permissions: z.array(z.string()),
   menus: z.array(MenuTreeNodeSchema),

@@ -1,9 +1,8 @@
-import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
-import { requireAuth } from '@/server/middleware/jwt-auth'
 import { requirePermission } from '@/server/middleware/rbac'
+import { requireAuth } from '@/server/middleware/session-auth'
 import {
   createConfig,
   deleteConfig,
@@ -13,6 +12,7 @@ import {
   updateConfig,
 } from '@/server/services'
 import { R } from '@/server/utils/response'
+import { zValidator } from '@/server/utils/validator'
 import { IdParamSchema } from '../shared'
 import {
   ConfigQuerySchema,
@@ -46,7 +46,11 @@ const configs = new Hono<Env>()
   .post(
     '/',
     requirePermission('system:config:create'),
-    auditLog({ module: '系统配置', operation: '创建', description: '创建系统配置项' }),
+    auditLog({
+      module: '系统配置',
+      operation: '创建',
+      description: '创建系统配置项',
+    }),
     zValidator('json', CreateConfigInputSchema),
     async (c) => {
       const body = c.req.valid('json')
@@ -67,7 +71,11 @@ const configs = new Hono<Env>()
   .put(
     '/:id',
     requirePermission('system:config:update'),
-    auditLog({ module: '系统配置', operation: '更新', description: '更新系统配置项' }),
+    auditLog({
+      module: '系统配置',
+      operation: '更新',
+      description: '更新系统配置项',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', UpdateConfigInputSchema),
     async (c) => {
@@ -81,7 +89,11 @@ const configs = new Hono<Env>()
   .delete(
     '/:id',
     requirePermission('system:config:delete'),
-    auditLog({ module: '系统配置', operation: '删除', description: '删除系统配置项' }),
+    auditLog({
+      module: '系统配置',
+      operation: '删除',
+      description: '删除系统配置项',
+    }),
     zValidator('param', IdParamSchema),
     async (c) => {
       const { id } = c.req.valid('param')
@@ -93,7 +105,11 @@ const configs = new Hono<Env>()
   .patch(
     '/key/:id',
     requirePermission('system:config:update'),
-    auditLog({ module: '系统配置', operation: '更新配置值', description: '更新系统配置值' }),
+    auditLog({
+      module: '系统配置',
+      operation: '更新配置值',
+      description: '更新系统配置值',
+    }),
     zValidator('param', IdParamSchema),
     zValidator('json', UpdateConfigValueInputSchema),
     async (c) => {

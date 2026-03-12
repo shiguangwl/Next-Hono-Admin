@@ -5,6 +5,7 @@
 
 import type { NextRequest } from 'next/server'
 import { NextResponse } from 'next/server'
+import { DEFAULT_SESSION_COOKIE_NAME } from '@/lib/utils/constants'
 
 /**
  * 公开路由（无需登录）
@@ -20,6 +21,7 @@ const apiPrefix = '/api'
  * 静态资源路径（不处理）
  */
 const staticPaths = ['/_next', '/favicon.ico', '/images', '/fonts']
+const sessionCookieName = process.env.SESSION_COOKIE_NAME || DEFAULT_SESSION_COOKIE_NAME
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -34,11 +36,6 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 从 cookie 或 localStorage 无法在 middleware 中直接读取
-  // 这里我们检查 auth-storage cookie（如果设置了的话）
-  // 实际的认证检查在客户端组件 AuthGuard 中完成
-  // Middleware 主要用于 SSR 场景的初步检查
-
   const isPublicRoute = publicRoutes.includes(pathname)
 
   // 公开路由直接放行
@@ -46,13 +43,12 @@ export function middleware(request: NextRequest) {
     return NextResponse.next()
   }
 
-  // 受保护路由：检查是否有 token cookie
-  // 注意：这只是初步检查，完整的认证验证在 AuthGuard 组件中
-  const _authCookie = request.cookies.get('auth-token')
-
-  // 如果没有 token 且不是公开路由，可以选择重定向到登录页
-  // 但由于我们使用 localStorage 存储 token，这里不做强制重定向
-  // 让客户端 AuthGuard 处理
+  const authCookie = request.cookies.get(sessionCookieName)
+  if (!authCookie?.value) {
+    const loginUrl = new URL('/login', request.url)
+    loginUrl.searchParams.set('redirect', pathname)
+    return NextResponse.redirect(loginUrl)
+  }
 
   return NextResponse.next()
 }

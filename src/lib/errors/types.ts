@@ -5,6 +5,19 @@
 
 import { ErrorCode } from './codes'
 
+export type ValidationIssueSource = 'json' | 'form' | 'query' | 'param' | 'header' | 'cookie'
+
+export interface ValidationIssue {
+  path: string
+  message: string
+  code: string
+  source: ValidationIssueSource
+}
+
+export interface ValidationErrorDetails {
+  issues: ValidationIssue[]
+}
+
 /**
  * 应用错误基类选项
  */
@@ -41,10 +54,8 @@ export class AppError extends Error {
     this.isOperational = options.isOperational ?? true
     this.details = options.details
 
-    // 确保原型链正确
     Object.setPrototypeOf(this, new.target.prototype)
 
-    // 捕获堆栈信息（提升调试体验）
     if (Error.captureStackTrace) {
       Error.captureStackTrace(this, this.constructor)
     }
@@ -83,8 +94,11 @@ export class ForbiddenError extends AppError {
  * 资源未找到错误 (404)
  */
 export class NotFoundError extends AppError {
-  constructor(resource: string, id: string | number) {
-    super(`${resource} with id ${id} not found`, ErrorCode.NOT_FOUND, {
+  constructor(resourceOrMessage: string, id?: string | number) {
+    const message =
+      id === undefined ? resourceOrMessage : `${resourceOrMessage} with id ${id} not found`
+
+    super(message, ErrorCode.NOT_FOUND, {
       httpStatus: 404,
       isOperational: true,
     })

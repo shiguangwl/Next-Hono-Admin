@@ -1,33 +1,32 @@
 import type { Hono } from 'hono'
 import { HTTPException } from 'hono/http-exception'
-import { env } from '@/env'
-import { mapErrorToResponse } from '@/lib/errors'
-import { logger } from '@/lib/logging'
+import { ErrorCode, mapErrorToResponse, reportError } from '@/lib/errors'
 import type { Env } from '@/server/context'
 
+type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 429 | 500
+
 export function setupErrorHandlers(app: Hono<Env>): void {
-  app.onError((err, c) => {
+  app.onError(async (err, c) => {
     const requestId = c.get('requestId')
 
+    // Hono 框架内部异常（malformed JSON 等边界情况）
     if (err instanceof HTTPException) {
-      const message =
-        env.NODE_ENV === 'production' && err.status >= 500 ? 'Internal Server Error' : err.message
-
       if (err.status >= 500) {
-        logger.error('HTTP Exception', {
-          requestId,
-          status: err.status,
-          method: c.req.method,
-          path: c.req.path,
-          err,
-        })
+        reportError(err, { requestId, httpStatus: err.status })
       }
 
-      return c.json({ code: 'HTTP_ERROR', message, requestId }, err.status)
+      return c.json(
+        {
+          code: ErrorCode.HTTP_ERROR,
+          message: err.status >= 500 ? '服务器内部错误' : err.message || '请求处理失败',
+          requestId,
+        },
+        err.status as ErrorStatus
+      )
     }
 
+    // AppError 及其子类 / 未知错误
     const errorResponse = mapErrorToResponse(err, requestId)
-
     return c.json(
       {
         code: errorResponse.code,
@@ -35,14 +34,14 @@ export function setupErrorHandlers(app: Hono<Env>): void {
         details: errorResponse.details,
         requestId: errorResponse.requestId,
       },
-      errorResponse.status as 400 | 401 | 403 | 404 | 409 | 429 | 500
+      errorResponse.status as ErrorStatus
     )
   })
 
   app.notFound((c) => {
     return c.json(
       {
-        code: 'NOT_FOUND',
+        code: ErrorCode.NOT_FOUND,
         message: `Route ${c.req.method} ${c.req.path} not found`,
         requestId: c.get('requestId'),
       },

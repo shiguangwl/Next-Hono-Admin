@@ -1,13 +1,13 @@
 /**
  * 公开路径配置
- * @description 定义无需 JWT 认证的 API 路径
+ * @description 定义无需会话认证的 API 路径
  */
 
 /**
- * 无需 JWT 认证的路径列表
- * @description 这些路径将跳过 JWT 认证中间件
+ * 无需会话认证的路径列表
+ * @description 这些路径将跳过会话认证中间件
  */
-export const PUBLIC_PATHS: readonly string[] = ['/api/auth/login'] as const
+export const PUBLIC_PATHS: readonly string[] = ['/api/auth/login', '/api/health'] as const
 
 /**
  * 检查路径是否为公开路径

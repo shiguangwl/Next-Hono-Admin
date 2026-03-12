@@ -149,6 +149,7 @@ export async function updateRole(id: number, input: UpdateRoleInput): Promise<Ro
     })
     .where(eq(sysRole.id, id))
 
+  invalidateAllPermissionCache()
   return getRoleById(id)
 }
 
@@ -182,6 +183,8 @@ export async function deleteRole(id: number): Promise<void> {
     await tx.delete(sysRoleMenu).where(eq(sysRoleMenu.roleId, id))
     await tx.delete(sysRole).where(eq(sysRole.id, id))
   })
+
+  invalidateAllPermissionCache()
 }
 
 /** 更新角色菜单权限 */

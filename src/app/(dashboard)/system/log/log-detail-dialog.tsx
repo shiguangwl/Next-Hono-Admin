@@ -1,4 +1,4 @@
-"use client";
+'use client'
 
 import {
   Badge,
@@ -11,7 +11,7 @@ import {
   ScrollArea,
   Stack,
   Text,
-} from "@mantine/core";
+} from '@mantine/core'
 import {
   Activity,
   AlertCircle,
@@ -22,40 +22,35 @@ import {
   Network,
   Terminal,
   User,
-} from "lucide-react";
+} from 'lucide-react'
 
-import { StatusChip } from "@/components/ui/status-chip";
-import {
-  CodeBlock,
-  DetailValue,
-  InfoRow,
-  Section,
-} from "./log-detail-components";
+import { StatusChip } from '@/components/ui/status-chip'
+import { CodeBlock, DetailValue, InfoRow, Section } from './log-detail-components'
 
 type OperationLog = {
-  id: number;
-  adminId: number | null;
-  adminName: string | null;
-  module: string | null;
-  operation: string | null;
-  description: string | null;
-  method: string | null;
-  requestMethod: string | null;
-  requestUrl: string | null;
-  requestParams: string | null;
-  responseResult: string | null;
-  ip: string | null;
-  ipLocation: string | null;
-  userAgent: string | null;
-  executionTime: number | null;
-  status: number;
-  errorMsg: string | null;
-  createdAt: string;
-};
+  id: number
+  adminId: number | null
+  adminName: string | null
+  module: string | null
+  operation: string | null
+  description: string | null
+  method: string | null
+  requestMethod: string | null
+  requestUrl: string | null
+  requestParams: string | null
+  responseResult: string | null
+  ip: string | null
+  ipLocation: string | null
+  userAgent: string | null
+  executionTime: number | null
+  status: number
+  errorMsg: string | null
+  createdAt: string
+}
 
 interface LogDetailDialogProps {
-  log: OperationLog;
-  onClose: () => void;
+  log: OperationLog
+  onClose: () => void
 }
 
 export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
@@ -82,28 +77,18 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           <Paper withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
             <Grid gutter="md">
               <Grid.Col span={{ base: 12, sm: 6 }}>
-                <InfoRow
-                  icon={<User size={14} />}
-                  label="操作人"
-                  value={log.adminName || "系统"}
-                />
+                <InfoRow icon={<User size={14} />} label="操作人" value={log.adminName || '系统'} />
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6 }}>
-                <InfoRow
-                  icon={<Clock size={14} />}
-                  label="操作时间"
-                  value={log.createdAt}
-                />
+                <InfoRow icon={<Clock size={14} />} label="操作时间" value={log.createdAt} />
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6 }}>
                 <InfoRow
                   icon={<Info size={14} />}
                   label="业务状态"
                   value={
-                    <StatusChip
-                      status={log.status === 1 ? "success" : "danger"}
-                    >
-                      {log.status === 1 ? "成功" : "失败"}
+                    <StatusChip status={log.status === 1 ? 'success' : 'danger'}>
+                      {log.status === 1 ? '成功' : '失败'}
                     </StatusChip>
                   }
                 />
@@ -112,9 +97,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
                 <InfoRow
                   icon={<Activity size={14} />}
                   label="响应耗时"
-                  value={
-                    log.executionTime !== null ? `${log.executionTime}ms` : "-"
-                  }
+                  value={log.executionTime !== null ? `${log.executionTime}ms` : '-'}
                 />
               </Grid.Col>
             </Grid>
@@ -153,7 +136,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
                 <Grid.Col span={{ base: 12, sm: 6 }}>
                   <DetailValue
                     label="IP 归属地"
-                    value={log.ipLocation || "-"}
+                    value={log.ipLocation || '-'}
                     icon={<Globe size={14} />}
                   />
                 </Grid.Col>
@@ -169,23 +152,14 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           {/* 数据详情 */}
           <Section title="数据详情" icon={<Terminal size={16} />}>
             <Stack gap="md">
-              {log.requestParams && (
-                <CodeBlock label="请求参数" value={log.requestParams} />
-              )}
-              {log.responseResult && (
-                <CodeBlock label="响应结果" value={log.responseResult} />
-              )}
+              {log.requestParams && <CodeBlock label="请求参数" value={log.requestParams} />}
+              {log.responseResult && <CodeBlock label="响应结果" value={log.responseResult} />}
               {log.status === 0 && log.errorMsg && (
                 <CodeBlock
                   label="异常信息"
                   value={log.errorMsg}
                   color="var(--mantine-color-red-light)"
-                  icon={
-                    <AlertCircle
-                      size={14}
-                      color="var(--mantine-color-red-filled)"
-                    />
-                  }
+                  icon={<AlertCircle size={14} color="var(--mantine-color-red-filled)" />}
                 />
               )}
             </Stack>
@@ -201,7 +175,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
         </Button>
       </Group>
     </Modal>
-  );
+  )
 }
 
-export type { OperationLog };
+export type { OperationLog }

@@ -3,8 +3,11 @@
  * @description 统一导出所有认证相关功能
  */
 
-// JWT 工具
-export { type AdminPayload, signToken, verifyToken } from './jwt'
+export type AdminPayload = {
+  adminId: number
+  username: string
+}
 
 // 密码工具
 export { hashPassword, verifyPassword } from './password'
+export { createSessionExpiry, createSessionToken, hashSessionToken } from './session-token'

@@ -7,4 +7,5 @@ export interface LoginInput {
   username: string
   password: string
   ip?: string
+  userAgent?: string | null
 }

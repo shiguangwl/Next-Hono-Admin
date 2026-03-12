@@ -1,6 +1,11 @@
 import { z } from 'zod'
 import { createPaginatedSchema, PaginationQuerySchema } from '../shared'
 
+const DateTimeStringSchema = z
+  .string()
+  .datetime({ offset: true })
+  .or(z.string().datetime({ local: true }))
+
 export const OperationLogSchema = z.object({
   id: z.number(),
   adminId: z.number().nullable(),
@@ -28,8 +33,8 @@ export const LogQuerySchema = PaginationQuerySchema.extend({
   module: z.string().optional(),
   operation: z.string().optional(),
   status: z.coerce.number().int().min(0).max(1).optional(),
-  startTime: z.string().optional(),
-  endTime: z.string().optional(),
+  startTime: DateTimeStringSchema.optional(),
+  endTime: DateTimeStringSchema.optional(),
 })
 
 export const PaginatedOperationLogSchema = createPaginatedSchema(OperationLogSchema)

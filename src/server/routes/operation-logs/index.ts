@@ -1,10 +1,10 @@
-import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
 import type { Env } from '@/server/context'
-import { requireAuth } from '@/server/middleware/jwt-auth'
 import { requirePermission } from '@/server/middleware/rbac'
+import { requireAuth } from '@/server/middleware/session-auth'
 import { deleteOperationLog, getOperationLogById, getOperationLogList } from '@/server/services'
 import { R } from '@/server/utils/response'
+import { zValidator } from '@/server/utils/validator'
 import { IdParamSchema } from '../shared'
 import { LogQuerySchema } from './dtos'
 

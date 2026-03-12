@@ -4,7 +4,7 @@
  */
 
 import type { AppError } from './types'
-import { ConflictError, InternalServerError, ValidationError } from './types'
+import { ConflictError, DatabaseError, InternalServerError, ValidationError } from './types'
 
 /**
  * MySQL 错误接口
@@ -51,17 +51,17 @@ export function handleDatabaseError(err: unknown): AppError {
 
   // 连接错误
   if (dbError.code === 'ECONNREFUSED') {
-    return new InternalServerError('数据库连接失败', err)
+    return new DatabaseError('数据库连接失败', err)
   }
 
   // 超时错误
   if (dbError.code === 'ETIMEDOUT') {
-    return new InternalServerError('数据库连接超时', err)
+    return new DatabaseError('数据库连接超时', err)
   }
 
   // 访问拒绝（配置错误）
   if (dbError.code === 'ER_ACCESS_DENIED_ERROR' || dbError.errno === 1045) {
-    return new InternalServerError('数据库访问拒绝', err)
+    return new DatabaseError('数据库访问拒绝', err)
   }
 
   // ========== 编程错误（字段/语法错误） ==========
@@ -73,9 +73,9 @@ export function handleDatabaseError(err: unknown): AppError {
 
   // SQL 语法错误
   if (dbError.code === 'ER_PARSE_ERROR' || dbError.errno === 1064) {
-    return new InternalServerError('数据库查询错误：SQL语法错误', err)
+    return new InternalServerError('数据库查询错误：语法错误', err)
   }
 
   // 其他未知数据库错误
-  return new InternalServerError('数据库操作失败', err)
+  return new DatabaseError('数据库操作失败', err)
 }

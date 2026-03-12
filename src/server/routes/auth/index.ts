@@ -1,40 +1,72 @@
-import { zValidator } from '@hono/zod-validator'
 import { Hono } from 'hono'
+import { getCookie } from 'hono/cookie'
+import { env } from '@/env'
+import { UnauthorizedError } from '@/lib/errors'
 import type { Env } from '@/server/context'
-import { requireAuth } from '@/server/middleware/jwt-auth'
 import { loginRateLimit } from '@/server/middleware/rate-limit'
-import { getAdminById, getAdminMenuTree, getAdminPermissions, login } from '@/server/services'
+import { requireAuth } from '@/server/middleware/session-auth'
+import {
+  getAdminById,
+  getAdminMenuTree,
+  getAdminPermissions,
+  login,
+  revokeSessionById,
+  revokeSessionToken,
+} from '@/server/services'
 import { R } from '@/server/utils/response'
+import { clearSessionCookie, setSessionCookie } from '@/server/utils/session-cookie'
+import { zValidator } from '@/server/utils/validator'
 import { LoginInputSchema } from './dtos'
 
 const auth = new Hono<Env>()
-  .post('/login', zValidator('json', LoginInputSchema), async (c) => {
-    await loginRateLimit(c, async () => {})
-
+  .post('/login', loginRateLimit, zValidator('json', LoginInputSchema), async (c) => {
     const body = c.req.valid('json')
     const ip =
       c.req.header('x-forwarded-for')?.split(',')[0]?.trim() ||
       c.req.header('x-real-ip') ||
       undefined
+    const userAgent = c.req.header('user-agent') || null
 
     const result = await login({
       username: body.username,
       password: body.password,
       ip,
+      userAgent,
     })
-    return R.ok(result, '登录成功')
+    setSessionCookie(c, result.sessionToken)
+    return R.ok(
+      {
+        sessionToken: result.sessionToken,
+        admin: result.admin,
+        permissions: result.permissions,
+        menus: result.menus,
+      },
+      '登录成功'
+    )
   })
-  .post('/logout', async () => {
+  .post('/logout', async (c) => {
+    const sessionId = c.get('sessionId')
+    const cookieToken = getCookie(c, env.SESSION_COOKIE_NAME)
+
+    if (sessionId) {
+      await revokeSessionById(sessionId)
+    } else if (cookieToken) {
+      await revokeSessionToken(cookieToken)
+    }
+
+    clearSessionCookie(c)
     return R.success('登出成功')
   })
   .get('/info', requireAuth, async (c) => {
     const adminPayload = c.get('admin')
     if (!adminPayload) {
-      return R.fail('UNAUTHORIZED', '未获取到管理员信息')
+      throw new UnauthorizedError('未获取到管理员信息')
     }
-    const admin = await getAdminById(adminPayload.adminId)
-    const permissions = await getAdminPermissions(adminPayload.adminId)
-    const menus = await getAdminMenuTree(adminPayload.adminId)
+    const [admin, permissions, menus] = await Promise.all([
+      getAdminById(adminPayload.adminId),
+      getAdminPermissions(adminPayload.adminId),
+      getAdminMenuTree(adminPayload.adminId),
+    ])
 
     return R.ok({ admin, permissions, menus })
   })

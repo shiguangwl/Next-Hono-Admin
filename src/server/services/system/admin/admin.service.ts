@@ -16,6 +16,7 @@ import {
 import { SUPER_ADMIN_ID } from '@/lib/utils'
 import { invalidatePermissionCache } from '@/server/utils/permission-cache'
 import type { PaginatedResult, PaginationQuery } from '../../../utils/shared'
+import { revokeSessionsByAdminId } from '../auth'
 import { toAdminVo } from './admin.utils'
 import type { AdminVo, CreateAdminInput, UpdateAdminInput } from './models'
 
@@ -179,6 +180,11 @@ export async function updateAdmin(id: number, input: UpdateAdminInput): Promise<
     })
     .where(eq(sysAdmin.id, id))
 
+  if (input.status === 0) {
+    await revokeSessionsByAdminId(id)
+  }
+
+  invalidatePermissionCache(id)
   return getAdminById(id)
 }
 
@@ -208,6 +214,7 @@ export async function deleteAdmin(id: number, currentAdminId: number): Promise<v
     await tx.delete(sysAdmin).where(eq(sysAdmin.id, id))
   })
 
+  await revokeSessionsByAdminId(id)
   invalidatePermissionCache(id)
 }
 
@@ -227,6 +234,7 @@ export async function resetPassword(id: number, newPassword: string): Promise<vo
   const hashedPassword = await hashPassword(newPassword)
 
   await db.update(sysAdmin).set({ password: hashedPassword }).where(eq(sysAdmin.id, id))
+  await revokeSessionsByAdminId(id)
 }
 
 /** 更新管理员角色 */

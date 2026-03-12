@@ -6,6 +6,7 @@ import { and, asc, count, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysMenu, sysRoleMenu } from '@/db/schema'
 import { BusinessError, ConflictError, ErrorCode, NotFoundError } from '@/lib/errors'
+import { invalidateAllPermissionCache } from '@/server/utils/permission-cache'
 import { buildMenuTree, toMenuVo } from './menu.utils'
 import type { CreateMenuInput, MenuQuery, MenuTreeNode, MenuVo, UpdateMenuInput } from './models'
 
@@ -126,6 +127,7 @@ export async function createMenu(input: CreateMenuInput): Promise<MenuVo> {
     remark: input.remark,
   })
 
+  invalidateAllPermissionCache()
   return getMenuById(Number(insertResult.insertId))
 }
 
@@ -196,6 +198,7 @@ export async function updateMenu(id: number, input: UpdateMenuInput): Promise<Me
     })
     .where(eq(sysMenu.id, id))
 
+  invalidateAllPermissionCache()
   return getMenuById(id)
 }
 
@@ -229,4 +232,6 @@ export async function deleteMenu(id: number): Promise<void> {
     await tx.delete(sysRoleMenu).where(eq(sysRoleMenu.menuId, id))
     await tx.delete(sysMenu).where(eq(sysMenu.id, id))
   })
+
+  invalidateAllPermissionCache()
 }

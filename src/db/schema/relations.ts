@@ -5,6 +5,7 @@
 import { relations } from 'drizzle-orm'
 import { sysAdmin } from './admin'
 import { sysAdminRole } from './admin-role'
+import { sysAdminSession } from './admin-session'
 import { sysMenu } from './menu'
 import { sysRole } from './role'
 import { sysRoleMenu } from './role-menu'
@@ -12,6 +13,7 @@ import { sysRoleMenu } from './role-menu'
 // 管理员关联
 export const sysAdminRelations = relations(sysAdmin, ({ many }) => ({
   adminRoles: many(sysAdminRole),
+  sessions: many(sysAdminSession),
 }))
 
 // 角色关联
@@ -34,6 +36,13 @@ export const sysAdminRoleRelations = relations(sysAdminRole, ({ one }) => ({
   role: one(sysRole, {
     fields: [sysAdminRole.roleId],
     references: [sysRole.id],
+  }),
+}))
+
+export const sysAdminSessionRelations = relations(sysAdminSession, ({ one }) => ({
+  admin: one(sysAdmin, {
+    fields: [sysAdminSession.adminId],
+    references: [sysAdmin.id],
   }),
 }))
 
