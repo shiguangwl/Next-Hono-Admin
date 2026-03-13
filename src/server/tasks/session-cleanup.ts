@@ -23,7 +23,6 @@ export function startSessionCleanupTask(): void {
       void runCleanup()
     }, CLEANUP_INTERVAL_MS)
 
-    // WHY: unref() 让定时器不阻止 Node.js 进程正常退出
     intervalTimer.unref()
   }, INITIAL_DELAY_MS)
 

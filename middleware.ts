@@ -1,4 +1,4 @@
-import { DEFAULT_SESSION_COOKIE_NAME } from "@/lib/utils/constants";
+import { DEFAULT_SESSION_COOKIE_NAME } from "@/lib/constants";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 

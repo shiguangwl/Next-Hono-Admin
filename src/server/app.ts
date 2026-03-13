@@ -1,15 +1,20 @@
-import { Hono } from 'hono'
-import type { Env } from './context'
-import { setupAuditLogger } from './setup/audit'
-import { setupErrorHandlers } from './setup/error-handlers'
-import { setupMiddlewares } from './setup/middlewares'
-import { setupRoutes } from './setup/routes'
+import { Hono } from "hono";
+import type { Env } from "./context";
+import { setLogRecorder } from "./middleware/audit-log";
+import { routes } from "./route-defs";
+import { createOperationLog } from "./services";
+import { setupErrorHandlers } from "./setup/error-handlers";
+import { setupMiddlewares } from "./setup/middlewares";
 
-const app = new Hono<Env>()
+const app = new Hono<Env>();
 
-setupAuditLogger()
-setupMiddlewares(app)
-setupRoutes(app)
-setupErrorHandlers(app)
+setLogRecorder(createOperationLog);
 
-export { app }
+setupMiddlewares(app);
+
+app.get("/api/health", (c) => c.json({ status: "ok" }));
+app.route("/api", routes);
+
+setupErrorHandlers(app);
+
+export { app };

@@ -5,6 +5,7 @@
 import { db } from "@/db";
 import { sysAdmin, sysAdminRole, sysRole } from "@/db/schema";
 import { hashPassword } from "@/lib/auth";
+import { SUPER_ADMIN_ID } from "@/lib/constants";
 import {
   BusinessError,
   ConflictError,
@@ -12,20 +13,30 @@ import {
   handleDatabaseError,
   NotFoundError,
 } from "@/lib/errors";
-import { SUPER_ADMIN_ID } from "@/lib/utils";
+import {
+  buildPaginatedResult,
+  normalizePagination,
+  type PaginatedResult,
+} from "@/server/utils/pagination";
 import { invalidatePermissionCache } from "@/server/utils/permission-cache";
 import { and, count, eq, inArray, like, sql } from "drizzle-orm";
-import type { PaginatedResult, PaginationQuery } from "../../../utils/shared";
-import { revokeSessionsByAdminId } from "../auth";
+import { revokeSessionsByAdminId } from "../auth/session.service";
 import { toAdminVo } from "./admin.utils";
-import type { AdminVo, CreateAdminInput, UpdateAdminInput } from "./models";
+import type { AdminVo, CreateAdminInput, UpdateAdminInput } from "./types";
+
+interface AdminQuery {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  status?: number;
+}
 
 /** 获取管理员列表（分页） */
 export async function getAdminList(
-  options: PaginationQuery = {},
+  options: AdminQuery = {},
 ): Promise<PaginatedResult<AdminVo>> {
-  const { page = 1, pageSize = 20, keyword, status } = options;
-  const offset = (page - 1) * pageSize;
+  const { page, pageSize, offset } = normalizePagination(options);
+  const { keyword, status } = options;
 
   const conditions = [];
   if (keyword) {
@@ -79,13 +90,7 @@ export async function getAdminList(
     roles: roleMap.get(admin.id) || [],
   }));
 
-  return {
-    items,
-    total,
-    page,
-    pageSize,
-    totalPages: Math.ceil(total / pageSize),
-  };
+  return buildPaginatedResult(items, total, page, pageSize);
 }
 
 /** 获取管理员详情 */

@@ -12,7 +12,7 @@
 import { sysAdmin, sysAdminSession } from "@/db/schema";
 import { env } from "@/env";
 import { hashPassword } from "@/lib/auth";
-import { SUPER_ADMIN_ID } from "@/lib/utils";
+import { SUPER_ADMIN_ID } from "@/lib/constants";
 import "dotenv/config";
 import { and, eq, isNull, ne } from "drizzle-orm";
 import { drizzle, type MySql2Database } from "drizzle-orm/mysql2";

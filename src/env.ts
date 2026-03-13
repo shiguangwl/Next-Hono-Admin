@@ -1,9 +1,7 @@
 import { createEnv } from "@t3-oss/env-nextjs";
 import { z } from "zod";
 
-// WHY: env.ts 被 next.config.mjs 直接 import，此时 tsconfig paths 别名不可用，必须内联定义
-// SYNC: 与 lib/utils/constants.ts、middleware.ts 保持一致
-const DEFAULT_SESSION_COOKIE_NAME = "auth_session";
+import { DEFAULT_SESSION_COOKIE_NAME } from "./lib/constants.ts";
 
 const DEFAULT_SESSION_TTL_DAYS = 7;
 
@@ -62,7 +60,12 @@ export const env = createEnv({
       .string()
       .optional()
       .default("")
-      .transform((v) => v.split(",").map((s) => s.trim()).filter(Boolean)),
+      .transform((v) =>
+        v
+          .split(",")
+          .map((s) => s.trim())
+          .filter(Boolean),
+      ),
 
     // 运行环境
     NODE_ENV: z

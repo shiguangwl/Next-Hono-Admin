@@ -45,3 +45,4 @@ coverage
 .ace-tool/
 
 .agent/
+.agents/

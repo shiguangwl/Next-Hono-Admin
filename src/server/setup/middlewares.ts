@@ -1,4 +1,3 @@
-import { isPublicPath } from "@/server/config/public-paths";
 import type { Env } from "@/server/context";
 import { corsMiddleware } from "@/server/middleware/cors";
 import { csrfMiddleware } from "@/server/middleware/csrf";
@@ -6,12 +5,16 @@ import { loadPermissions } from "@/server/middleware/rbac";
 import { requestContextMiddleware } from "@/server/middleware/request-context";
 import { requestLoggerMiddleware } from "@/server/middleware/request-logger";
 import { sessionAuth } from "@/server/middleware/session-auth";
-import { contextMiddleware } from "@/server/utils/response";
 import type { Hono } from "hono";
+
+const PUBLIC_PATHS = new Set(["/api/auth/login", "/api/health"]);
+
+function isPublicPath(path: string): boolean {
+  return PUBLIC_PATHS.has(path);
+}
 
 export function setupMiddlewares(app: Hono<Env>): void {
   app.use("*", requestContextMiddleware);
-  app.use("*", contextMiddleware);
   app.use("*", requestLoggerMiddleware);
 
   // CORS 必须在认证之前，否则 preflight OPTIONS 请求会被拦截

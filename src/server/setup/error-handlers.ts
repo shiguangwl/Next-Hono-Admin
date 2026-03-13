@@ -1,32 +1,34 @@
-import type { Hono } from 'hono'
-import { HTTPException } from 'hono/http-exception'
-import { ErrorCode, mapErrorToResponse, reportError } from '@/lib/errors'
-import type { Env } from '@/server/context'
-
-type ErrorStatus = 400 | 401 | 403 | 404 | 409 | 429 | 500
+import { ErrorCode, mapErrorToResponse, reportError } from "@/lib/errors";
+import type { Env } from "@/server/context";
+import type { Hono } from "hono";
+import { HTTPException } from "hono/http-exception";
+import type { ContentfulStatusCode } from "hono/utils/http-status";
 
 export function setupErrorHandlers(app: Hono<Env>): void {
   app.onError(async (err, c) => {
-    const requestId = c.get('requestId')
+    const requestId = c.get("requestId");
 
     // Hono 框架内部异常（malformed JSON 等边界情况）
     if (err instanceof HTTPException) {
       if (err.status >= 500) {
-        reportError(err, { requestId, httpStatus: err.status })
+        reportError(err, { requestId, httpStatus: err.status });
       }
 
       return c.json(
         {
           code: ErrorCode.HTTP_ERROR,
-          message: err.status >= 500 ? '服务器内部错误' : err.message || '请求处理失败',
+          message:
+            err.status >= 500
+              ? "服务器内部错误"
+              : err.message || "请求处理失败",
           requestId,
         },
-        err.status as ErrorStatus
-      )
+        err.status as ContentfulStatusCode,
+      );
     }
 
     // AppError 及其子类 / 未知错误
-    const errorResponse = mapErrorToResponse(err, requestId)
+    const errorResponse = mapErrorToResponse(err, requestId);
     return c.json(
       {
         code: errorResponse.code,
@@ -34,18 +36,18 @@ export function setupErrorHandlers(app: Hono<Env>): void {
         details: errorResponse.details,
         requestId: errorResponse.requestId,
       },
-      errorResponse.status as ErrorStatus
-    )
-  })
+      errorResponse.status as ContentfulStatusCode,
+    );
+  });
 
   app.notFound((c) => {
     return c.json(
       {
         code: ErrorCode.NOT_FOUND,
         message: `Route ${c.req.method} ${c.req.path} not found`,
-        requestId: c.get('requestId'),
+        requestId: c.get("requestId"),
       },
-      404
-    )
-  })
+      404,
+    );
+  });
 }

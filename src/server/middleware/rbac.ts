@@ -1,5 +1,5 @@
+import { SUPER_ADMIN_ID } from "@/lib/constants";
 import { ForbiddenError, UnauthorizedError } from "@/lib/errors";
-import { SUPER_ADMIN_ID } from "@/lib/utils";
 import type { Env } from "@/server/context";
 import { getAdminPermissions } from "@/server/services";
 import {

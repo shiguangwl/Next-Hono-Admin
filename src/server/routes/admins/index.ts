@@ -33,7 +33,7 @@ const admins = new Hono<Env>()
     async (c) => {
       const query = c.req.valid('query')
       const result = await getAdminList(query)
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .get(
@@ -43,7 +43,7 @@ const admins = new Hono<Env>()
     async (c) => {
       const { id } = c.req.valid('param')
       const result = await getAdminById(id)
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .post(
@@ -58,7 +58,7 @@ const admins = new Hono<Env>()
     async (c) => {
       const body = c.req.valid('json')
       const result = await createAdmin(body)
-      return R.created(result)
+      return R.ok(c, result)
     }
   )
   .put(
@@ -75,7 +75,7 @@ const admins = new Hono<Env>()
       const { id } = c.req.valid('param')
       const body = c.req.valid('json')
       const result = await updateAdmin(id, body)
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .delete(
@@ -94,7 +94,7 @@ const admins = new Hono<Env>()
         throw new UnauthorizedError('未获取到管理员信息')
       }
       await deleteAdmin(id, currentAdmin.adminId)
-      return R.success('删除成功')
+      return R.success(c, '删除成功')
     }
   )
   .put(
@@ -111,7 +111,7 @@ const admins = new Hono<Env>()
       const { id } = c.req.valid('param')
       const body = c.req.valid('json')
       await resetPassword(id, body.newPassword)
-      return R.success('密码重置成功')
+      return R.success(c, '密码重置成功')
     }
   )
   .put(
@@ -128,7 +128,7 @@ const admins = new Hono<Env>()
       const { id } = c.req.valid('param')
       const body = c.req.valid('json')
       await updateAdminRoles(id, body.roleIds)
-      return R.success('角色更新成功')
+      return R.success(c, '角色更新成功')
     }
   )
 

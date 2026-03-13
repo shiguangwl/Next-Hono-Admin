@@ -10,18 +10,29 @@ import {
   ErrorCode,
   NotFoundError,
 } from "@/lib/errors";
+import {
+  buildPaginatedResult,
+  normalizePagination,
+  type PaginatedResult,
+} from "@/server/utils/pagination";
 import { invalidateAllPermissionCache } from "@/server/utils/permission-cache";
 import { and, asc, count, eq, like, ne } from "drizzle-orm";
-import type { PaginatedResult, PaginationQuery } from "../../../utils/shared";
-import type { CreateRoleInput, RoleVo, UpdateRoleInput } from "./models";
 import { toRoleVo } from "./role.utils";
+import type { CreateRoleInput, RoleVo, UpdateRoleInput } from "./types";
+
+interface RoleQuery {
+  page?: number;
+  pageSize?: number;
+  keyword?: string;
+  status?: number;
+}
 
 /** 获取角色列表（分页） */
 export async function getRoleList(
-  options: PaginationQuery = {},
+  options: RoleQuery = {},
 ): Promise<PaginatedResult<RoleVo>> {
-  const { page = 1, pageSize = 20, keyword, status } = options;
-  const offset = (page - 1) * pageSize;
+  const { page, pageSize, offset } = normalizePagination(options);
+  const { keyword, status } = options;
 
   const conditions = [];
   if (keyword) {
@@ -46,13 +57,7 @@ export async function getRoleList(
     .limit(pageSize)
     .offset(offset);
 
-  return {
-    items: roles.map(toRoleVo),
-    total,
-    page,
-    pageSize,
-    totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
-  };
+  return buildPaginatedResult(roles.map(toRoleVo), total, page, pageSize);
 }
 
 /** 获取所有角色（不分页） */

@@ -30,7 +30,7 @@ const configs = new Hono<Env>()
     async (c) => {
       const query = c.req.valid('query')
       const result = await listConfigs(query)
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .get(
@@ -40,7 +40,7 @@ const configs = new Hono<Env>()
     async (c) => {
       const { id } = c.req.valid('param')
       const result = await getConfigById(id)
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .post(
@@ -65,7 +65,7 @@ const configs = new Hono<Env>()
         status: body.status,
       })
       await preloadAllActiveConfigs()
-      return R.created(config)
+      return R.ok(c, config)
     }
   )
   .put(
@@ -83,7 +83,7 @@ const configs = new Hono<Env>()
       const body = c.req.valid('json')
       const config = await updateConfig(id, body)
       await preloadAllActiveConfigs()
-      return R.ok(config)
+      return R.ok(c, config)
     }
   )
   .delete(
@@ -99,7 +99,7 @@ const configs = new Hono<Env>()
       const { id } = c.req.valid('param')
       await deleteConfig(id)
       await preloadAllActiveConfigs()
-      return R.success('删除成功')
+      return R.success(c, '删除成功')
     }
   )
   .patch(
@@ -121,7 +121,7 @@ const configs = new Hono<Env>()
         status: body.status,
       })
       await preloadAllActiveConfigs()
-      return R.ok(config)
+      return R.ok(c, config)
     }
   )
 

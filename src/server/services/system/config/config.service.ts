@@ -4,10 +4,14 @@
 
 import { db } from "@/db";
 import { sysConfig } from "@/db/schema";
+import { formatDateToLocal } from "@/lib/date";
 import { ConflictError, NotFoundError } from "@/lib/errors";
-import { formatDateToLocal } from "@/lib/utils/date";
+import {
+  buildPaginatedResult,
+  normalizePagination,
+  type PaginatedResult,
+} from "@/server/utils/pagination";
 import { and, count, eq } from "drizzle-orm";
-import type { PaginatedResult } from "../../../utils/shared";
 import type {
   ConfigCacheEntry,
   ConfigQuery,
@@ -15,7 +19,7 @@ import type {
   ConfigVo,
   UpdateConfigValueInput,
   UpsertConfigInput,
-} from "./models";
+} from "./types";
 
 // ========== 缓存管理 ==========
 
@@ -171,11 +175,7 @@ export async function getConfigByKey(key: string): Promise<ConfigVo> {
 export async function listConfigs(
   options: ConfigQuery,
 ): Promise<PaginatedResult<ConfigVo>> {
-  const page = options.page && options.page > 0 ? options.page : 1;
-  const pageSize =
-    options.pageSize && options.pageSize > 0 && options.pageSize <= 100
-      ? options.pageSize
-      : 20;
+  const { page, pageSize, offset } = normalizePagination(options);
 
   const whereClauses = [];
 
@@ -201,7 +201,7 @@ export async function listConfigs(
       .where(where as never)
       .orderBy(sysConfig.configGroup, sysConfig.configKey)
       .limit(pageSize)
-      .offset((page - 1) * pageSize),
+      .offset(offset),
     db
       .select({ count: count() })
       .from(sysConfig)
@@ -210,15 +210,7 @@ export async function listConfigs(
   ]);
 
   const total = Number(totalResult?.count ?? 0);
-  const totalPages = total === 0 ? 0 : Math.ceil(total / pageSize);
-
-  return {
-    items: items.map(toConfigVo),
-    total,
-    page,
-    pageSize,
-    totalPages,
-  };
+  return buildPaginatedResult(items.map(toConfigVo), total, page, pageSize);
 }
 
 /** 创建配置 */

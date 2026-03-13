@@ -28,7 +28,7 @@ const menus = new Hono<Env>()
         menuType: query.menuType,
         status: query.status,
       })
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .get(
@@ -41,7 +41,7 @@ const menus = new Hono<Env>()
         menuType: query.menuType,
         status: query.status,
       })
-      return R.ok(result)
+      return R.ok(c, result)
     }
   )
   .get(
@@ -51,7 +51,7 @@ const menus = new Hono<Env>()
     async (c) => {
       const { id } = c.req.valid('param')
       const menu = await getMenuById(id)
-      return R.ok(menu)
+      return R.ok(c, menu)
     }
   )
   .post(
@@ -66,7 +66,7 @@ const menus = new Hono<Env>()
     async (c) => {
       const body = c.req.valid('json')
       const menu = await createMenu(body)
-      return R.created(menu)
+      return R.ok(c, menu)
     }
   )
   .put(
@@ -83,7 +83,7 @@ const menus = new Hono<Env>()
       const { id } = c.req.valid('param')
       const body = c.req.valid('json')
       const menu = await updateMenu(id, body)
-      return R.ok(menu)
+      return R.ok(c, menu)
     }
   )
   .delete(
@@ -98,7 +98,7 @@ const menus = new Hono<Env>()
     async (c) => {
       const { id } = c.req.valid('param')
       await deleteMenu(id)
-      return R.success('删除成功')
+      return R.success(c, '删除成功')
     }
   )
 

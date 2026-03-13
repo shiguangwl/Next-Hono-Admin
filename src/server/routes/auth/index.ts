@@ -40,7 +40,7 @@ const auth = new Hono<Env>()
         userAgent,
       });
       setSessionCookie(c, result.sessionToken);
-      return R.ok(
+      return R.ok(c, 
         {
           sessionToken: result.sessionToken,
           admin: result.admin,
@@ -62,7 +62,7 @@ const auth = new Hono<Env>()
     }
 
     clearSessionCookie(c);
-    return R.success("登出成功");
+    return R.success(c, "登出成功");
   })
   .get("/info", requireAuth, async (c) => {
     const adminPayload = c.get("admin")!;
@@ -72,7 +72,7 @@ const auth = new Hono<Env>()
       getAdminMenuTree(adminPayload.adminId),
     ]);
 
-    return R.ok({ admin, permissions, menus });
+    return R.ok(c, { admin, permissions, menus });
   });
 
 export { auth };

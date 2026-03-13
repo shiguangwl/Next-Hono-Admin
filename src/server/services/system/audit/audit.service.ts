@@ -5,14 +5,18 @@
 import { db } from "@/db";
 import { sysOperationLog } from "@/db/schema";
 import { NotFoundError } from "@/lib/errors";
-import type { PaginatedResult } from "@/server/utils/shared";
+import {
+  buildPaginatedResult,
+  normalizePagination,
+  type PaginatedResult,
+} from "@/server/utils/pagination";
 import { and, count, desc, eq, gte, like, lte, sql } from "drizzle-orm";
 import { toOperationLogVo } from "./audit.utils";
 import type {
   CreateOperationLogInput,
   OperationLogQuery,
   OperationLogVo,
-} from "./models";
+} from "./types";
 
 /** 创建操作日志 */
 export async function createOperationLog(
@@ -42,18 +46,9 @@ export async function createOperationLog(
 export async function getOperationLogList(
   options: OperationLogQuery = {},
 ): Promise<PaginatedResult<OperationLogVo>> {
-  const {
-    page = 1,
-    pageSize = 20,
-    adminId,
-    adminName,
-    module,
-    operation,
-    status,
-    startTime,
-    endTime,
-  } = options;
-  const offset = (page - 1) * pageSize;
+  const { adminId, adminName, module, operation, status, startTime, endTime } =
+    options;
+  const { page, pageSize, offset } = normalizePagination(options);
 
   const conditions = [];
 
@@ -94,13 +89,12 @@ export async function getOperationLogList(
     .limit(pageSize)
     .offset(offset);
 
-  return {
-    items: logs.map(toOperationLogVo),
+  return buildPaginatedResult(
+    logs.map(toOperationLogVo),
     total,
     page,
     pageSize,
-    totalPages: total === 0 ? 0 : Math.ceil(total / pageSize),
-  };
+  );
 }
 
 /** 获取操作日志详情 */

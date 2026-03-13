@@ -1,125 +1,134 @@
-'use client'
+"use client";
 
-import { ActionIcon, Button, Group, Paper, PasswordInput, TextInput, Tooltip } from '@mantine/core'
-import { KeyRound, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
-import { useState } from 'react'
-import { toast } from 'sonner'
+import {
+  ActionIcon,
+  Button,
+  Group,
+  Paper,
+  PasswordInput,
+  TextInput,
+  Tooltip,
+} from "@mantine/core";
+import { KeyRound, Pencil, Plus, RefreshCw, Trash2 } from "lucide-react";
+import { useState } from "react";
+import { toast } from "sonner";
 
-import { PermissionGuard } from '@/components/permission-guard'
-import { type ColumnDef, DataTable } from '@/components/ui/data-table'
-import { ConfirmDialog, FormDialog } from '@/components/ui/form-dialog'
-import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import { Pagination } from '@/components/ui/pagination'
-import { EnableStatusChip } from '@/components/ui/status-chip'
-import { useAdmins, useDeleteAdmin, useResetPassword } from '@/hooks/queries'
-import { SUPER_ADMIN_ID } from '@/lib/utils'
-import { AdminFormDialog } from './admin-form-dialog'
+import { PermissionGuard } from "@/components/permission-guard";
+import { type ColumnDef, DataTable } from "@/components/ui/data-table";
+import { ConfirmDialog, FormDialog } from "@/components/ui/form-dialog";
+import { PageContainer, PageHeader } from "@/components/ui/page-header";
+import { Pagination } from "@/components/ui/pagination";
+import { EnableStatusChip } from "@/components/ui/status-chip";
+import { useAdmins, useDeleteAdmin, useResetPassword } from "@/hooks/queries";
+import { SUPER_ADMIN_ID } from "@/lib/constants";
+import { AdminFormDialog } from "./admin-form-dialog";
 
 type Admin = {
-  id: number
-  username: string
-  nickname: string
-  status: number
-  loginIp: string | null
-  loginTime: string | null
-  remark: string | null
-  createdAt: string
-  updatedAt: string
-  roles?: Array<{ id: number; roleName: string }>
-}
+  id: number;
+  username: string;
+  nickname: string;
+  status: number;
+  loginIp: string | null;
+  loginTime: string | null;
+  remark: string | null;
+  createdAt: string;
+  updatedAt: string;
+  roles?: Array<{ id: number; roleName: string }>;
+};
 
 export default function AdminPage() {
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
-  const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
-  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null)
-  const [newPassword, setNewPassword] = useState('')
-  const [passwordError, setPasswordError] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<Admin | null>(null)
+  const [page, setPage] = useState(1);
+  const [pageSize] = useState(20);
+  const [keyword, setKeyword] = useState("");
+  const [searchKeyword, setSearchKeyword] = useState("");
+  const [dialogOpen, setDialogOpen] = useState(false);
+  const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null);
+  const [resetPasswordId, setResetPasswordId] = useState<number | null>(null);
+  const [newPassword, setNewPassword] = useState("");
+  const [passwordError, setPasswordError] = useState("");
+  const [deleteTarget, setDeleteTarget] = useState<Admin | null>(null);
 
   const { data, isLoading, refetch } = useAdmins({
     page,
     pageSize,
     keyword: searchKeyword,
-  })
-  const deleteAdmin = useDeleteAdmin()
-  const resetPassword = useResetPassword()
+  });
+  const deleteAdmin = useDeleteAdmin();
+  const resetPassword = useResetPassword();
 
   const handleSearch = () => {
-    setSearchKeyword(keyword)
-    setPage(1)
-  }
+    setSearchKeyword(keyword);
+    setPage(1);
+  };
 
   const handleCreate = () => {
-    setEditingAdmin(null)
-    setDialogOpen(true)
-  }
+    setEditingAdmin(null);
+    setDialogOpen(true);
+  };
 
   const handleEdit = (admin: Admin) => {
-    setEditingAdmin(admin)
-    setDialogOpen(true)
-  }
+    setEditingAdmin(admin);
+    setDialogOpen(true);
+  };
 
   const handleDelete = async () => {
-    if (!deleteTarget) return
+    if (!deleteTarget) return;
     try {
-      await deleteAdmin.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-      toast.success('删除成功')
+      await deleteAdmin.mutateAsync(deleteTarget.id);
+      setDeleteTarget(null);
+      toast.success("删除成功");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '删除失败')
+      toast.error(err instanceof Error ? err.message : "删除失败");
     }
-  }
+  };
 
   const handleResetPassword = async () => {
-    if (!resetPasswordId) return
+    if (!resetPasswordId) return;
     if (!newPassword) {
-      setPasswordError('请输入新密码')
-      return
+      setPasswordError("请输入新密码");
+      return;
     }
     if (newPassword.length < 6) {
-      setPasswordError('密码长度不能少于6位')
-      return
+      setPasswordError("密码长度不能少于6位");
+      return;
     }
     try {
       await resetPassword.mutateAsync({
         id: resetPasswordId,
         input: { newPassword },
-      })
-      setResetPasswordId(null)
-      setNewPassword('')
-      setPasswordError('')
-      toast.success('密码重置成功')
+      });
+      setResetPasswordId(null);
+      setNewPassword("");
+      setPasswordError("");
+      toast.success("密码重置成功");
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '重置密码失败')
+      toast.error(err instanceof Error ? err.message : "重置密码失败");
     }
-  }
+  };
 
   const columns: ColumnDef<Admin>[] = [
-    { key: 'id', title: 'ID', width: 80 },
-    { key: 'username', title: '用户名' },
-    { key: 'nickname', title: '昵称', render: (v) => (v as string) || '-' },
+    { key: "id", title: "ID", width: 80 },
+    { key: "username", title: "用户名" },
+    { key: "nickname", title: "昵称", render: (v) => (v as string) || "-" },
     {
-      key: 'roles',
-      title: '角色',
-      render: (_, record) => record.roles?.map((r) => r.roleName).join(', ') || '-',
+      key: "roles",
+      title: "角色",
+      render: (_, record) =>
+        record.roles?.map((r) => r.roleName).join(", ") || "-",
     },
     {
-      key: 'status',
-      title: '状态',
+      key: "status",
+      title: "状态",
       render: (v) => <EnableStatusChip status={v as number} />,
     },
     {
-      key: 'loginTime',
-      title: '最后登录',
-      render: (v) => (v as string) || '-',
+      key: "loginTime",
+      title: "最后登录",
+      render: (v) => (v as string) || "-",
     },
     {
-      key: 'actions',
-      title: '操作',
+      key: "actions",
+      title: "操作",
       width: 150,
       render: (_, record) => (
         <Group gap={4}>
@@ -127,7 +136,11 @@ export default function AdminPage() {
             <>
               <PermissionGuard permission="system:admin:update">
                 <Tooltip label="编辑">
-                  <ActionIcon variant="subtle" size="sm" onClick={() => handleEdit(record)}>
+                  <ActionIcon
+                    variant="subtle"
+                    size="sm"
+                    onClick={() => handleEdit(record)}
+                  >
                     <Pencil size={14} />
                   </ActionIcon>
                 </Tooltip>
@@ -152,9 +165,9 @@ export default function AdminPage() {
                 variant="subtle"
                 size="sm"
                 onClick={() => {
-                  setResetPasswordId(record.id)
-                  setNewPassword('')
-                  setPasswordError('')
+                  setResetPasswordId(record.id);
+                  setNewPassword("");
+                  setPasswordError("");
                 }}
               >
                 <KeyRound size={14} />
@@ -164,13 +177,13 @@ export default function AdminPage() {
         </Group>
       ),
     },
-  ]
+  ];
 
   return (
     <PageContainer>
       <PageHeader
         title="用户管理"
-        breadcrumbs={[{ label: '系统管理' }, { label: '用户管理' }]}
+        breadcrumbs={[{ label: "系统管理" }, { label: "用户管理" }]}
         actions={
           <PermissionGuard permission="system:admin:create">
             <Button leftSection={<Plus size={16} />} onClick={handleCreate}>
@@ -189,7 +202,7 @@ export default function AdminPage() {
             placeholder="搜索用户名或昵称"
             value={keyword}
             onChange={(e) => setKeyword(e.currentTarget.value)}
-            onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
+            onKeyDown={(e) => e.key === "Enter" && handleSearch()}
           />
           <Button variant="default" onClick={handleSearch} mt="auto">
             搜索
@@ -214,7 +227,12 @@ export default function AdminPage() {
       />
 
       {data && (
-        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
+        <Pagination
+          page={page}
+          pageSize={pageSize}
+          total={data.total}
+          onPageChange={setPage}
+        />
       )}
 
       <AdminFormDialog
@@ -222,8 +240,8 @@ export default function AdminPage() {
         admin={editingAdmin}
         onClose={() => setDialogOpen(false)}
         onSuccess={() => {
-          setDialogOpen(false)
-          refetch()
+          setDialogOpen(false);
+          refetch();
         }}
       />
 
@@ -243,9 +261,9 @@ export default function AdminPage() {
         description="请输入新密码"
         isOpen={!!resetPasswordId}
         onClose={() => {
-          setResetPasswordId(null)
-          setNewPassword('')
-          setPasswordError('')
+          setResetPasswordId(null);
+          setNewPassword("");
+          setPasswordError("");
         }}
         onSubmit={handleResetPassword}
         isSubmitting={resetPassword.isPending}
@@ -262,5 +280,5 @@ export default function AdminPage() {
         />
       </FormDialog>
     </PageContainer>
-  )
+  );
 }

@@ -1,18 +1,18 @@
-export { createCrudMiddlewares } from "./crud";
+export { createCrudMiddlewares } from "./crud/router-factory";
 export type {
   AuditConfig,
   CrudHandlers,
   CrudMiddlewareConfig,
   CrudMiddlewares,
-} from "./crud";
+} from "./crud/router-factory";
 
 export {
+  createDataResponseSchema,
   ErrorSchema,
   IdParamSchema,
   SuccessSchema,
   ValidationErrorDetailsSchema,
   ValidationIssueSchema,
-  createDataResponseSchema,
   type ErrorResponse,
   type IdParam,
   type SuccessResponse,
@@ -30,9 +30,9 @@ export {
 } from "./schemas/entities";
 
 export {
+  createPaginatedSchema,
   PaginationMetaSchema,
   PaginationQuerySchema,
-  createPaginatedSchema,
   type PaginationMeta,
   type PaginationQuery,
 } from "./schemas/pagination";

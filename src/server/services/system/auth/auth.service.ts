@@ -11,14 +11,14 @@ import {
   sysRoleMenu,
 } from "@/db/schema";
 import { verifyPassword } from "@/lib/auth";
+import { SUPER_ADMIN_ID } from "@/lib/constants";
 import { BusinessError, ErrorCode, UnauthorizedError } from "@/lib/errors";
-import { SUPER_ADMIN_ID } from "@/lib/utils";
 import { and, eq, inArray } from "drizzle-orm";
 import { toAdminVo } from "../admin/admin.utils";
-import type { MenuTreeNode } from "../menu";
 import { buildMenuTree, toMenuTreeNode } from "../menu/menu.utils";
-import type { LoginInput, LoginResultVo } from "./models";
+import type { MenuTreeNode } from "../menu/types";
 import { createAdminSession } from "./session.service";
+import type { LoginInput, LoginResultVo } from "./types";
 
 async function findAdminByUsername(username: string) {
   return db
