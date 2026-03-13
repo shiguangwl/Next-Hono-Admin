@@ -1,7 +1,7 @@
 import { createEnv } from '@t3-oss/env-nextjs'
 import { z } from 'zod'
 
-import { DEFAULT_SESSION_COOKIE_NAME } from './lib/constants'
+import { DEFAULT_SESSION_COOKIE_NAME } from './lib/constants.ts'
 
 const DEFAULT_SESSION_TTL_DAYS = 7
 
