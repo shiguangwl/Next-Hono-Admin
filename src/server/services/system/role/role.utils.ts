@@ -2,9 +2,9 @@
  * 角色 - 工具函数
  */
 
-import type { sysRole } from "@/db/schema";
-import { formatDateToLocal } from "@/lib/date";
-import type { RoleVo } from "./types";
+import type { sysRole } from '@/db/schema'
+import { formatDateToLocal } from '@/lib/date'
+import type { RoleVo } from './types'
 
 /** 转换为角色 VO */
 export function toRoleVo(role: typeof sysRole.$inferSelect): RoleVo {
@@ -14,7 +14,7 @@ export function toRoleVo(role: typeof sysRole.$inferSelect): RoleVo {
     sort: role.sort,
     status: role.status,
     remark: role.remark,
-    createdAt: formatDateToLocal(role.createdAt) ?? "",
-    updatedAt: formatDateToLocal(role.updatedAt) ?? "",
-  };
+    createdAt: formatDateToLocal(role.createdAt) ?? '',
+    updatedAt: formatDateToLocal(role.updatedAt) ?? '',
+  }
 }

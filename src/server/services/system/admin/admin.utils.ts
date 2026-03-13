@@ -2,9 +2,9 @@
  * 管理员 - 工具函数
  */
 
-import type { sysAdmin } from "@/db/schema";
-import { formatDateToLocal } from "@/lib/date";
-import type { AdminVo } from "./types";
+import type { sysAdmin } from '@/db/schema'
+import { formatDateToLocal } from '@/lib/date'
+import type { AdminVo } from './types'
 
 /** 转换为管理员 VO */
 export function toAdminVo(admin: typeof sysAdmin.$inferSelect): AdminVo {
@@ -16,7 +16,7 @@ export function toAdminVo(admin: typeof sysAdmin.$inferSelect): AdminVo {
     loginIp: admin.loginIp,
     loginTime: formatDateToLocal(admin.loginTime),
     remark: admin.remark,
-    createdAt: formatDateToLocal(admin.createdAt) ?? "",
-    updatedAt: formatDateToLocal(admin.updatedAt) ?? "",
-  };
+    createdAt: formatDateToLocal(admin.createdAt) ?? '',
+    updatedAt: formatDateToLocal(admin.updatedAt) ?? '',
+  }
 }

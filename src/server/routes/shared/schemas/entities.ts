@@ -1,30 +1,30 @@
-import { z } from "zod";
+import { z } from 'zod'
 
 export const RoleBriefSchema = z.object({
   id: z.number(),
   roleName: z.string(),
-});
+})
 
-export const MenuTypeEnum = z.enum(["D", "M", "B"]);
+export const MenuTypeEnum = z.enum(['D', 'M', 'B'])
 
 export interface MenuTreeNode {
-  id: number;
-  parentId: number;
-  menuType: "D" | "M" | "B";
-  menuName: string;
-  permission: string | null;
-  path: string | null;
-  component: string | null;
-  icon: string | null;
-  sort: number;
-  visible: number;
-  status: number;
-  isExternal: number;
-  isCache: number;
-  remark: string | null;
-  createdAt: string;
-  updatedAt: string;
-  children?: MenuTreeNode[];
+  id: number
+  parentId: number
+  menuType: 'D' | 'M' | 'B'
+  menuName: string
+  permission: string | null
+  path: string | null
+  component: string | null
+  icon: string | null
+  sort: number
+  visible: number
+  status: number
+  isExternal: number
+  isCache: number
+  remark: string | null
+  createdAt: string
+  updatedAt: string
+  children?: MenuTreeNode[]
 }
 
 export const MenuTreeNodeSchema: z.ZodType<MenuTreeNode> = z.lazy(() =>
@@ -46,8 +46,8 @@ export const MenuTreeNodeSchema: z.ZodType<MenuTreeNode> = z.lazy(() =>
     createdAt: z.string(),
     updatedAt: z.string(),
     children: z.array(z.lazy(() => MenuTreeNodeSchema)).optional(),
-  }),
-);
+  })
+)
 
-export type RoleBrief = z.infer<typeof RoleBriefSchema>;
-export type MenuTreeNodeDto = z.infer<typeof MenuTreeNodeSchema>;
+export type RoleBrief = z.infer<typeof RoleBriefSchema>
+export type MenuTreeNodeDto = z.infer<typeof MenuTreeNodeSchema>
