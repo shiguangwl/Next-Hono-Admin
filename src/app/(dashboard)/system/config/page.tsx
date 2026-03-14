@@ -1,23 +1,23 @@
 'use client'
 
-import { Button, Card, Group, Select, SimpleGrid, TextInput } from '@mantine/core'
-import { Plus, RefreshCw } from 'lucide-react'
+import { Button, Group, Paper, Select, SimpleGrid, TextInput } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import { IconPlus, IconRefresh } from '@tabler/icons-react'
+import { DataTable, type DataTableSortStatus } from 'mantine-datatable'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 import { PermissionGuard } from '@/components/permission-guard'
-import { DataTable } from '@/components/ui/data-table'
-import { ConfirmDialog } from '@/components/ui/form-dialog'
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import { Pagination } from '@/components/ui/pagination'
 import { useConfigs, useCreateConfig, useDeleteConfig, useUpdateConfigValue } from '@/hooks/queries'
 import { buildColumns, type Config } from './config-columns'
 import { ConfigCreateDialog, type CreateFormData, defaultCreateForm } from './config-create-dialog'
 import { ConfigEditDialog } from './config-edit-dialog'
 
+const PAGE_SIZE = 20
+
 export default function ConfigPage() {
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
   const [filters, setFilters] = useState({
     group: '',
     status: '' as '' | '0' | '1',
@@ -33,13 +33,18 @@ export default function ConfigPage() {
     {}
   )
 
-  const [deleteTarget, setDeleteTarget] = useState<Config | null>(null)
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<Config>>({
+    columnAccessor: 'configGroup',
+    direction: 'asc',
+  })
 
   const { data, isLoading, refetch } = useConfigs({
     page,
-    pageSize,
+    pageSize: PAGE_SIZE,
     group: appliedFilters.group || undefined,
     status: appliedFilters.status ? Number(appliedFilters.status) : undefined,
+    sortBy: sortStatus.columnAccessor,
+    sortOrder: sortStatus.direction,
   })
 
   const createConfig = useCreateConfig()
@@ -81,9 +86,12 @@ export default function ConfigPage() {
         },
       })
       setEditingConfig(null)
-      toast.success('配置已保存')
+      notifications.show({ message: '配置已保存', color: 'green' })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '保存失败')
+      notifications.show({
+        message: err instanceof Error ? err.message : '保存失败',
+        color: 'red',
+      })
     }
   }
 
@@ -109,31 +117,43 @@ export default function ConfigPage() {
         status: createForm.status,
       })
       setCreateDialogOpen(false)
-      toast.success('配置已创建')
+      notifications.show({ message: '配置已创建', color: 'green' })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '创建失败')
+      notifications.show({
+        message: err instanceof Error ? err.message : '创建失败',
+        color: 'red',
+      })
     }
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    if (deleteTarget.isSystem === 1) {
-      toast.error('系统配置不允许删除')
-      setDeleteTarget(null)
+  const openDeleteConfirm = (config: Config) => {
+    if (config.isSystem === 1) {
+      notifications.show({ message: '系统配置不允许删除', color: 'red' })
       return
     }
-    try {
-      await deleteConfig.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-      toast.success('删除成功')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '删除失败')
-    }
+    modals.openConfirmModal({
+      title: '删除配置',
+      children: `确定要删除配置 "${config.configKey}" 吗？此操作不可恢复。`,
+      labels: { confirm: '删除', cancel: '取消' },
+      confirmProps: { color: 'red' },
+      centered: true,
+      onConfirm: async () => {
+        try {
+          await deleteConfig.mutateAsync(config.id)
+          notifications.show({ message: '删除成功', color: 'green' })
+        } catch (err) {
+          notifications.show({
+            message: err instanceof Error ? err.message : '删除失败',
+            color: 'red',
+          })
+        }
+      },
+    })
   }
 
   const columns = buildColumns({
     onEdit: openEditDialog,
-    onDelete: setDeleteTarget,
+    onDelete: openDeleteConfirm,
   })
 
   return (
@@ -144,13 +164,13 @@ export default function ConfigPage() {
         actions={
           <Group gap="sm">
             <PermissionGuard permission="system:config:create">
-              <Button leftSection={<Plus size={14} />} onClick={openCreateDialog}>
+              <Button leftSection={<IconPlus size={14} />} onClick={openCreateDialog}>
                 新增配置
               </Button>
             </PermissionGuard>
             <Button
               variant="subtle"
-              leftSection={<RefreshCw size={14} />}
+              leftSection={<IconRefresh size={14} />}
               onClick={() => refetch()}
             >
               刷新
@@ -159,7 +179,7 @@ export default function ConfigPage() {
         }
       />
 
-      <Card padding="md">
+      <Paper withBorder p="md" radius="md" mb="md">
         <SimpleGrid cols={{ base: 1, sm: 3 }} spacing="md">
           <TextInput
             label="分组"
@@ -187,19 +207,26 @@ export default function ConfigPage() {
             </Button>
           </Group>
         </SimpleGrid>
-      </Card>
+      </Paper>
 
       <DataTable
+        withTableBorder
+        borderRadius="md"
+        striped
+        highlightOnHover
+        minHeight={200}
         columns={columns}
-        data={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        emptyText="暂无配置"
+        records={data?.items ?? []}
+        fetching={isLoading}
+        noRecordsText="暂无配置"
+        totalRecords={data?.total ?? 0}
+        recordsPerPage={PAGE_SIZE}
+        page={page}
+        onPageChange={setPage}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
       />
-
-      {data && (
-        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
-      )}
 
       <ConfigCreateDialog
         isOpen={createDialogOpen}
@@ -218,17 +245,6 @@ export default function ConfigPage() {
         onClose={() => setEditingConfig(null)}
         onSubmit={handleSaveValue}
         isSubmitting={updateValue.isPending}
-      />
-
-      <ConfirmDialog
-        title="删除配置"
-        content={`确定要删除配置 "${deleteTarget?.configKey}" 吗？此操作不可恢复。`}
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        isConfirming={deleteConfig.isPending}
-        confirmText="删除"
-        isDanger
       />
     </PageContainer>
   )

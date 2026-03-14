@@ -1,7 +1,8 @@
 'use client'
 
 import { Alert, Button, Group, Modal, ScrollArea, Stack } from '@mantine/core'
-import { AlertCircle } from 'lucide-react'
+import { useForm } from '@mantine/form'
+import { IconAlertCircle } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 import { useCreateMenu, useUpdateMenu } from '@/hooks/queries'
 import { type MenuFormData, MenuFormFields } from './menu-form-fields'
@@ -55,16 +56,24 @@ export function MenuFormDialog({
   onSuccess,
 }: MenuFormDialogProps) {
   const isEdit = !!menu
-  const [formData, setFormData] = useState<MenuFormData>(defaultFormData)
   const [error, setError] = useState('')
+
+  const form = useForm<MenuFormData>({
+    mode: 'controlled',
+    initialValues: defaultFormData,
+    validate: {
+      menuName: (v) => (!v.trim() ? '请输入菜单名称' : null),
+    },
+  })
 
   const createMenu = useCreateMenu()
   const updateMenu = useUpdateMenu()
 
+  // biome-ignore lint: form methods are stable refs
   useEffect(() => {
     if (open) {
       if (menu) {
-        setFormData({
+        form.setValues({
           parentId: menu.parentId,
           menuType: menu.menuType,
           menuName: menu.menuName,
@@ -80,41 +89,36 @@ export function MenuFormDialog({
           remark: menu.remark || '',
         })
       } else {
-        setFormData({
+        form.setValues({
           ...defaultFormData,
           parentId: parentMenu?.id || 0,
           menuType: parentMenu ? (parentMenu.menuType === 'D' ? 'M' : 'B') : 'D',
         })
       }
+      form.clearErrors()
       setError('')
     }
   }, [open, menu, parentMenu])
 
-  const handleSubmit = async () => {
+  const handleSubmit = async (values: MenuFormData) => {
     setError('')
-    if (!formData.menuName.trim()) {
-      setError('请输入菜单名称')
-      return
-    }
     try {
       const input = {
-        parentId: formData.parentId,
-        menuType: formData.menuType,
-        menuName: formData.menuName,
-        permission: formData.permission || undefined,
+        parentId: values.parentId,
+        menuType: values.menuType,
+        menuName: values.menuName,
+        permission: values.permission || undefined,
         // WHY: 目录/按钮类型不需要路径
         path:
-          formData.menuType === 'D' || formData.menuType === 'B'
-            ? undefined
-            : formData.path || undefined,
-        component: formData.component || undefined,
-        icon: formData.icon || undefined,
-        sort: formData.sort,
-        visible: formData.visible,
-        status: formData.status,
-        isExternal: formData.isExternal,
-        isCache: formData.isCache,
-        remark: formData.remark || undefined,
+          values.menuType === 'D' || values.menuType === 'B' ? undefined : values.path || undefined,
+        component: values.component || undefined,
+        icon: values.icon || undefined,
+        sort: values.sort,
+        visible: values.visible,
+        status: values.status,
+        isExternal: values.isExternal,
+        isCache: values.isCache,
+        remark: values.remark || undefined,
       }
       if (isEdit && menu) {
         await updateMenu.mutateAsync({ id: menu.id, input })
@@ -129,7 +133,8 @@ export function MenuFormDialog({
 
   const isPending = createMenu.isPending || updateMenu.isPending
   const parentMenuName =
-    parentMenu?.menuName || (formData.parentId === 0 ? '根目录' : `ID: ${formData.parentId}`)
+    parentMenu?.menuName ||
+    (form.getValues().parentId === 0 ? '根目录' : `ID: ${form.getValues().parentId}`)
 
   return (
     <Modal
@@ -139,28 +144,30 @@ export function MenuFormDialog({
       size="lg"
       centered
     >
-      <Stack gap="md">
-        {error && (
-          <Alert color="red" icon={<AlertCircle size={16} />}>
-            {error}
-          </Alert>
-        )}
-        <ScrollArea.Autosize mah="60vh">
-          <MenuFormFields
-            formData={formData}
-            onChange={setFormData}
-            parentMenuName={parentMenuName}
-          />
-        </ScrollArea.Autosize>
-        <Group justify="flex-end">
-          <Button variant="default" onClick={onClose} disabled={isPending}>
-            取消
-          </Button>
-          <Button onClick={handleSubmit} loading={isPending}>
-            确定
-          </Button>
-        </Group>
-      </Stack>
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          {error && (
+            <Alert color="red" icon={<IconAlertCircle size={16} />}>
+              {error}
+            </Alert>
+          )}
+          <ScrollArea.Autosize mah="60vh">
+            <MenuFormFields
+              formData={form.getValues()}
+              onChange={(data) => form.setValues(data)}
+              parentMenuName={parentMenuName}
+            />
+          </ScrollArea.Autosize>
+          <Group justify="flex-end">
+            <Button variant="default" onClick={onClose} disabled={isPending}>
+              取消
+            </Button>
+            <Button type="submit" loading={isPending}>
+              确定
+            </Button>
+          </Group>
+        </Stack>
+      </form>
     </Modal>
   )
 }

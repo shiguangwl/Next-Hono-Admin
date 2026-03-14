@@ -8,9 +8,10 @@ import {
   NavLink,
   ScrollArea,
   Stack,
+  Text,
   Tooltip,
 } from '@mantine/core'
-import { ChevronLeft, ChevronRight } from 'lucide-react'
+import { IconChevronLeft, IconChevronRight, IconChevronUp } from '@tabler/icons-react'
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useEffect, useMemo, useState } from 'react'
@@ -32,7 +33,6 @@ interface MenuTreeNode {
   children?: MenuTreeNode[]
 }
 
-/** 查找当前路径对应的激活节点 ID 链 */
 function findActiveIds(menus: MenuTreeNode[], pathname: string): Set<number> {
   const ids: number[] = []
   const dfs = (items: MenuTreeNode[], parents: number[]): boolean => {
@@ -50,9 +50,8 @@ function findActiveIds(menus: MenuTreeNode[], pathname: string): Set<number> {
   return new Set(ids)
 }
 
-/** 折叠状态下的单体菜单项 */
 function CollapsedMenuItem({ menu, isActive }: { menu: MenuTreeNode; isActive: boolean }) {
-  const icon = <DynamicIcon name={menu.icon} size={22} />
+  const icon = <DynamicIcon name={menu.icon} size={22} filled={isActive} />
   const variant = isActive ? 'filled' : 'subtle'
   const iconProps = { variant, size: 'lg' as const, radius: 'md' as const }
 
@@ -84,7 +83,6 @@ interface SidebarMenuItemProps {
   activeIds: Set<number>
 }
 
-/** 标准导航项渲染逻辑 */
 function SidebarMenuItem({ menu, collapsed, pathname, activeIds }: SidebarMenuItemProps) {
   const hasChildren = !!menu.children?.length
   const isActive = menu.path === pathname
@@ -98,6 +96,26 @@ function SidebarMenuItem({ menu, collapsed, pathname, activeIds }: SidebarMenuIt
   if (menu.visible === 0 || menu.status === 0 || menu.menuType === 'B') return null
   if (collapsed) return <CollapsedMenuItem menu={menu} isActive={isActive || isChildActive} />
 
+  if (menu.menuType === 'D' && menu.parentId === 0) {
+    return (
+      <Box mt="lg" mb={4}>
+        <Text size="xs" fw={700} c="dimmed" tt="uppercase" lts="0.04em" px="sm" pb={6}>
+          {menu.menuName}
+        </Text>
+        <Divider mb="xs" opacity={0.4} />
+        {menu.children?.map((child) => (
+          <SidebarMenuItem
+            key={child.id}
+            menu={child}
+            collapsed={collapsed}
+            pathname={pathname}
+            activeIds={activeIds}
+          />
+        ))}
+      </Box>
+    )
+  }
+
   const children = hasChildren
     ? menu.children?.map((child) => (
         <SidebarMenuItem
@@ -110,19 +128,42 @@ function SidebarMenuItem({ menu, collapsed, pathname, activeIds }: SidebarMenuIt
       ))
     : undefined
 
+  const navLinkStyles = {
+    root: {
+      margin: '2px 0',
+      padding: '8px 12px',
+      borderRadius: 'var(--mantine-radius-md)',
+      backgroundColor: isActive ? 'var(--mantine-color-blue-0)' : 'transparent',
+      color: isActive ? 'var(--mantine-color-blue-7)' : undefined,
+      fontWeight: isActive ? 600 : 400,
+      transition: 'background-color 150ms ease, color 150ms ease',
+    },
+    label: {
+      fontSize: 'var(--mantine-font-size-sm)',
+    },
+    chevron: {
+      transition: 'transform 200ms ease',
+    },
+  }
+
   const navProps = {
     label: menu.menuName,
-    leftSection: <DynamicIcon name={menu.icon} size={20} />,
+    leftSection: <DynamicIcon name={menu.icon} size={20} filled={isActive || isChildActive} />,
     active: isActive,
     opened: hasChildren ? opened : undefined,
     onChange: hasChildren ? setOpened : undefined,
     variant: 'light' as const,
-    childrenOffset: 16,
-    fw: isActive ? 700 : 500,
-    styles: {
-      root: { margin: '2px 0', borderRadius: 'var(--mantine-radius-md)' },
-      label: { fontSize: 'var(--mantine-font-size-sm)' },
-    },
+    childrenOffset: 20,
+    styles: navLinkStyles,
+    rightSection: hasChildren ? (
+      <IconChevronUp
+        size={14}
+        style={{
+          transform: opened ? 'rotate(0deg)' : 'rotate(180deg)',
+          transition: 'transform 200ms ease',
+        }}
+      />
+    ) : undefined,
   }
 
   if (menu.path && menu.isExternal) {
@@ -159,14 +200,9 @@ export function AppSidebar({
   )
 
   return (
-    <Stack
-      h="100%"
-      gap={0}
-      bg="var(--app-sidebar-bg)"
-      style={{ borderRight: '1px solid var(--mantine-color-default-border)' }}
-    >
+    <Stack h="100%" gap={0} bg="var(--app-sidebar-bg)">
       <AppShell.Section grow component={ScrollArea} p="xs" scrollbarSize={4}>
-        <Stack gap={2}>
+        <Stack gap={0}>
           {menus.map((menu: MenuTreeNode) => (
             <SidebarMenuItem
               key={menu.id}
@@ -180,7 +216,6 @@ export function AppSidebar({
       </AppShell.Section>
 
       <AppShell.Section p="xs">
-        <Divider mb="xs" variant="dashed" opacity={0.5} />
         <ActionIcon
           variant="subtle"
           size="xl"
@@ -189,7 +224,7 @@ export function AppSidebar({
           color="gray"
           onClick={() => onCollapsedChange?.(!collapsed)}
         >
-          {collapsed ? <ChevronRight size={20} /> : <ChevronLeft size={20} />}
+          {collapsed ? <IconChevronRight size={20} /> : <IconChevronLeft size={20} />}
         </ActionIcon>
       </AppShell.Section>
     </Stack>

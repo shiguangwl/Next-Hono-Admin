@@ -13,6 +13,8 @@ export interface PaginatedResponse<T> {
 export interface BasePaginationQuery {
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
 }
 
 export interface ResourceConfig<_TQuery extends BasePaginationQuery = BasePaginationQuery> {

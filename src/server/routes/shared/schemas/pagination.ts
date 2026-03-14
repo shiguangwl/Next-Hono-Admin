@@ -22,5 +22,14 @@ export function createPaginatedSchema<T extends z.ZodTypeAny>(itemSchema: T) {
   })
 }
 
+export const SortQuerySchema = z.object({
+  sortBy: z.string().optional(),
+  sortOrder: z.enum(['asc', 'desc']).default('asc').optional(),
+})
+
+export const SortablePaginationQuerySchema = PaginationQuerySchema.merge(SortQuerySchema)
+
 export type PaginationQuery = z.infer<typeof PaginationQuerySchema>
 export type PaginationMeta = z.infer<typeof PaginationMetaSchema>
+export type SortQuery = z.infer<typeof SortQuerySchema>
+export type SortablePaginationQuery = z.infer<typeof SortablePaginationQuerySchema>

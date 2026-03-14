@@ -11,30 +11,38 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core'
-import { ArrowRight, Github, Layout, Monitor, Rocket, ShieldCheck, Zap } from 'lucide-react'
+import {
+  IconArrowRight,
+  IconBolt,
+  IconBrandGithub,
+  IconDeviceDesktop,
+  IconLayout,
+  IconRocket,
+  IconShieldCheck,
+} from '@tabler/icons-react'
 import Link from 'next/link'
 
 const FEATURES = [
   {
-    icon: Zap,
+    icon: IconBolt,
     color: 'yellow',
     title: '极速开发体验',
     desc: '基于 Next.js 16 和 Hono 的全栈架构，提供热更新和强类型支持。',
   },
   {
-    icon: ShieldCheck,
+    icon: IconShieldCheck,
     color: 'green',
     title: '权限管理系统',
     desc: '内置完整的 RBAC 架构，支持角色、菜单、按钮级别的权限控制。',
   },
   {
-    icon: Monitor,
+    icon: IconDeviceDesktop,
     color: 'blue',
     title: '响应式设计',
     desc: '完美适配移动端和桌面端，提供流畅的跨设备体验。',
   },
   {
-    icon: Layout,
+    icon: IconLayout,
     color: 'violet',
     title: '现代化组件库',
     desc: '结合 Mantine UI 组件库，打造精致的界面和极佳的视觉效果。',
@@ -54,7 +62,7 @@ export default function HomePage() {
       >
         <Group gap="xs">
           <ThemeIcon variant="gradient" gradient={{ from: 'violet', to: 'indigo' }} radius="md">
-            <Rocket size={18} />
+            <IconRocket size={18} />
           </ThemeIcon>
           <Text fw={700} size="lg">
             NextHonoAdmin
@@ -85,7 +93,7 @@ export default function HomePage() {
                 component={Link}
                 href="/dashboard"
                 size="lg"
-                rightSection={<ArrowRight size={18} />}
+                rightSection={<IconArrowRight size={18} />}
               >
                 立刻开始
               </Button>
@@ -96,7 +104,7 @@ export default function HomePage() {
                 rel="noopener noreferrer"
                 size="lg"
                 variant="default"
-                leftSection={<Github size={18} />}
+                leftSection={<IconBrandGithub size={18} />}
               >
                 GitHub
               </Button>

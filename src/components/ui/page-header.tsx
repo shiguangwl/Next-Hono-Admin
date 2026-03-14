@@ -1,7 +1,7 @@
 'use client'
 
 import { Anchor, Group, Breadcrumbs as MantineBreadcrumbs, Stack, Text, Title } from '@mantine/core'
-import { Home } from 'lucide-react'
+import { IconHome } from '@tabler/icons-react'
 import Link from 'next/link'
 import type { ReactNode } from 'react'
 
@@ -23,7 +23,7 @@ export function PageHeader({ title, description, breadcrumbs = [], actions }: Pa
       {breadcrumbs.length > 0 && (
         <MantineBreadcrumbs>
           <Anchor component={Link} href="/dashboard" c="dimmed" size="sm">
-            <Home size={14} />
+            <IconHome size={14} />
           </Anchor>
           {breadcrumbs.map((item, index) => {
             const isLast = index === breadcrumbs.length - 1

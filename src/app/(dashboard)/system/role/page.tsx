@@ -1,15 +1,14 @@
 'use client'
 
 import { ActionIcon, Button, Group, Paper, TextInput, Tooltip } from '@mantine/core'
-import { Pencil, Plus, RefreshCw, ShieldCheck, Trash2 } from 'lucide-react'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import { IconPencil, IconPlus, IconRefresh, IconShieldCheck, IconTrash } from '@tabler/icons-react'
+import { DataTable, type DataTableColumn, type DataTableSortStatus } from 'mantine-datatable'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 import { PermissionGuard } from '@/components/permission-guard'
-import { type ColumnDef, DataTable } from '@/components/ui/data-table'
-import { ConfirmDialog } from '@/components/ui/form-dialog'
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import { Pagination } from '@/components/ui/pagination'
 import { EnableStatusChip } from '@/components/ui/status-chip'
 import { useDeleteRole, useRoles } from '@/hooks/queries'
 import { RoleFormDialog } from './role-form-dialog'
@@ -25,20 +24,26 @@ type Role = {
   updatedAt: string
 }
 
+const PAGE_SIZE = 20
+
 export default function RolePage() {
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
   const [keyword, setKeyword] = useState('')
   const [searchKeyword, setSearchKeyword] = useState('')
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [menuDialogRole, setMenuDialogRole] = useState<Role | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<Role | null>(null)
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<Role>>({
+    columnAccessor: 'sort',
+    direction: 'asc',
+  })
 
   const { data, isLoading, refetch } = useRoles({
     page,
-    pageSize,
+    pageSize: PAGE_SIZE,
     keyword: searchKeyword,
+    sortBy: sortStatus.columnAccessor,
+    sortOrder: sortStatus.direction,
   })
   const deleteRole = useDeleteRole()
 
@@ -57,42 +62,58 @@ export default function RolePage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deleteRole.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-      toast.success('删除成功')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '删除失败')
-    }
+  const openDeleteConfirm = (role: Role) => {
+    modals.openConfirmModal({
+      title: '删除角色',
+      children: `确定要删除角色 "${role.roleName}" 吗？此操作不可恢复。`,
+      labels: { confirm: '删除', cancel: '取消' },
+      confirmProps: { color: 'red' },
+      centered: true,
+      onConfirm: async () => {
+        try {
+          await deleteRole.mutateAsync(role.id)
+          notifications.show({ message: '删除成功', color: 'green' })
+        } catch (err) {
+          notifications.show({
+            message: err instanceof Error ? err.message : '删除失败',
+            color: 'red',
+          })
+        }
+      },
+    })
   }
 
-  const columns: ColumnDef<Role>[] = [
-    { key: 'id', title: 'ID', width: 80 },
-    { key: 'roleName', title: '角色名称' },
-    { key: 'sort', title: '排序', width: 80 },
+  const columns: DataTableColumn<Role>[] = [
+    { accessor: 'id', title: 'ID', width: 80, sortable: true },
+    { accessor: 'roleName', title: '角色名称', sortable: true },
+    { accessor: 'sort', title: '排序', width: 80, sortable: true },
     {
-      key: 'status',
+      accessor: 'status',
       title: '状态',
-      render: (v) => <EnableStatusChip status={v as number} />,
+      sortable: true,
+      render: (record) => <EnableStatusChip status={record.status} />,
     },
-    { key: 'remark', title: '备注', render: (v) => (v as string) || '-' },
     {
-      key: 'createdAt',
+      accessor: 'remark',
+      title: '备注',
+      render: (record) => record.remark || '-',
+    },
+    {
+      accessor: 'createdAt',
       title: '创建时间',
-      render: (v) => (v as string) || '-',
+      sortable: true,
+      render: (record) => record.createdAt || '-',
     },
     {
-      key: 'actions',
+      accessor: 'actions',
       title: '操作',
       width: 150,
-      render: (_, record) => (
+      render: (record) => (
         <Group gap={4}>
           <PermissionGuard permission="system:role:update">
             <Tooltip label="编辑">
               <ActionIcon variant="subtle" size="sm" onClick={() => handleEdit(record)}>
-                <Pencil size={14} />
+                <IconPencil size={14} />
               </ActionIcon>
             </Tooltip>
           </PermissionGuard>
@@ -104,7 +125,7 @@ export default function RolePage() {
                 size="sm"
                 onClick={() => setMenuDialogRole(record)}
               >
-                <ShieldCheck size={14} />
+                <IconShieldCheck size={14} />
               </ActionIcon>
             </Tooltip>
           </PermissionGuard>
@@ -114,9 +135,9 @@ export default function RolePage() {
                 variant="subtle"
                 color="red"
                 size="sm"
-                onClick={() => setDeleteTarget(record)}
+                onClick={() => openDeleteConfirm(record)}
               >
-                <Trash2 size={14} />
+                <IconTrash size={14} />
               </ActionIcon>
             </Tooltip>
           </PermissionGuard>
@@ -132,14 +153,14 @@ export default function RolePage() {
         breadcrumbs={[{ label: '系统管理' }, { label: '角色管理' }]}
         actions={
           <PermissionGuard permission="system:role:create">
-            <Button leftSection={<Plus size={16} />} onClick={handleCreate}>
+            <Button leftSection={<IconPlus size={16} />} onClick={handleCreate}>
               新增角色
             </Button>
           </PermissionGuard>
         }
       />
 
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" mb="md">
         <Group>
           <TextInput
             flex={1}
@@ -155,7 +176,7 @@ export default function RolePage() {
           </Button>
           <Button
             variant="subtle"
-            leftSection={<RefreshCw size={14} />}
+            leftSection={<IconRefresh size={14} />}
             onClick={() => refetch()}
             mt="auto"
           >
@@ -165,16 +186,23 @@ export default function RolePage() {
       </Paper>
 
       <DataTable
+        withTableBorder
+        borderRadius="md"
+        striped
+        highlightOnHover
+        minHeight={200}
         columns={columns}
-        data={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        emptyText="暂无角色数据"
+        records={data?.items ?? []}
+        fetching={isLoading}
+        noRecordsText="暂无角色数据"
+        totalRecords={data?.total ?? 0}
+        recordsPerPage={PAGE_SIZE}
+        page={page}
+        onPageChange={setPage}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
       />
-
-      {data && (
-        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
-      )}
 
       <RoleFormDialog
         open={dialogOpen}
@@ -191,17 +219,6 @@ export default function RolePage() {
         role={menuDialogRole}
         onClose={() => setMenuDialogRole(null)}
         onSuccess={() => setMenuDialogRole(null)}
-      />
-
-      <ConfirmDialog
-        title="删除角色"
-        content={`确定要删除角色 "${deleteTarget?.roleName}" 吗？此操作不可恢复。`}
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        isConfirming={deleteRole.isPending}
-        confirmText="删除"
-        isDanger
       />
     </PageContainer>
   )

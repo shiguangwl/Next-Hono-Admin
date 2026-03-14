@@ -13,16 +13,16 @@ import {
   Text,
 } from '@mantine/core'
 import {
-  Activity,
-  AlertCircle,
-  Clock,
-  Globe,
-  Info,
-  Laptop,
-  Network,
-  Terminal,
-  User,
-} from 'lucide-react'
+  IconActivity,
+  IconAlertCircle,
+  IconClock,
+  IconDeviceLaptop,
+  IconInfoCircle,
+  IconNetwork,
+  IconTerminal,
+  IconUser,
+  IconWorld,
+} from '@tabler/icons-react'
 
 import { StatusChip } from '@/components/ui/status-chip'
 import { CodeBlock, DetailValue, InfoRow, Section } from './log-detail-components'
@@ -60,7 +60,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
       onClose={onClose}
       title={
         <Group gap="xs">
-          <Activity size={20} />
+          <IconActivity size={20} />
           <Text fw={700}>日志详情</Text>
           <Badge variant="outline" color="gray">
             ID: {log.id}
@@ -77,14 +77,18 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           <Paper withBorder p="md" radius="md" bg="var(--mantine-color-gray-0)">
             <Grid gutter="md">
               <Grid.Col span={{ base: 12, sm: 6 }}>
-                <InfoRow icon={<User size={14} />} label="操作人" value={log.adminName || '系统'} />
+                <InfoRow
+                  icon={<IconUser size={14} />}
+                  label="操作人"
+                  value={log.adminName || '系统'}
+                />
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6 }}>
-                <InfoRow icon={<Clock size={14} />} label="操作时间" value={log.createdAt} />
+                <InfoRow icon={<IconClock size={14} />} label="操作时间" value={log.createdAt} />
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6 }}>
                 <InfoRow
-                  icon={<Info size={14} />}
+                  icon={<IconInfoCircle size={14} />}
                   label="业务状态"
                   value={
                     <StatusChip status={log.status === 1 ? 'success' : 'danger'}>
@@ -95,7 +99,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
               </Grid.Col>
               <Grid.Col span={{ base: 12, sm: 6 }}>
                 <InfoRow
-                  icon={<Activity size={14} />}
+                  icon={<IconActivity size={14} />}
                   label="响应耗时"
                   value={log.executionTime !== null ? `${log.executionTime}ms` : '-'}
                 />
@@ -104,7 +108,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           </Paper>
 
           {/* 业务信息 */}
-          <Section title="业务描述" icon={<Info size={16} />}>
+          <Section title="业务描述" icon={<IconInfoCircle size={16} />}>
             <Grid gutter="sm">
               <Grid.Col span={{ base: 12, sm: 6 }}>
                 <DetailValue label="所属模块" value={log.module} />
@@ -119,7 +123,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           </Section>
 
           {/* 请求信息 */}
-          <Section title="请求详情" icon={<Network size={16} />}>
+          <Section title="请求详情" icon={<IconNetwork size={16} />}>
             <Stack gap="sm">
               <Group grow align="flex-start">
                 <DetailValue
@@ -137,7 +141,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
                   <DetailValue
                     label="IP 归属地"
                     value={log.ipLocation || '-'}
-                    icon={<Globe size={14} />}
+                    icon={<IconWorld size={14} />}
                   />
                 </Grid.Col>
               </Grid>
@@ -145,12 +149,12 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
           </Section>
 
           {/* 终端信息 */}
-          <Section title="设备信息" icon={<Laptop size={16} />}>
+          <Section title="设备信息" icon={<IconDeviceLaptop size={16} />}>
             <DetailValue label="User Agent" value={log.userAgent} isLongText />
           </Section>
 
           {/* 数据详情 */}
-          <Section title="数据详情" icon={<Terminal size={16} />}>
+          <Section title="数据详情" icon={<IconTerminal size={16} />}>
             <Stack gap="md">
               {log.requestParams && <CodeBlock label="请求参数" value={log.requestParams} />}
               {log.responseResult && <CodeBlock label="响应结果" value={log.responseResult} />}
@@ -159,7 +163,7 @@ export function LogDetailDialog({ log, onClose }: LogDetailDialogProps) {
                   label="异常信息"
                   value={log.errorMsg}
                   color="var(--mantine-color-red-light)"
-                  icon={<AlertCircle size={14} color="var(--mantine-color-red-filled)" />}
+                  icon={<IconAlertCircle size={14} color="var(--mantine-color-red-filled)" />}
                 />
               )}
             </Stack>

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createPaginatedSchema, PaginationQuerySchema } from '../shared'
+import { createPaginatedSchema, SortablePaginationQuerySchema } from '../shared'
 
 export const ConfigTypeSchema = z.enum(['string', 'boolean', 'number', 'json', 'array'])
 
@@ -17,7 +17,7 @@ export const ConfigSchema = z.object({
   updatedAt: z.string(),
 })
 
-export const ConfigQuerySchema = PaginationQuerySchema.extend({
+export const ConfigQuerySchema = SortablePaginationQuerySchema.extend({
   group: z.string().optional(),
   status: z.coerce.number().int().min(0).max(1).optional(),
 })

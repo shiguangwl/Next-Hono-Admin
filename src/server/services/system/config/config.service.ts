@@ -2,13 +2,14 @@
  * 系统配置服务
  */
 
-import { and, count, eq } from 'drizzle-orm'
+import { and, asc, count, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysConfig } from '@/db/schema'
 import { formatDateToLocal } from '@/lib/date'
 import { ConflictError, NotFoundError } from '@/lib/errors'
 import {
   buildPaginatedResult,
+  buildSortOrder,
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
@@ -163,9 +164,19 @@ export async function getConfigByKey(key: string): Promise<ConfigVo> {
   return toConfigVo(row)
 }
 
+const CONFIG_SORTABLE_FIELDS = [
+  'id',
+  'configKey',
+  'configGroup',
+  'configName',
+  'configType',
+  'status',
+  'createdAt',
+] as const
+
 /** 获取配置列表（分页） */
 export async function listConfigs(options: ConfigQuery): Promise<PaginatedResult<ConfigVo>> {
-  const { page, pageSize, offset } = normalizePagination(options)
+  const { page, pageSize, offset, sortBy, sortOrder } = normalizePagination(options)
 
   const whereClauses = []
 
@@ -184,12 +195,17 @@ export async function listConfigs(options: ConfigQuery): Promise<PaginatedResult
         ? whereClauses[0]
         : and(...whereClauses)
 
+  const orderBy = buildSortOrder(sysConfig, sortBy, sortOrder, CONFIG_SORTABLE_FIELDS, [
+    asc(sysConfig.configGroup),
+    asc(sysConfig.configKey),
+  ])
+
   const [items, totalResult] = await Promise.all([
     db
       .select()
       .from(sysConfig)
       .where(where as never)
-      .orderBy(sysConfig.configGroup, sysConfig.configKey)
+      .orderBy(...orderBy)
       .limit(pageSize)
       .offset(offset),
     db

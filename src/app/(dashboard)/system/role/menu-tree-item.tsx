@@ -1,7 +1,7 @@
 'use client'
 
 import { Badge, Center, Checkbox, Group, Text, UnstyledButton } from '@mantine/core'
-import { ChevronRight } from 'lucide-react'
+import { IconChevronRight } from '@tabler/icons-react'
 
 export type MenuTreeNode = {
   id: number
@@ -56,7 +56,7 @@ export function MenuTreeItem({
         {hasChildren ? (
           <UnstyledButton onClick={() => onToggleExpand(node.id)}>
             <Center w={20} h={20}>
-              <ChevronRight
+              <IconChevronRight
                 size={14}
                 style={{
                   transition: 'transform 150ms',

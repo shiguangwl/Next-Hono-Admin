@@ -13,9 +13,10 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core'
-import { AlertTriangle, Shield } from 'lucide-react'
+import { useForm } from '@mantine/form'
+import { IconAlertTriangle, IconShield } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
-import { type FormEvent, useState } from 'react'
+import { useState } from 'react'
 
 import { useAuth } from '@/hooks/use-auth'
 
@@ -42,32 +43,24 @@ function getErrorInfo(message: string) {
 export default function LoginPage() {
   const router = useRouter()
   const { login, loading } = useAuth()
-  const [username, setUsername] = useState('')
-  const [password, setPassword] = useState('')
   const [error, setError] = useState<{
     title: string
     description: string
   } | null>(null)
-  const [fieldErrors, setFieldErrors] = useState<{
-    username?: string
-    password?: string
-  }>({})
 
-  const validateForm = (): boolean => {
-    const errors: { username?: string; password?: string } = {}
-    if (!username.trim()) errors.username = '请输入用户名'
-    if (!password) errors.password = '请输入密码'
-    setFieldErrors(errors)
-    return Object.keys(errors).length === 0
-  }
+  const form = useForm({
+    mode: 'uncontrolled',
+    initialValues: { username: '', password: '' },
+    validate: {
+      username: (v) => (!v.trim() ? '请输入用户名' : null),
+      password: (v) => (!v ? '请输入密码' : null),
+    },
+  })
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault()
+  const handleSubmit = async (values: typeof form.values) => {
     setError(null)
-    if (!validateForm()) return
-
     try {
-      await login(username, password)
+      await login(values.username, values.password)
       router.replace('/dashboard')
     } catch (err) {
       const message = err instanceof Error ? err.message : '登录失败'
@@ -86,7 +79,7 @@ export default function LoginPage() {
               variant="gradient"
               gradient={{ from: 'indigo', to: 'violet' }}
             >
-              <Shield size={28} />
+              <IconShield size={28} />
             </ThemeIcon>
             <Title order={2} fw={800} mt="sm">
               后台管理系统
@@ -97,11 +90,11 @@ export default function LoginPage() {
           </Stack>
         </Center>
 
-        <form onSubmit={handleSubmit}>
+        <form onSubmit={form.onSubmit(handleSubmit)}>
           <Stack gap="md">
             {error && (
               <Alert
-                icon={<AlertTriangle size={18} />}
+                icon={<IconAlertTriangle size={18} />}
                 color="red"
                 variant="light"
                 radius="md"
@@ -121,9 +114,8 @@ export default function LoginPage() {
               required
               autoComplete="username"
               disabled={loading}
-              value={username}
-              onChange={(e) => setUsername(e.currentTarget.value)}
-              error={fieldErrors.username}
+              key={form.key('username')}
+              {...form.getInputProps('username')}
             />
 
             <PasswordInput
@@ -133,9 +125,8 @@ export default function LoginPage() {
               required
               autoComplete="current-password"
               disabled={loading}
-              value={password}
-              onChange={(e) => setPassword(e.currentTarget.value)}
-              error={fieldErrors.password}
+              key={form.key('password')}
+              {...form.getInputProps('password')}
             />
 
             <Button

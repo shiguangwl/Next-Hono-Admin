@@ -1,56 +1,50 @@
 'use client'
 
-import { ActionIcon, Button, Group, Paper, PasswordInput, TextInput, Tooltip } from '@mantine/core'
-import { KeyRound, Pencil, Plus, RefreshCw, Trash2 } from 'lucide-react'
+import { Button, Group, Paper, PasswordInput, TextInput } from '@mantine/core'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import { IconPlus, IconRefresh } from '@tabler/icons-react'
+import { DataTable, type DataTableSortStatus } from 'mantine-datatable'
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
 import { PermissionGuard } from '@/components/permission-guard'
-import { type ColumnDef, DataTable } from '@/components/ui/data-table'
-import { ConfirmDialog, FormDialog } from '@/components/ui/form-dialog'
+import { FormDialog } from '@/components/ui/form-dialog'
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import { Pagination } from '@/components/ui/pagination'
-import { EnableStatusChip } from '@/components/ui/status-chip'
 import { useAdmins, useDeleteAdmin, useResetPassword } from '@/hooks/queries'
-import { SUPER_ADMIN_ID } from '@/lib/constants'
+import { type Admin, buildAdminColumns } from './admin-columns'
 import { AdminFormDialog } from './admin-form-dialog'
 
-type Admin = {
-  id: number
-  username: string
-  nickname: string
-  status: number
-  loginIp: string | null
-  loginTime: string | null
-  remark: string | null
-  createdAt: string
-  updatedAt: string
-  roles?: Array<{ id: number; roleName: string }>
-}
+const PAGE_SIZE = 20
 
 export default function AdminPage() {
-  const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
-  const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const [{ page, keyword: searchKeyword }, setQueryParams] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    keyword: parseAsString.withDefault(''),
+  })
+  const [localKeyword, setLocalKeyword] = useState(searchKeyword)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingAdmin, setEditingAdmin] = useState<Admin | null>(null)
   const [resetPasswordId, setResetPasswordId] = useState<number | null>(null)
   const [newPassword, setNewPassword] = useState('')
   const [passwordError, setPasswordError] = useState('')
-  const [deleteTarget, setDeleteTarget] = useState<Admin | null>(null)
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<Admin>>({
+    columnAccessor: 'id',
+    direction: 'desc',
+  })
 
   const { data, isLoading, refetch } = useAdmins({
     page,
-    pageSize,
+    pageSize: PAGE_SIZE,
     keyword: searchKeyword,
+    sortBy: sortStatus.columnAccessor,
+    sortOrder: sortStatus.direction,
   })
   const deleteAdmin = useDeleteAdmin()
   const resetPassword = useResetPassword()
 
   const handleSearch = () => {
-    setSearchKeyword(keyword)
-    setPage(1)
+    setQueryParams({ keyword: localKeyword || null, page: 1 })
   }
 
   const handleCreate = () => {
@@ -63,15 +57,25 @@ export default function AdminPage() {
     setDialogOpen(true)
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deleteAdmin.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-      toast.success('删除成功')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '删除失败')
-    }
+  const openDeleteConfirm = (admin: Admin) => {
+    modals.openConfirmModal({
+      title: '删除管理员',
+      children: `确定要删除管理员 "${admin.username}" 吗？此操作不可恢复。`,
+      labels: { confirm: '删除', cancel: '取消' },
+      confirmProps: { color: 'red' },
+      centered: true,
+      onConfirm: async () => {
+        try {
+          await deleteAdmin.mutateAsync(admin.id)
+          notifications.show({ message: '删除成功', color: 'green' })
+        } catch (err) {
+          notifications.show({
+            message: err instanceof Error ? err.message : '删除失败',
+            color: 'red',
+          })
+        }
+      },
+    })
   }
 
   const handleResetPassword = async () => {
@@ -92,79 +96,24 @@ export default function AdminPage() {
       setResetPasswordId(null)
       setNewPassword('')
       setPasswordError('')
-      toast.success('密码重置成功')
+      notifications.show({ message: '密码重置成功', color: 'green' })
     } catch (err) {
-      toast.error(err instanceof Error ? err.message : '重置密码失败')
+      notifications.show({
+        message: err instanceof Error ? err.message : '重置密码失败',
+        color: 'red',
+      })
     }
   }
 
-  const columns: ColumnDef<Admin>[] = [
-    { key: 'id', title: 'ID', width: 80 },
-    { key: 'username', title: '用户名' },
-    { key: 'nickname', title: '昵称', render: (v) => (v as string) || '-' },
-    {
-      key: 'roles',
-      title: '角色',
-      render: (_, record) => record.roles?.map((r) => r.roleName).join(', ') || '-',
+  const columns = buildAdminColumns({
+    onEdit: handleEdit,
+    onDelete: openDeleteConfirm,
+    onResetPassword: (admin) => {
+      setResetPasswordId(admin.id)
+      setNewPassword('')
+      setPasswordError('')
     },
-    {
-      key: 'status',
-      title: '状态',
-      render: (v) => <EnableStatusChip status={v as number} />,
-    },
-    {
-      key: 'loginTime',
-      title: '最后登录',
-      render: (v) => (v as string) || '-',
-    },
-    {
-      key: 'actions',
-      title: '操作',
-      width: 150,
-      render: (_, record) => (
-        <Group gap={4}>
-          {record.id !== SUPER_ADMIN_ID && (
-            <>
-              <PermissionGuard permission="system:admin:update">
-                <Tooltip label="编辑">
-                  <ActionIcon variant="subtle" size="sm" onClick={() => handleEdit(record)}>
-                    <Pencil size={14} />
-                  </ActionIcon>
-                </Tooltip>
-              </PermissionGuard>
-              <PermissionGuard permission="system:admin:delete">
-                <Tooltip label="删除">
-                  <ActionIcon
-                    variant="subtle"
-                    color="red"
-                    size="sm"
-                    onClick={() => setDeleteTarget(record)}
-                  >
-                    <Trash2 size={14} />
-                  </ActionIcon>
-                </Tooltip>
-              </PermissionGuard>
-            </>
-          )}
-          <PermissionGuard permission="system:admin:resetPwd">
-            <Tooltip label="重置密码">
-              <ActionIcon
-                variant="subtle"
-                size="sm"
-                onClick={() => {
-                  setResetPasswordId(record.id)
-                  setNewPassword('')
-                  setPasswordError('')
-                }}
-              >
-                <KeyRound size={14} />
-              </ActionIcon>
-            </Tooltip>
-          </PermissionGuard>
-        </Group>
-      ),
-    },
-  ]
+  })
 
   return (
     <PageContainer>
@@ -173,22 +122,22 @@ export default function AdminPage() {
         breadcrumbs={[{ label: '系统管理' }, { label: '用户管理' }]}
         actions={
           <PermissionGuard permission="system:admin:create">
-            <Button leftSection={<Plus size={16} />} onClick={handleCreate}>
+            <Button leftSection={<IconPlus size={16} />} onClick={handleCreate}>
               新增管理员
             </Button>
           </PermissionGuard>
         }
       />
 
-      <Paper withBorder p="md" radius="md">
+      <Paper withBorder p="md" radius="md" mb="md">
         <Group>
           <TextInput
             flex={1}
             maw={300}
             label="关键词"
             placeholder="搜索用户名或昵称"
-            value={keyword}
-            onChange={(e) => setKeyword(e.currentTarget.value)}
+            value={localKeyword}
+            onChange={(e) => setLocalKeyword(e.currentTarget.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
           />
           <Button variant="default" onClick={handleSearch} mt="auto">
@@ -196,7 +145,7 @@ export default function AdminPage() {
           </Button>
           <Button
             variant="subtle"
-            leftSection={<RefreshCw size={14} />}
+            leftSection={<IconRefresh size={14} />}
             onClick={() => refetch()}
             mt="auto"
           >
@@ -206,16 +155,23 @@ export default function AdminPage() {
       </Paper>
 
       <DataTable
+        withTableBorder
+        borderRadius="md"
+        striped
+        highlightOnHover
+        minHeight={200}
         columns={columns}
-        data={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        emptyText="暂无管理员数据"
+        records={data?.items ?? []}
+        fetching={isLoading}
+        noRecordsText="暂无管理员数据"
+        totalRecords={data?.total ?? 0}
+        recordsPerPage={PAGE_SIZE}
+        page={page}
+        onPageChange={(p) => setQueryParams({ page: p })}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
       />
-
-      {data && (
-        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
-      )}
 
       <AdminFormDialog
         open={dialogOpen}
@@ -225,17 +181,6 @@ export default function AdminPage() {
           setDialogOpen(false)
           refetch()
         }}
-      />
-
-      <ConfirmDialog
-        title="删除管理员"
-        content={`确定要删除管理员 "${deleteTarget?.username}" 吗？此操作不可恢复。`}
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        isConfirming={deleteAdmin.isPending}
-        confirmText="删除"
-        isDanger
       />
 
       <FormDialog

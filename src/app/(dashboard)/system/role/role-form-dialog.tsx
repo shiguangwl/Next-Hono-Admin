@@ -16,6 +16,7 @@ import {
   Textarea,
   TextInput,
 } from '@mantine/core'
+import { useForm } from '@mantine/form'
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import {
@@ -42,20 +43,6 @@ interface RoleFormDialogProps {
   onSuccess: () => void
 }
 
-interface FormData {
-  roleName: string
-  sort: number
-  status: number
-  remark: string
-}
-
-const initialFormData: FormData = {
-  roleName: '',
-  sort: 0,
-  status: 1,
-  remark: '',
-}
-
 // WHY: 递归收集所有节点 ID，用于全选和默认展开
 function collectAllIds(nodes: MenuTreeNode[]): number[] {
   return nodes.flatMap((n) => [n.id, ...(n.children ? collectAllIds(n.children) : [])])
@@ -68,11 +55,22 @@ function getDescendantIds(node: MenuTreeNode): number[] {
 
 export function RoleFormDialog({ open, role, onClose, onSuccess }: RoleFormDialogProps) {
   const isEdit = !!role
-  const [formData, setFormData] = useState<FormData>(initialFormData)
   const [checkedMenuIds, setCheckedMenuIds] = useState<number[]>([])
   const [expandedIds, setExpandedIds] = useState<number[]>([])
-  const [errors, setErrors] = useState<Partial<Record<keyof FormData, string>>>({})
   const expandedInitRef = useRef(false)
+
+  const form = useForm({
+    mode: 'uncontrolled',
+    initialValues: {
+      roleName: '',
+      sort: 0,
+      status: '1',
+      remark: '',
+    },
+    validate: {
+      roleName: (v) => (!v.trim() ? '请输入角色名称' : null),
+    },
+  })
 
   const { data: menuTreeData, isLoading: menuLoading } = useMenuTree()
   const menuTree = (menuTreeData as MenuTreeNode[] | undefined) || []
@@ -84,21 +82,22 @@ export function RoleFormDialog({ open, role, onClose, onSuccess }: RoleFormDialo
 
   const allMenuIds = useMemo(() => collectAllIds(menuTree), [menuTree])
 
+  // biome-ignore lint: form methods are stable refs
   useEffect(() => {
     if (!open) return
     if (role && roleDetail) {
-      setFormData({
+      form.setValues({
         roleName: role.roleName,
         sort: role.sort,
-        status: role.status,
+        status: String(role.status),
         remark: role.remark || '',
       })
       setCheckedMenuIds(roleDetail.menuIds || [])
     } else if (!role) {
-      setFormData(initialFormData)
+      form.reset()
       setCheckedMenuIds([])
     }
-    setErrors({})
+    form.clearErrors()
   }, [open, role, roleDetail])
 
   useEffect(() => {
@@ -112,35 +111,26 @@ export function RoleFormDialog({ open, role, onClose, onSuccess }: RoleFormDialo
     }
   }, [open, allMenuIds])
 
-  const validate = (): boolean => {
-    const e: typeof errors = {}
-    if (!formData.roleName.trim()) e.roleName = '请输入角色名称'
-    setErrors(e)
-    return Object.keys(e).length === 0
-  }
-
-  const handleSubmit = async () => {
-    if (!validate()) return
+  const handleSubmit = async (values: typeof form.values) => {
     try {
+      const payload = {
+        roleName: values.roleName,
+        sort: values.sort,
+        status: Number(values.status),
+        remark: values.remark || undefined,
+      }
       if (isEdit && role) {
-        await updateRole.mutateAsync({
-          id: role.id,
-          input: { ...formData, remark: formData.remark || undefined },
-        })
+        await updateRole.mutateAsync({ id: role.id, input: payload })
         await updateRoleMenus.mutateAsync({
           id: role.id,
           input: { menuIds: checkedMenuIds },
         })
       } else {
-        await createRole.mutateAsync({
-          ...formData,
-          remark: formData.remark || undefined,
-          menuIds: checkedMenuIds,
-        })
+        await createRole.mutateAsync({ ...payload, menuIds: checkedMenuIds })
       }
       onSuccess()
     } catch (err) {
-      setErrors({ roleName: err instanceof Error ? err.message : '操作失败' })
+      form.setFieldError('roleName', err instanceof Error ? err.message : '操作失败')
     }
   }
 
@@ -168,93 +158,94 @@ export function RoleFormDialog({ open, role, onClose, onSuccess }: RoleFormDialo
       size="lg"
       centered
     >
-      <Stack gap="md">
-        <TextInput
-          label="角色名称"
-          placeholder="请输入角色名称"
-          required
-          value={formData.roleName}
-          onChange={(e) => setFormData({ ...formData, roleName: e.currentTarget.value })}
-          error={errors.roleName}
-        />
-
-        <SimpleGrid cols={2}>
-          <NumberInput
-            label="排序"
-            placeholder="排序值"
-            value={formData.sort}
-            onChange={(v) => setFormData({ ...formData, sort: Number(v) })}
+      <form onSubmit={form.onSubmit(handleSubmit)}>
+        <Stack gap="md">
+          <TextInput
+            label="角色名称"
+            placeholder="请输入角色名称"
+            required
+            key={form.key('roleName')}
+            {...form.getInputProps('roleName')}
           />
-          <Select
-            label="状态"
-            value={String(formData.status)}
-            onChange={(v) => setFormData({ ...formData, status: Number(v) })}
-            data={[
-              { value: '1', label: '正常' },
-              { value: '0', label: '禁用' },
-            ]}
+
+          <SimpleGrid cols={2}>
+            <NumberInput
+              label="排序"
+              placeholder="排序值"
+              key={form.key('sort')}
+              {...form.getInputProps('sort')}
+            />
+            <Select
+              label="状态"
+              key={form.key('status')}
+              {...form.getInputProps('status')}
+              data={[
+                { value: '1', label: '正常' },
+                { value: '0', label: '禁用' },
+              ]}
+            />
+          </SimpleGrid>
+
+          <Textarea
+            label="备注"
+            placeholder="请输入备注"
+            rows={2}
+            key={form.key('remark')}
+            {...form.getInputProps('remark')}
           />
-        </SimpleGrid>
 
-        <Textarea
-          label="备注"
-          placeholder="请输入备注"
-          rows={2}
-          value={formData.remark}
-          onChange={(e) => setFormData({ ...formData, remark: e.currentTarget.value })}
-        />
-
-        <div>
-          <Text size="sm" fw={500} mb="xs">
-            权限分配
-          </Text>
-          {isDataLoading ? (
-            <Group justify="center" py="xl">
-              <Loader />
-            </Group>
-          ) : (
-            <>
-              <Paper withBorder p="xs" radius="md" mb="xs">
-                <Group>
-                  <Checkbox
-                    label="全选/取消全选"
-                    size="xs"
-                    checked={checkedMenuIds.length === allMenuIds.length && allMenuIds.length > 0}
-                    onChange={handleSelectAll}
-                  />
-                  <Text size="xs" c="dimmed">
-                    (已选 {checkedMenuIds.length}/{allMenuIds.length})
-                  </Text>
-                </Group>
-              </Paper>
-              <Paper withBorder radius="md" p="xs">
-                <ScrollArea.Autosize mah={256}>
-                  {menuTree.map((node) => (
-                    <MenuTreeItem
-                      key={node.id}
-                      node={node}
-                      checkedIds={checkedMenuIds}
-                      expandedIds={expandedIds}
-                      onToggleCheck={toggleCheck}
-                      onToggleExpand={toggleExpand}
-                      level={0}
+          <div>
+            <Text size="sm" fw={500} mb="xs">
+              权限分配
+            </Text>
+            {isDataLoading ? (
+              <Group justify="center" py="xl">
+                <Loader />
+              </Group>
+            ) : (
+              <>
+                <Paper p="xs" radius="md" mb="xs" bg="var(--mantine-color-gray-0)">
+                  <Group>
+                    <Checkbox
+                      label="全选/取消全选"
+                      size="xs"
+                      checked={checkedMenuIds.length === allMenuIds.length && allMenuIds.length > 0}
+                      onChange={handleSelectAll}
                     />
-                  ))}
-                </ScrollArea.Autosize>
-              </Paper>
-            </>
-          )}
-        </div>
+                    <Text size="xs" c="dimmed">
+                      (已选 {checkedMenuIds.length}/{allMenuIds.length})
+                    </Text>
+                  </Group>
+                </Paper>
+                <Paper radius="md" p="xs" bg="var(--mantine-color-gray-0)">
+                  <ScrollArea.Autosize mah={256}>
+                    {menuTree.map((node) => (
+                      <MenuTreeItem
+                        key={node.id}
+                        node={node}
+                        checkedIds={checkedMenuIds}
+                        expandedIds={expandedIds}
+                        onToggleCheck={toggleCheck}
+                        onToggleExpand={toggleExpand}
+                        level={0}
+                      />
+                    ))}
+                  </ScrollArea.Autosize>
+                </Paper>
+              </>
+            )}
+          </div>
 
-        <Group justify="flex-end" mt="md">
-          <Button variant="default" onClick={onClose} disabled={isPending}>
-            取消
-          </Button>
-          <Button onClick={handleSubmit} loading={isPending}>
-            确定
-          </Button>
-        </Group>
-      </Stack>
+          <Group justify="flex-end" mt="md">
+            <Button variant="default" onClick={onClose} disabled={isPending}>
+              取消
+            </Button>
+            <Button type="submit" loading={isPending}>
+              确定
+            </Button>
+          </Group>
+        </Stack>
+      </form>
     </Modal>
   )
 }

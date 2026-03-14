@@ -2,7 +2,7 @@
  * 管理员服务
  */
 
-import { and, count, eq, inArray, like, sql } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, like } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysAdmin, sysAdminRole, sysRole } from '@/db/schema'
 import { hashPassword } from '@/lib/auth'
@@ -16,6 +16,7 @@ import {
 } from '@/lib/errors'
 import {
   buildPaginatedResult,
+  buildSortOrder,
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
@@ -27,13 +28,25 @@ import type { AdminVo, CreateAdminInput, UpdateAdminInput } from './types'
 interface AdminQuery {
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   keyword?: string
   status?: number
 }
 
+const SORTABLE_FIELDS = [
+  'id',
+  'username',
+  'nickname',
+  'status',
+  'loginTime',
+  'createdAt',
+  'updatedAt',
+] as const
+
 /** 获取管理员列表（分页） */
 export async function getAdminList(options: AdminQuery = {}): Promise<PaginatedResult<AdminVo>> {
-  const { page, pageSize, offset } = normalizePagination(options)
+  const { page, pageSize, offset, sortBy, sortOrder } = normalizePagination(options)
   const { keyword, status } = options
 
   const conditions = []
@@ -48,11 +61,13 @@ export async function getAdminList(options: AdminQuery = {}): Promise<PaginatedR
 
   const [{ total }] = await db.select({ total: count() }).from(sysAdmin).where(whereClause)
 
+  const orderBy = buildSortOrder(sysAdmin, sortBy, sortOrder, SORTABLE_FIELDS, [desc(sysAdmin.id)])
+
   const admins = await db
     .select()
     .from(sysAdmin)
     .where(whereClause)
-    .orderBy(sql`${sysAdmin.id} DESC`)
+    .orderBy(...orderBy)
     .limit(pageSize)
     .offset(offset)
 

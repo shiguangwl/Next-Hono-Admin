@@ -1,8 +1,8 @@
 import { ActionIcon, Code, Group } from '@mantine/core'
-import { Pencil, Trash2 } from 'lucide-react'
+import { IconPencil, IconTrash } from '@tabler/icons-react'
+import type { DataTableColumn } from 'mantine-datatable'
 
 import { PermissionGuard } from '@/components/permission-guard'
-import type { ColumnDef } from '@/components/ui/data-table'
 import { EnableStatusChip } from '@/components/ui/status-chip'
 import type { ConfigType } from './config-value-preview'
 
@@ -25,34 +25,36 @@ interface ColumnActions {
   onDelete: (record: Config) => void
 }
 
-export function buildColumns({ onEdit, onDelete }: ColumnActions): ColumnDef<Config>[] {
+export function buildColumns({ onEdit, onDelete }: ColumnActions): DataTableColumn<Config>[] {
   return [
-    { key: 'id', title: 'ID', width: 60 },
-    { key: 'configGroup', title: '分组' },
+    { accessor: 'id', title: 'ID', width: 60, sortable: true },
+    { accessor: 'configGroup', title: '分组', sortable: true },
     {
-      key: 'configKey',
+      accessor: 'configKey',
       title: 'Key',
-      render: (v) => <Code fz="xs">{v as string}</Code>,
+      sortable: true,
+      render: (record) => <Code fz="xs">{record.configKey}</Code>,
     },
-    { key: 'configName', title: '名称' },
-    { key: 'configType', title: '类型', width: 80 },
+    { accessor: 'configName', title: '名称' },
+    { accessor: 'configType', title: '类型', width: 80 },
     {
-      key: 'status',
+      accessor: 'status',
       title: '状态',
       width: 100,
-      render: (v) => <EnableStatusChip status={v as number} />,
+      sortable: true,
+      render: (record) => <EnableStatusChip status={record.status} />,
     },
     {
-      key: 'isSystem',
+      accessor: 'isSystem',
       title: '系统',
       width: 60,
-      render: (v) => ((v as number) === 1 ? '是' : '否'),
+      render: (record) => (record.isSystem === 1 ? '是' : '否'),
     },
     {
-      key: 'actions',
+      accessor: 'actions',
       title: '操作',
       width: 120,
-      render: (_, record) => (
+      render: (record) => (
         <Group gap={4}>
           <PermissionGuard permission="system:config:update">
             <ActionIcon
@@ -61,7 +63,7 @@ export function buildColumns({ onEdit, onDelete }: ColumnActions): ColumnDef<Con
               onClick={() => onEdit(record)}
               aria-label="编辑值"
             >
-              <Pencil size={14} />
+              <IconPencil size={14} />
             </ActionIcon>
           </PermissionGuard>
           <PermissionGuard permission="system:config:delete">
@@ -73,7 +75,7 @@ export function buildColumns({ onEdit, onDelete }: ColumnActions): ColumnDef<Con
               onClick={() => onDelete(record)}
               aria-label="删除"
             >
-              <Trash2 size={14} />
+              <IconTrash size={14} />
             </ActionIcon>
           </PermissionGuard>
         </Group>

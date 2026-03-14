@@ -1,3 +1,4 @@
+/** biome-ignore-all lint/suspicious/noExplicitAny: 图标库类型无法精确推断，需要动态索引 */
 'use client'
 
 import {
@@ -12,58 +13,11 @@ import {
   TextInput,
   UnstyledButton,
 } from '@mantine/core'
-import * as LucideIcons from 'lucide-react'
-import { Search } from 'lucide-react'
+import * as Icons from '@tabler/icons-react'
+import { IconSearch } from '@tabler/icons-react'
 import { useMemo, useState } from 'react'
 
-const COMMON_ICONS = [
-  'Settings',
-  'Users',
-  'Shield',
-  'Menu',
-  'FileText',
-  'House',
-  'LayoutDashboard',
-  'UserCog',
-  'Lock',
-  'Key',
-  'Database',
-  'Server',
-  'Folder',
-  'File',
-  'Search',
-  'Plus',
-  'Edit',
-  'Trash2',
-  'Check',
-  'X',
-  'ChevronRight',
-  'ChevronDown',
-  'AlertCircle',
-  'Info',
-  'Bell',
-  'Mail',
-  'Calendar',
-  'Clock',
-  'Download',
-  'Upload',
-  'RefreshCw',
-  'LogOut',
-  'Eye',
-  'EyeOff',
-  'Star',
-  'Heart',
-  'Bookmark',
-  'Tag',
-  'Filter',
-  'ArrowUpDown',
-  'Grid',
-  'List',
-  'Image',
-  'Package',
-  'Box',
-  'Layers',
-]
+import { ICON_REGISTRY } from './icon-registry'
 
 interface IconPickerProps {
   value?: string | null
@@ -71,13 +25,23 @@ interface IconPickerProps {
   onClose: () => void
 }
 
+const ALL_ICON_NAMES = Object.keys(Icons).filter(
+  (name) => name.startsWith('Icon') && (Icons as any)[name]?.render
+)
+
 export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
   const [searchTerm, setSearchTerm] = useState('')
 
   const filteredIcons = useMemo(() => {
     const term = searchTerm.toLowerCase().trim()
-    if (!term) return COMMON_ICONS
-    return COMMON_ICONS.filter((name) => name.toLowerCase().includes(term))
+    if (!term) {
+      // 默认显示注册表里的常用图标，避免由于图标过多导致首次渲染卡顿
+      return Object.keys(ICON_REGISTRY)
+    }
+    return ALL_ICON_NAMES.filter(
+      (name) =>
+        name.toLowerCase().includes(term) || name.replace('Icon', '').toLowerCase().includes(term)
+    ).slice(0, 100)
   }, [searchTerm])
 
   const handleSelect = (iconName: string) => {
@@ -89,13 +53,14 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
     <Modal opened onClose={onClose} title="选择图标" size="lg" centered>
       <Stack gap="md">
         <TextInput
-          placeholder="搜索图标..."
-          leftSection={<Search size={16} />}
+          placeholder="搜索图标 (例如: Home, Settings, User...)"
+          leftSection={<IconSearch size={16} />}
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.currentTarget.value)}
+          autoFocus
         />
 
-        <ScrollArea h={320}>
+        <ScrollArea h={400}>
           <Paper withBorder p="sm" radius="md">
             {filteredIcons.length === 0 ? (
               <Center py="xl">
@@ -104,13 +69,10 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                 </Text>
               </Center>
             ) : (
-              <SimpleGrid cols={{ base: 6, sm: 8 }} spacing="xs">
+              <SimpleGrid cols={{ base: 4, sm: 6 }} spacing="xs">
                 {filteredIcons.map((iconName) => {
-                  const IconComponent = LucideIcons[iconName as keyof typeof LucideIcons]
-                  if (!IconComponent || typeof IconComponent !== 'object') return null
-                  const Icon = IconComponent as unknown as React.ComponentType<{
-                    size?: number
-                  }>
+                  const IconComponent = (Icons as any)[iconName]
+                  if (!IconComponent) return null
                   const isSelected = value === iconName
 
                   return (
@@ -118,18 +80,18 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
                       key={iconName}
                       onClick={() => handleSelect(iconName)}
                       p="xs"
+                      title={iconName}
                       style={(theme) => ({
                         borderRadius: theme.radius.md,
                         textAlign: 'center',
                         backgroundColor: isSelected ? theme.colors.blue[1] : undefined,
-                        '&:hover': { backgroundColor: theme.colors.gray[1] },
+                        '&:hover': { backgroundColor: theme.colors.gray[0] },
                       })}
-                      title={iconName}
                     >
-                      <Stack align="center" gap={2}>
-                        <Icon size={20} />
-                        <Text size="xs" truncate w="100%">
-                          {iconName}
+                      <Stack align="center" gap={4}>
+                        <IconComponent size={24} stroke={1.5} />
+                        <Text size="xs" truncate w="100%" ta="center">
+                          {iconName.replace('Icon', '')}
                         </Text>
                       </Stack>
                     </UnstyledButton>
@@ -139,7 +101,9 @@ export function IconPicker({ value, onChange, onClose }: IconPickerProps) {
             )}
           </Paper>
         </ScrollArea>
-
+        <Text size="xs" c="dimmed" ta="center">
+          {searchTerm ? `显示前 ${filteredIcons.length} 个匹配结果` : '显示常用图标'}
+        </Text>
         <Button variant="default" onClick={onClose} fullWidth>
           取消
         </Button>

@@ -1,5 +1,12 @@
 @import url("https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap");
 @import "@mantine/core/styles.css";
+@import "@mantine/notifications/styles.css";
+@import "@mantine/nprogress/styles.css";
+@import "@mantine/dates/styles.css";
+@import "@mantine/tiptap/styles.css";
+@import "@mantine/charts/styles.css";
+@import "@mantine/dropzone/styles.css";
+@import "mantine-datatable/styles.css";
 
 /* ===== 全局设计令牌 ===== */
 :root {
@@ -63,16 +70,11 @@ body {
 
 /* ===== NavLink 增强 ===== */
 .mantine-NavLink-root {
-  margin-bottom: 2px;
-}
-
-.mantine-NavLink-root:hover {
-  transform: translateX(2px);
+  margin-bottom: 1px;
 }
 
 .mantine-NavLink-root[data-active] {
   font-weight: 600;
-  box-shadow: inset 3px 0 0 0 var(--mantine-primary-color-filled);
 }
 
 /* ===== 表格增强 ===== */
@@ -107,43 +109,10 @@ body {
   background-color: rgba(99, 102, 241, 0.06);
 }
 
-/* ===== Paper 卡片 hover 效果 ===== */
-.card-hover {
-  transition:
-    box-shadow var(--app-transition),
-    transform var(--app-transition);
-}
-
-.card-hover:hover {
-  box-shadow: var(--app-card-hover-shadow);
-  transform: translateY(-1px);
-}
-
-/* ===== 渐变统计卡片 ===== */
-.stat-card {
-  position: relative;
-  overflow: hidden;
-  transition:
-    box-shadow var(--app-transition),
-    transform var(--app-transition);
-}
-
-.stat-card::before {
-  content: "";
-  position: absolute;
-  inset: 0;
-  opacity: 0;
-  background: linear-gradient(135deg, rgba(255, 255, 255, 0.1), rgba(255, 255, 255, 0));
-  transition: opacity var(--app-transition);
-}
-
-.stat-card:hover {
+/* ===== Card 全局悬停效果 ===== */
+.mantine-Card-root:hover {
   transform: translateY(-2px);
   box-shadow: var(--app-card-hover-shadow);
-}
-
-.stat-card:hover::before {
-  opacity: 1;
 }
 
 /* ===== 页面进入动画 ===== */

@@ -14,7 +14,7 @@ import {
   ThemeIcon,
   Title,
 } from '@mantine/core'
-import { AlertCircle, Home, RefreshCw } from 'lucide-react'
+import { IconAlertCircle, IconHome, IconRefresh } from '@tabler/icons-react'
 import { useEffect } from 'react'
 
 interface GlobalErrorProps {
@@ -68,7 +68,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
               >
                 <Stack align="center" gap="lg">
                   <ThemeIcon size={64} radius="lg" color="red" variant="light">
-                    <AlertCircle size={32} />
+                    <IconAlertCircle size={32} />
                   </ThemeIcon>
 
                   <Stack gap={8} align="center">
@@ -112,7 +112,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                       color="dark"
                       size="md"
                       radius="md"
-                      leftSection={<RefreshCw size={18} />}
+                      leftSection={<IconRefresh size={18} />}
                       onClick={reset}
                     >
                       重试
@@ -122,7 +122,7 @@ export default function GlobalError({ error, reset }: GlobalErrorProps) {
                       color="gray"
                       size="md"
                       radius="md"
-                      leftSection={<Home size={18} />}
+                      leftSection={<IconHome size={18} />}
                       onClick={() => {
                         window.location.href = '/'
                       }}

@@ -7,6 +7,7 @@ import { type ReactNode, useState } from 'react'
 import { AuthGuard } from '@/components/auth-guard'
 import { AppHeader } from '@/components/layout/app-header'
 import { AppSidebar } from '@/components/layout/app-sidebar'
+import { RouteProgress } from '@/components/layout/route-progress'
 
 interface DashboardLayoutProps {
   children: ReactNode
@@ -31,6 +32,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
         <AppShell.Header>
           <AppHeader mobileOpened={mobileOpened} onBurgerClick={toggleMobile} />
         </AppShell.Header>
+
+        <RouteProgress />
 
         <AppShell.Navbar>
           <AppSidebar collapsed={collapsed} onCollapsedChange={setCollapsed} />

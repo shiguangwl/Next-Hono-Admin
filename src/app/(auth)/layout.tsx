@@ -1,7 +1,7 @@
 'use client'
 
 import { Box, Center, Flex, Stack, Text, ThemeIcon, Title } from '@mantine/core'
-import { Zap } from 'lucide-react'
+import { IconBolt } from '@tabler/icons-react'
 import type { ReactNode } from 'react'
 
 import { GuestGuard } from '@/components/auth-guard'
@@ -61,7 +61,7 @@ export default function AuthLayout({ children }: { children: ReactNode }) {
                 border: '1px solid rgba(255,255,255,0.2)',
               }}
             >
-              <Zap size={40} />
+              <IconBolt size={40} />
             </ThemeIcon>
             <Title order={1} c="white" ta="center">
               欢迎回来

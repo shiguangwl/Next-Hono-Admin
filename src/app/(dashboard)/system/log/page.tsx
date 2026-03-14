@@ -1,42 +1,48 @@
 'use client'
 
-import { ActionIcon, Button, Card, Group, Select, SimpleGrid, TextInput } from '@mantine/core'
-import { RefreshCw, Trash2 } from 'lucide-react'
+import { ActionIcon, Button, Group, Paper, Select, SimpleGrid, TextInput } from '@mantine/core'
+import { DateTimePicker } from '@mantine/dates'
+import { modals } from '@mantine/modals'
+import { notifications } from '@mantine/notifications'
+import { IconRefresh, IconTrash } from '@tabler/icons-react'
+import { DataTable, type DataTableColumn, type DataTableSortStatus } from 'mantine-datatable'
 import { useState } from 'react'
-import { toast } from 'sonner'
 
-import { type ColumnDef, DataTable } from '@/components/ui/data-table'
-import { ConfirmDialog } from '@/components/ui/form-dialog'
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import { Pagination } from '@/components/ui/pagination'
 import { StatusChip } from '@/components/ui/status-chip'
 import { useDeleteOperationLog, useOperationLogs } from '@/hooks/queries'
 import { LogDetailDialog, type OperationLog } from './log-detail-dialog'
 
+const PAGE_SIZE = 20
+
 export default function LogPage() {
   const [page, setPage] = useState(1)
-  const [pageSize] = useState(20)
   const [filters, setFilters] = useState({
     adminName: '',
     module: '',
     operation: '',
     status: '' as '' | '0' | '1',
-    startTime: '',
-    endTime: '',
+    startTime: null as Date | null,
+    endTime: null as Date | null,
   })
   const [appliedFilters, setAppliedFilters] = useState(filters)
   const [detailLog, setDetailLog] = useState<OperationLog | null>(null)
-  const [deleteTarget, setDeleteTarget] = useState<OperationLog | null>(null)
+  const [sortStatus, setSortStatus] = useState<DataTableSortStatus<OperationLog>>({
+    columnAccessor: 'createdAt',
+    direction: 'desc',
+  })
 
   const { data, isLoading, refetch } = useOperationLogs({
     page,
-    pageSize,
+    pageSize: PAGE_SIZE,
     adminName: appliedFilters.adminName || undefined,
     module: appliedFilters.module || undefined,
     operation: appliedFilters.operation || undefined,
     status: appliedFilters.status ? Number(appliedFilters.status) : undefined,
-    startTime: appliedFilters.startTime || undefined,
-    endTime: appliedFilters.endTime || undefined,
+    startTime: appliedFilters.startTime?.toISOString() || undefined,
+    endTime: appliedFilters.endTime?.toISOString() || undefined,
+    sortBy: sortStatus.columnAccessor,
+    sortOrder: sortStatus.direction,
   })
   const deleteLog = useDeleteOperationLog()
 
@@ -51,58 +57,76 @@ export default function LogPage() {
       module: '',
       operation: '',
       status: '' as const,
-      startTime: '',
-      endTime: '',
+      startTime: null as Date | null,
+      endTime: null as Date | null,
     }
     setFilters(resetFilters)
     setAppliedFilters(resetFilters)
     setPage(1)
   }
 
-  const handleDelete = async () => {
-    if (!deleteTarget) return
-    try {
-      await deleteLog.mutateAsync(deleteTarget.id)
-      setDeleteTarget(null)
-      toast.success('删除成功')
-    } catch (err) {
-      toast.error(err instanceof Error ? err.message : '删除失败')
-    }
+  const openDeleteConfirm = (log: OperationLog) => {
+    modals.openConfirmModal({
+      title: '删除日志',
+      children: '确定要删除这条日志吗？此操作不可恢复。',
+      labels: { confirm: '删除', cancel: '取消' },
+      confirmProps: { color: 'red' },
+      centered: true,
+      onConfirm: async () => {
+        try {
+          await deleteLog.mutateAsync(log.id)
+          notifications.show({ message: '删除成功', color: 'green' })
+        } catch (err) {
+          notifications.show({
+            message: err instanceof Error ? err.message : '删除失败',
+            color: 'red',
+          })
+        }
+      },
+    })
   }
 
-  const columns: ColumnDef<OperationLog>[] = [
-    { key: 'id', title: 'ID', width: 80 },
-    { key: 'adminName', title: '管理员', render: (v) => (v as string) || '-' },
-    { key: 'module', title: '模块', render: (v) => (v as string) || '-' },
-    { key: 'operation', title: '操作', render: (v) => (v as string) || '-' },
-    { key: 'requestMethod', title: '请求方法', width: 100 },
-    { key: 'ip', title: 'IP', render: (v) => (v as string) || '-' },
+  const columns: DataTableColumn<OperationLog>[] = [
+    { accessor: 'id', title: 'ID', width: 80, sortable: true },
     {
-      key: 'executionTime',
+      accessor: 'adminName',
+      title: '管理员',
+      sortable: true,
+      render: (r) => r.adminName || '-',
+    },
+    { accessor: 'module', title: '模块', render: (r) => r.module || '-' },
+    { accessor: 'operation', title: '操作', render: (r) => r.operation || '-' },
+    { accessor: 'requestMethod', title: '请求方法', width: 100 },
+    { accessor: 'ip', title: 'IP', render: (r) => r.ip || '-' },
+    {
+      accessor: 'executionTime',
       title: '耗时',
       width: 80,
-      render: (v) => (v !== null ? `${v}ms` : '-'),
+      sortable: true,
+      render: (r) => (r.executionTime !== null ? `${r.executionTime}ms` : '-'),
     },
     {
-      key: 'status',
+      accessor: 'status',
       title: '状态',
       width: 150,
-      render: (v) => (
-        <StatusChip status={(v as number) === 1 ? 'success' : 'danger'}>
-          {(v as number) === 1 ? '成功' : '失败'}
+      sortable: true,
+      render: (r) => (
+        <StatusChip status={r.status === 1 ? 'success' : 'danger'}>
+          {r.status === 1 ? '成功' : '失败'}
         </StatusChip>
       ),
     },
     {
-      key: 'createdAt',
+      accessor: 'createdAt',
       title: '时间',
-      render: (v) => (v as string) || '-',
+      sortable: true,
+      render: (r) => r.createdAt || '-',
     },
     {
-      key: 'actions',
+      accessor: 'actions',
       title: '操作',
       width: 120,
-      render: (_, record) => (
+      render: (record) => (
         <Group gap={4}>
           <Button variant="subtle" size="compact-sm" onClick={() => setDetailLog(record)}>
             详情
@@ -111,9 +135,9 @@ export default function LogPage() {
             variant="subtle"
             color="red"
             size="sm"
-            onClick={() => setDeleteTarget(record)}
+            onClick={() => openDeleteConfirm(record)}
           >
-            <Trash2 size={14} />
+            <IconTrash size={14} />
           </ActionIcon>
         </Group>
       ),
@@ -126,13 +150,17 @@ export default function LogPage() {
         title="操作日志"
         breadcrumbs={[{ label: '系统管理' }, { label: '操作日志' }]}
         actions={
-          <Button variant="subtle" leftSection={<RefreshCw size={14} />} onClick={() => refetch()}>
+          <Button
+            variant="subtle"
+            leftSection={<IconRefresh size={14} />}
+            onClick={() => refetch()}
+          >
             刷新
           </Button>
         }
       />
 
-      <Card padding="md">
+      <Paper withBorder p="md" radius="md" mb="md">
         <SimpleGrid cols={{ base: 1, sm: 2, lg: 4 }} spacing="md">
           <TextInput
             label="管理员"
@@ -163,17 +191,24 @@ export default function LogPage() {
             value={filters.status}
             onChange={(v) => setFilters({ ...filters, status: (v ?? '') as '' | '0' | '1' })}
           />
-          <TextInput
+          <DateTimePicker
             label="开始时间"
-            type="datetime-local"
+            placeholder="选择开始时间"
+            clearable
             value={filters.startTime}
-            onChange={(e) => setFilters({ ...filters, startTime: e.currentTarget.value })}
+            onChange={(v) =>
+              setFilters({
+                ...filters,
+                startTime: (v ?? null) as Date | null,
+              })
+            }
           />
-          <TextInput
+          <DateTimePicker
             label="结束时间"
-            type="datetime-local"
+            placeholder="选择结束时间"
+            clearable
             value={filters.endTime}
-            onChange={(e) => setFilters({ ...filters, endTime: e.currentTarget.value })}
+            onChange={(v) => setFilters({ ...filters, endTime: (v ?? null) as Date | null })}
           />
           <Group align="flex-end" gap="sm" style={{ gridColumn: 'span 2' }}>
             <Button variant="filled" onClick={handleSearch}>
@@ -184,32 +219,28 @@ export default function LogPage() {
             </Button>
           </Group>
         </SimpleGrid>
-      </Card>
+      </Paper>
 
       <DataTable
+        withTableBorder
+        borderRadius="md"
+        striped
+        highlightOnHover
+        minHeight={200}
         columns={columns}
-        data={data?.items || []}
-        rowKey="id"
-        loading={isLoading}
-        emptyText="暂无日志数据"
+        records={data?.items ?? []}
+        fetching={isLoading}
+        noRecordsText="暂无日志数据"
+        totalRecords={data?.total ?? 0}
+        recordsPerPage={PAGE_SIZE}
+        page={page}
+        onPageChange={setPage}
+        sortStatus={sortStatus}
+        onSortStatusChange={setSortStatus}
+        paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
       />
-
-      {data && (
-        <Pagination page={page} pageSize={pageSize} total={data.total} onPageChange={setPage} />
-      )}
 
       {detailLog && <LogDetailDialog log={detailLog} onClose={() => setDetailLog(null)} />}
-
-      <ConfirmDialog
-        title="删除日志"
-        content="确定要删除这条日志吗？此操作不可恢复。"
-        isOpen={!!deleteTarget}
-        onClose={() => setDeleteTarget(null)}
-        onConfirm={handleDelete}
-        isConfirming={deleteLog.isPending}
-        confirmText="删除"
-        isDanger
-      />
     </PageContainer>
   )
 }

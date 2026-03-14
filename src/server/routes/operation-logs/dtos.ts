@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createPaginatedSchema, PaginationQuerySchema } from '../shared'
+import { createPaginatedSchema, SortablePaginationQuerySchema } from '../shared'
 
 const DateTimeStringSchema = z
   .string()
@@ -27,7 +27,7 @@ export const OperationLogSchema = z.object({
   createdAt: z.string(),
 })
 
-export const LogQuerySchema = PaginationQuerySchema.extend({
+export const LogQuerySchema = SortablePaginationQuerySchema.extend({
   adminId: z.coerce.number().int().positive().optional(),
   adminName: z.string().optional(),
   module: z.string().optional(),

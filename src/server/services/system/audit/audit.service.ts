@@ -8,6 +8,7 @@ import { sysOperationLog } from '@/db/schema'
 import { NotFoundError } from '@/lib/errors'
 import {
   buildPaginatedResult,
+  buildSortOrder,
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
@@ -36,12 +37,22 @@ export async function createOperationLog(input: CreateOperationLogInput): Promis
   })
 }
 
+const AUDIT_SORTABLE_FIELDS = [
+  'id',
+  'adminName',
+  'module',
+  'operation',
+  'status',
+  'executionTime',
+  'createdAt',
+] as const
+
 /** 获取操作日志列表（分页） */
 export async function getOperationLogList(
   options: OperationLogQuery = {}
 ): Promise<PaginatedResult<OperationLogVo>> {
   const { adminId, adminName, module, operation, status, startTime, endTime } = options
-  const { page, pageSize, offset } = normalizePagination(options)
+  const { page, pageSize, offset, sortBy, sortOrder } = normalizePagination(options)
 
   const conditions = []
 
@@ -71,11 +82,15 @@ export async function getOperationLogList(
 
   const [{ total }] = await db.select({ total: count() }).from(sysOperationLog).where(whereClause)
 
+  const orderBy = buildSortOrder(sysOperationLog, sortBy, sortOrder, AUDIT_SORTABLE_FIELDS, [
+    desc(sysOperationLog.createdAt),
+  ])
+
   const logs = await db
     .select()
     .from(sysOperationLog)
     .where(whereClause)
-    .orderBy(desc(sysOperationLog.createdAt))
+    .orderBy(...orderBy)
     .limit(pageSize)
     .offset(offset)
 

@@ -23,6 +23,8 @@ export interface CreateOperationLogInput {
 export interface OperationLogQuery {
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   adminId?: number
   adminName?: string
   module?: string

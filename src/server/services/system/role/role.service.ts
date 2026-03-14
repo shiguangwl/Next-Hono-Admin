@@ -8,6 +8,7 @@ import { sysAdminRole, sysRole, sysRoleMenu } from '@/db/schema'
 import { BusinessError, ConflictError, ErrorCode, NotFoundError } from '@/lib/errors'
 import {
   buildPaginatedResult,
+  buildSortOrder,
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
@@ -18,13 +19,17 @@ import type { CreateRoleInput, RoleVo, UpdateRoleInput } from './types'
 interface RoleQuery {
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   keyword?: string
   status?: number
 }
 
+const SORTABLE_FIELDS = ['id', 'roleName', 'sort', 'status', 'createdAt', 'updatedAt'] as const
+
 /** 获取角色列表（分页） */
 export async function getRoleList(options: RoleQuery = {}): Promise<PaginatedResult<RoleVo>> {
-  const { page, pageSize, offset } = normalizePagination(options)
+  const { page, pageSize, offset, sortBy, sortOrder } = normalizePagination(options)
   const { keyword, status } = options
 
   const conditions = []
@@ -39,11 +44,13 @@ export async function getRoleList(options: RoleQuery = {}): Promise<PaginatedRes
 
   const [{ total }] = await db.select({ total: count() }).from(sysRole).where(whereClause)
 
+  const orderBy = buildSortOrder(sysRole, sortBy, sortOrder, SORTABLE_FIELDS, [asc(sysRole.sort)])
+
   const roles = await db
     .select()
     .from(sysRole)
     .where(whereClause)
-    .orderBy(asc(sysRole.sort))
+    .orderBy(...orderBy)
     .limit(pageSize)
     .offset(offset)
 

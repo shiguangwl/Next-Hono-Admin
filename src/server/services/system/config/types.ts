@@ -5,6 +5,8 @@ export type ConfigValueType = ConfigPrimitiveType | 'json' | 'array'
 export interface ConfigQuery {
   page?: number
   pageSize?: number
+  sortBy?: string
+  sortOrder?: 'asc' | 'desc'
   group?: string
   keyword?: string
   status?: number

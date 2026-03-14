@@ -1,7 +1,7 @@
 'use client'
 
 import { ActionIcon, Avatar, Burger, Divider, Group, Menu, Text, ThemeIcon } from '@mantine/core'
-import { Bell, Home, LogOut, Moon, Sun, Zap } from 'lucide-react'
+import { IconBell, IconBolt, IconHome, IconLogout, IconMoon, IconSun } from '@tabler/icons-react'
 import Link from 'next/link'
 import { useRouter } from 'next/navigation'
 
@@ -24,7 +24,7 @@ function ThemeToggle() {
       onClick={toggleTheme}
       aria-label="切换主题"
     >
-      {isDark ? <Sun size={20} strokeWidth={1.5} /> : <Moon size={20} strokeWidth={1.5} />}
+      {isDark ? <IconSun size={20} stroke={1.5} /> : <IconMoon size={20} stroke={1.5} />}
     </ActionIcon>
   )
 }
@@ -68,13 +68,13 @@ function UserDropdown() {
 
         <Divider my={4} />
 
-        <Menu.Item leftSection={<Home size={16} />} onClick={() => router.push('/')}>
+        <Menu.Item leftSection={<IconHome size={16} />} onClick={() => router.push('/')}>
           返回首页
         </Menu.Item>
 
         <Divider my={4} />
 
-        <Menu.Item color="red" leftSection={<LogOut size={16} />} onClick={handleLogout}>
+        <Menu.Item color="red" leftSection={<IconLogout size={16} />} onClick={handleLogout}>
           退出登录
         </Menu.Item>
       </Menu.Dropdown>
@@ -84,17 +84,7 @@ function UserDropdown() {
 
 export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
   return (
-    <Group
-      h="100%"
-      px="md"
-      justify="space-between"
-      bg="var(--app-header-bg)"
-      style={{
-        backdropFilter: 'blur(12px)',
-        borderBottom: '1px solid var(--mantine-color-default-border)',
-        zIndex: 100,
-      }}
-    >
+    <Group h="100%" px="md" justify="space-between" bg="var(--app-header-bg)">
       <Group gap="xs">
         <Burger opened={mobileOpened} onClick={onBurgerClick} hiddenFrom="sm" size="sm" />
 
@@ -109,7 +99,7 @@ export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
               variant="gradient"
               gradient={{ from: 'indigo', to: 'violet' }}
             >
-              <Zap size={18} fill="white" />
+              <IconBolt size={18} fill="white" />
             </ThemeIcon>
             <Text fw={800} size="lg" style={{ letterSpacing: '-0.02em' }}>
               Admin
@@ -120,7 +110,7 @@ export function AppHeader({ mobileOpened, onBurgerClick }: AppHeaderProps) {
 
       <Group gap="xs">
         <ActionIcon variant="subtle" size="lg" radius="md" color="gray" aria-label="通知">
-          <Bell size={20} strokeWidth={1.5} />
+          <IconBell size={20} stroke={1.5} />
         </ActionIcon>
 
         <Divider orientation="vertical" h={20} my="auto" opacity={0.5} />

@@ -1,5 +1,5 @@
 import { z } from 'zod'
-import { createPaginatedSchema, PaginationQuerySchema } from '../shared'
+import { createPaginatedSchema, SortablePaginationQuerySchema } from '../shared'
 
 export const RoleSchema = z.object({
   id: z.number(),
@@ -12,7 +12,7 @@ export const RoleSchema = z.object({
   menuIds: z.array(z.number()).optional(),
 })
 
-export const RoleQuerySchema = PaginationQuerySchema.extend({
+export const RoleQuerySchema = SortablePaginationQuerySchema.extend({
   keyword: z.string().optional(),
   status: z.coerce.number().int().min(0).max(1).optional(),
 })

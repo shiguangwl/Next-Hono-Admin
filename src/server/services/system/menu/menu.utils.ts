@@ -2,9 +2,9 @@
  * 菜单 - 工具函数
  */
 
-import type { sysMenu } from '@/db/schema'
-import { formatDateToLocal } from '@/lib/date'
-import type { MenuTreeNode, MenuVo } from './types'
+import type { sysMenu } from "@/db/schema";
+import { formatDateToLocal } from "@/lib/date";
+import type { MenuTreeNode, MenuVo } from "./types";
 
 /** 转换为菜单 VO */
 export function toMenuVo(menu: typeof sysMenu.$inferSelect): MenuVo {
@@ -23,51 +23,53 @@ export function toMenuVo(menu: typeof sysMenu.$inferSelect): MenuVo {
     isExternal: menu.isExternal,
     isCache: menu.isCache,
     remark: menu.remark,
-    createdAt: formatDateToLocal(menu.createdAt) ?? '',
-    updatedAt: formatDateToLocal(menu.updatedAt) ?? '',
-  }
+    createdAt: formatDateToLocal(menu.createdAt) ?? "",
+    updatedAt: formatDateToLocal(menu.updatedAt) ?? "",
+  };
 }
 
 /** 转换为菜单树节点 */
-export function toMenuTreeNode(menu: typeof sysMenu.$inferSelect): MenuTreeNode {
-  return { ...toMenuVo(menu) }
+export function toMenuTreeNode(
+  menu: typeof sysMenu.$inferSelect,
+): MenuTreeNode {
+  return { ...toMenuVo(menu) };
 }
 
 /** 从扁平列表构建菜单树 */
 export function buildMenuTree(menus: MenuTreeNode[]): MenuTreeNode[] {
-  const menuMap = new Map<number, MenuTreeNode>()
-  const roots: MenuTreeNode[] = []
+  const menuMap = new Map<number, MenuTreeNode>();
+  const roots: MenuTreeNode[] = [];
 
   // 第一遍：创建所有节点
   for (const menu of menus) {
-    menuMap.set(menu.id, { ...menu, children: [] })
+    menuMap.set(menu.id, { ...menu, children: [] });
   }
 
   // 第二遍：建立父子关系
   for (const menu of menus) {
-    const node = menuMap.get(menu.id)
-    if (!node) continue
+    const node = menuMap.get(menu.id);
+    if (!node) continue;
     if (menu.parentId === 0) {
-      roots.push(node)
+      roots.push(node);
     } else {
-      const parent = menuMap.get(menu.parentId)
+      const parent = menuMap.get(menu.parentId);
       if (parent) {
-        parent.children = parent.children || []
-        parent.children.push(node)
+        parent.children = parent.children || [];
+        parent.children.push(node);
       }
     }
   }
 
   // 递归排序
   const sortNodes = (nodes: MenuTreeNode[]) => {
-    nodes.sort((a, b) => a.sort - b.sort)
+    nodes.sort((a, b) => b.sort - a.sort);
     for (const node of nodes) {
       if (node.children?.length) {
-        sortNodes(node.children)
+        sortNodes(node.children);
       }
     }
-  }
-  sortNodes(roots)
+  };
+  sortNodes(roots);
 
-  return roots
+  return roots;
 }

@@ -1,7 +1,7 @@
 'use client'
 
 import { Button, Center, Code, Group, Paper, Stack, Text, ThemeIcon, Title } from '@mantine/core'
-import { AlertCircle, Home, RefreshCw, Server, Wifi } from 'lucide-react'
+import { IconAlertCircle, IconHome, IconRefresh, IconServer, IconWifi } from '@tabler/icons-react'
 import { useRouter } from 'next/navigation'
 
 export type ErrorType = 'server' | 'network' | 'notFound' | 'unknown'
@@ -11,25 +11,25 @@ const ERROR_CONFIGS: Record<
   { icon: React.ReactNode; title: string; description: string; color: string }
 > = {
   server: {
-    icon: <Server size={24} />,
+    icon: <IconServer size={24} />,
     title: '服务暂时不可用',
     description: '服务器正在维护或遇到了一些问题，请稍后再试',
     color: 'red',
   },
   network: {
-    icon: <Wifi size={24} />,
+    icon: <IconWifi size={24} />,
     title: '网络连接失败',
     description: '无法连接到服务器，请检查您的网络连接',
     color: 'orange',
   },
   notFound: {
-    icon: <AlertCircle size={24} />,
+    icon: <IconAlertCircle size={24} />,
     title: '页面未找到',
     description: '您访问的页面不存在或已被移除',
     color: 'blue',
   },
   unknown: {
-    icon: <AlertCircle size={24} />,
+    icon: <IconAlertCircle size={24} />,
     title: '发生了错误',
     description: '抱歉，出现了一些意外情况',
     color: 'gray',
@@ -82,14 +82,14 @@ export function ErrorPage({
 
           <Group>
             {onRetry && (
-              <Button leftSection={<RefreshCw size={16} />} onClick={onRetry}>
+              <Button leftSection={<IconRefresh size={16} />} onClick={onRetry}>
                 重试
               </Button>
             )}
             {showHomeButton && (
               <Button
                 variant="default"
-                leftSection={<Home size={16} />}
+                leftSection={<IconHome size={16} />}
                 onClick={() => router.push('/')}
               >
                 返回首页
