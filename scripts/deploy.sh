@@ -24,7 +24,7 @@ ROLLBACK=false
 # M8: 临时文件追踪 + 中断清理
 TEMP_FILES=()
 cleanup_on_exit() {
-    for f in "${TEMP_FILES[@]}"; do
+    for f in ${TEMP_FILES[@]+"${TEMP_FILES[@]}"}; do
         rm -f "$f" 2>/dev/null
     done
 }

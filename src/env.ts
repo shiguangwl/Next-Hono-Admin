@@ -35,6 +35,10 @@ export const env = createEnv({
       .max(30)
       .optional()
       .default(DEFAULT_SESSION_TTL_DAYS),
+    COOKIE_SECURE: z
+      .enum(['true', 'false'])
+      .optional()
+      .transform((v) => (v !== undefined ? v === 'true' : undefined)),
 
     // CORS 配置
     CORS_ORIGINS: z
@@ -72,6 +76,7 @@ export const env = createEnv({
     SESSION_TTL_DAYS: process.env.SESSION_TTL_DAYS,
     CORS_ORIGINS: process.env.CORS_ORIGINS,
     NODE_ENV: process.env.NODE_ENV,
+    COOKIE_SECURE: process.env.COOKIE_SECURE,
   },
 
   /**
