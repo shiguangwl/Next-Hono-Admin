@@ -106,6 +106,22 @@ cleanup_old_images() {
     ssh_cmd "docker image prune -f 2>/dev/null || true"
 }
 
+# 在远程生成网络 override 文件
+generate_network_override() {
+    local network="$1"
+    local remote_dir="$2"
+    log_info "生成网络 override: $network"
+    ssh_cmd "cat > $remote_dir/docker-compose.network.yml << 'YAML'
+services:
+  app:
+    networks:
+      - $network
+networks:
+  $network:
+    external: true
+YAML"
+}
+
 # 检查 Docker 依赖
 check_docker_dependencies() {
     command -v docker &>/dev/null || log_error "本地未安装 Docker"

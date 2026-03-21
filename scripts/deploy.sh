@@ -1,15 +1,6 @@
 #!/bin/bash
-# ============================================
-# 通用远程部署脚本
-# 本地构建镜像 -> 传输到远程 -> Docker Compose 部署
-#
-# 使用方式:
-#   ./deploy.sh                           # 使用默认配置 .deploy.env
-#   ./deploy.sh --config .deploy.prod.env # 指定配置文件
-#   ./deploy.sh --dry-run                 # 预演模式
-#   ./deploy.sh --rollback                # 回滚到上一版本
-#   ./deploy.sh --help                    # 显示帮助
-# ============================================
+# 通用远程部署脚本: 本地构建镜像 -> 传输到远程 -> Docker Compose 部署
+# 用法详见: ./deploy.sh --help
 
 export DOCKER_BUILDKIT=1
 set -euo pipefail
@@ -38,23 +29,15 @@ source "${SCRIPT_DIR}/lib/docker.sh"
 # 帮助信息
 show_help() {
     cat <<EOF
-通用远程部署脚本
-
 用法: $(basename "$0") [选项]
-
 选项:
   -c, --config FILE    指定配置文件路径 (默认: .deploy.env)
   -d, --dry-run        预演模式，不实际执行部署
   -r, --rollback       回滚到上一次成功部署的版本
   -h, --help           显示此帮助信息
-
-配置文件格式请参考 .deploy.env.example
-
 示例:
-  $(basename "$0")                              # 使用默认配置
-  $(basename "$0") --config .deploy.staging.env # 使用 staging 配置
+  $(basename "$0") --config .deploy.prod.env    # 使用 prod 配置
   $(basename "$0") --dry-run                    # 预演模式
-  $(basename "$0") --rollback                   # 回滚到上一版本
 EOF
     exit 0
 }
@@ -103,6 +86,7 @@ load_config() {
     APP_PORT="${APP_PORT:-3000}"
     CONTAINER_NAME="${CONTAINER_NAME:-app}"
     COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-}"
+    DOCKER_NETWORK="${DOCKER_NETWORK:-}"
 
     # 验证必填项
     [[ -z "${SSH_HOST:-}" ]] && log_error "缺少必填配置: SSH_HOST"
@@ -122,7 +106,17 @@ load_config() {
         [[ ! -f "$env_path" ]] && log_error "环境文件不存在: $env_path"
     done
 
-    log_info "配置验证通过 [镜像: ${IMAGE_NAME}:${IMAGE_TAG}, 容器: ${CONTAINER_NAME}, 端口: ${APP_PORT}]"
+    local net_info=""
+    [[ -n "$DOCKER_NETWORK" ]] && net_info=", 网络: ${DOCKER_NETWORK}"
+    log_info "配置验证通过 [镜像: ${IMAGE_NAME}:${IMAGE_TAG}, 容器: ${CONTAINER_NAME}, 端口: ${APP_PORT}${net_info}]"
+}
+
+# 构建 compose 命令选项（-p / -f 参数）
+get_compose_opts() {
+    local opts=""
+    [[ -n "$COMPOSE_PROJECT_NAME" ]] && opts="$opts -p $COMPOSE_PROJECT_NAME"
+    [[ -n "$DOCKER_NETWORK" ]] && opts="$opts -f docker-compose.yml -f docker-compose.network.yml"
+    echo "$opts"
 }
 
 # 准备远程环境
@@ -143,14 +137,21 @@ prepare_remote() {
     scp_cmd "$compose_path" "$REMOTE_DIR/docker-compose.yml" || log_error "上传 docker-compose.yml 失败"
 
     # 上传环境配置文件并设置安全权限
+    # docker-compose.yml 固定引用 .env.production，需将环境文件重命名上传
     IFS=',' read -ra env_array <<< "$ENV_FILES"
     for env_file in "${env_array[@]}"; do
         env_file=$(echo "$env_file" | xargs)
         local env_path="${PROJECT_DIR}/${env_file}"
-        log_info "上传环境配置: $env_file"
-        scp_cmd "$env_path" "$REMOTE_DIR/" || log_error "上传 $env_file 失败"
-        ssh_cmd "chmod 600 $REMOTE_DIR/$env_file" || log_warn "设置 $env_file 权限失败"
+        local remote_name=".env.production"
+        log_info "上传环境配置: $env_file -> $remote_name"
+        scp_cmd "$env_path" "$REMOTE_DIR/$remote_name" || log_error "上传 $env_file 失败"
+        ssh_cmd "chmod 600 $REMOTE_DIR/$remote_name" || log_warn "设置 $remote_name 权限失败"
     done
+
+    # 生成网络 override 文件
+    if [[ -n "$DOCKER_NETWORK" ]]; then
+        generate_network_override "$DOCKER_NETWORK" "$REMOTE_DIR"
+    fi
 
     log_info "远程部署文件准备完成"
 }
@@ -202,14 +203,13 @@ deploy() {
 
     log_info "部署应用..."
 
-    local project_opt=""
-    [[ -n "$COMPOSE_PROJECT_NAME" ]] && project_opt="-p $COMPOSE_PROJECT_NAME"
+    local compose_opts
+    compose_opts=$(get_compose_opts)
 
-    # 使用 up -d 直接替换（Docker Compose 自动停旧启新），而非先 down 再 up
     local env_vars="IMAGE_NAME=$IMAGE_NAME IMAGE_TAG=$IMAGE_TAG APP_PORT=$APP_PORT CONTAINER_NAME=$CONTAINER_NAME"
     [[ -n "$COMPOSE_PROJECT_NAME" ]] && env_vars="$env_vars COMPOSE_PROJECT_NAME=$COMPOSE_PROJECT_NAME"
 
-    ssh_cmd "cd $REMOTE_DIR && $env_vars docker compose $project_opt up -d --pull never --remove-orphans" || log_error "部署失败"
+    ssh_cmd "cd $REMOTE_DIR && $env_vars docker compose $compose_opts up -d --pull never --remove-orphans" || log_error "部署失败"
 }
 
 # 检查状态
@@ -223,12 +223,12 @@ check_status() {
 
     local max_wait=30
     local waited=0
-    local project_opt=""
-    [[ -n "$COMPOSE_PROJECT_NAME" ]] && project_opt="-p $COMPOSE_PROJECT_NAME"
+    local compose_opts
+    compose_opts=$(get_compose_opts)
 
     while [[ $waited -lt $max_wait ]]; do
-        if ssh_cmd "cd $REMOTE_DIR && docker compose $project_opt ps 2>/dev/null | grep -qE '(Up|running)'"; then
-            ssh_cmd "cd $REMOTE_DIR && docker compose $project_opt ps"
+        if ssh_cmd "cd $REMOTE_DIR && docker compose $compose_opts ps 2>/dev/null | grep -qE '(Up|running)'"; then
+            ssh_cmd "cd $REMOTE_DIR && docker compose $compose_opts ps"
             return 0
         fi
         sleep 2
@@ -237,7 +237,7 @@ check_status() {
     done
 
     echo ""
-    log_error "部署超时或失败，请检查日志:\n  ssh $SSH_USER@$SSH_HOST 'cd $REMOTE_DIR && docker compose $project_opt logs --tail=50'"
+    log_error "部署超时或失败，请检查日志:\n  ssh $SSH_USER@$SSH_HOST 'cd $REMOTE_DIR && docker compose $compose_opts logs --tail=50'"
 }
 
 # 主流程
@@ -254,20 +254,10 @@ main() {
         check_ssh_dependencies
         test_ssh_connection
         rollback
-    elif $DRY_RUN; then
-        show_title "🔍 部署预演模式 (Dry Run)"
-        load_config
-        check_docker_dependencies
-        check_ssh_dependencies
-        test_ssh_connection
-        build_image
-        push_image
-        prepare_remote
-        deploy
-        cleanup_old_images
-        check_status
     else
-        show_title "🚀 通用远程部署脚本"
+        local title="🚀 通用远程部署脚本"
+        $DRY_RUN && title="🔍 部署预演模式 (Dry Run)"
+        show_title "$title"
         load_config
         check_docker_dependencies
         check_ssh_dependencies
@@ -276,7 +266,7 @@ main() {
         push_image
         prepare_remote
         deploy
-        save_deploy_tag
+        $DRY_RUN || save_deploy_tag
         cleanup_old_images
         check_status
     fi
@@ -296,6 +286,7 @@ main() {
     log_info "   镜像: $IMAGE_NAME:$IMAGE_TAG"
     log_info "   容器: $CONTAINER_NAME"
     log_info "   端口: $APP_PORT"
+    [[ -n "$DOCKER_NETWORK" ]] && log_info "   网络: $DOCKER_NETWORK"
     log_info "   总耗时: $(format_time $total_duration)"
     show_separator "$GREEN"
     echo ""
