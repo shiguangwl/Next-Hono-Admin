@@ -22,10 +22,18 @@ function createLogger() {
     // WHY: 防止 password/token/secret 等敏感字段泄漏到日志
     redact: {
       paths: [
-        'password', 'token', 'secret', 'apiKey',
-        'authorization', 'cookie',
-        '*.password', '*.token', '*.secret', '*.apiKey',
-        '*.authorization', '*.cookie',
+        'password',
+        'token',
+        'secret',
+        'apiKey',
+        'authorization',
+        'cookie',
+        '*.password',
+        '*.token',
+        '*.secret',
+        '*.apiKey',
+        '*.authorization',
+        '*.cookie',
       ],
       censor: '[REDACTED]',
     },

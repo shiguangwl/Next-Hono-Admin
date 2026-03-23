@@ -18,7 +18,6 @@ import type { Env } from '@/server/context'
  * - 客户端 IP（仅错误时记录，用于安全审计）
  */
 
-
 export const requestLoggerMiddleware = createMiddleware<Env>(async (c, next) => {
   if (c.req.path === HEALTH_CHECK_PATH) {
     await next()

@@ -73,9 +73,9 @@ import {
   IconWifi,
   IconWorld,
   IconX,
-} from "@tabler/icons-react";
+} from '@tabler/icons-react'
 
-type IconComponent = React.ComponentType<{ size?: number; stroke?: number }>;
+type IconComponent = React.ComponentType<{ size?: number; stroke?: number }>
 
 // WHY: 注册常用图标作为快速查找缓存，icon-picker 无搜索词时默认展示此列表
 export const ICON_REGISTRY: Record<string, IconComponent> = {
@@ -153,8 +153,8 @@ export const ICON_REGISTRY: Record<string, IconComponent> = {
   IconWifi,
   IconWorld,
   IconX,
-};
+}
 
-export const ICON_NAMES = Object.keys(ICON_REGISTRY);
+export const ICON_NAMES = Object.keys(ICON_REGISTRY)
 
-export const FALLBACK_ICON = IconHelpCircle;
+export const FALLBACK_ICON = IconHelpCircle

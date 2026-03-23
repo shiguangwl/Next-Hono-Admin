@@ -4,8 +4,8 @@
  * 未设置时完全不加载 OTel SDK，零开销
  */
 
-import pino from 'pino'
 import { type Attributes, trace } from '@opentelemetry/api'
+import pino from 'pino'
 import { HEALTH_CHECK_PATH } from '@/lib/constants'
 
 // WHY: 独立 pino 实例避免循环依赖（telemetry ↔ logger）

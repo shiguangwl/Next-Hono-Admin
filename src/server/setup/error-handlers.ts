@@ -14,9 +14,36 @@ export function setupErrorHandlers(app: Hono<Env>): void {
         reportError(err, { requestId, httpStatus: err.status })
       }
 
+      if (err.res) {
+        const headers = new Headers(err.res.headers)
+        if (requestId) headers.set('x-request-id', requestId)
+
+        const contentType = headers.get('content-type') || ''
+        if (!contentType.includes('application/json')) {
+          return new Response(err.res.body, {
+            status: err.res.status,
+            statusText: err.res.statusText,
+            headers,
+          })
+        }
+        for (const [key, value] of headers.entries()) {
+          c.header(key, value)
+        }
+      } else if (requestId) {
+        c.header('x-request-id', requestId)
+      }
+
+      const STATUS_TO_CODE: Record<number, string> = {
+        401: ErrorCode.UNAUTHORIZED,
+        403: ErrorCode.FORBIDDEN,
+        404: ErrorCode.NOT_FOUND,
+        409: ErrorCode.CONFLICT,
+        429: ErrorCode.TOO_MANY_REQUESTS,
+      }
+      const codeStr = STATUS_TO_CODE[err.status] ?? ErrorCode.HTTP_ERROR
       return c.json(
         {
-          code: ErrorCode.HTTP_ERROR,
+          code: codeStr,
           message: err.status >= 500 ? '服务器内部错误' : err.message || '请求处理失败',
           requestId,
         },

@@ -2,12 +2,10 @@ import type { Context } from 'hono'
 import { deleteCookie, setCookie } from 'hono/cookie'
 import { env } from '@/env'
 
-
 // 通过COOKIE_SECURE控制是否需要 secure
 function isSecureCookie(): boolean {
   return env.COOKIE_SECURE ?? false
 }
-
 
 function getCookieOptions() {
   return {
