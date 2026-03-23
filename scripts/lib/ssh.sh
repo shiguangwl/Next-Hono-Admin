@@ -1,16 +1,12 @@
 #!/bin/bash
-# SSH 和 SCP 操作封装
+# SSH 和 SCP 操作封装（基于 ControlMaster 连接复用）
 
-# SSH 连接选项
-# accept-new: 首次连接自动接受并记录主机密钥，后续连接严格校验（防 MITM）
+# SSH 基础选项
 _ssh_opts="-o StrictHostKeyChecking=accept-new -o ConnectTimeout=30 -o ServerAliveInterval=60"
 
-# 构建 SSH 认证参数
-_build_ssh_auth() {
-    if [[ -n "${SSH_PASSWORD:-}" ]]; then
-        echo "sshpass -p $SSH_PASSWORD"
-    fi
-}
+# ControlMaster socket 路径
+_SSH_CTRL_SOCKET=""
+_SSH_CTRL_ACTIVE=false
 
 # 构建 SSH 密钥参数
 _build_ssh_key_opt() {
@@ -19,16 +15,59 @@ _build_ssh_key_opt() {
     fi
 }
 
+# 启动 SSH ControlMaster 持久连接（整个部署周期只认证一次）
+start_ssh_control() {
+    _SSH_CTRL_SOCKET="/tmp/ssh-deploy-$$-${SSH_HOST}"
+
+    local key_opt
+    key_opt=$(_build_ssh_key_opt)
+    local ctrl_opts="$_ssh_opts -o ControlMaster=yes -o ControlPath=$_SSH_CTRL_SOCKET -o ControlPersist=300 -fN"
+
+    if [[ -n "${SSH_PASSWORD:-}" ]]; then
+        sshpass -p "$SSH_PASSWORD" ssh $ctrl_opts $key_opt -p "$SSH_PORT" "$SSH_USER@$SSH_HOST"
+    else
+        ssh $ctrl_opts $key_opt -p "$SSH_PORT" "$SSH_USER@$SSH_HOST"
+    fi
+
+    if [[ $? -eq 0 ]] && [[ -S "$_SSH_CTRL_SOCKET" ]]; then
+        _SSH_CTRL_ACTIVE=true
+    else
+        log_warn "ControlMaster 启动失败，将使用独立连接"
+    fi
+}
+
+# 关闭 SSH ControlMaster 连接
+stop_ssh_control() {
+    if $_SSH_CTRL_ACTIVE && [[ -S "$_SSH_CTRL_SOCKET" ]]; then
+        ssh -o ControlPath="$_SSH_CTRL_SOCKET" -O exit "$SSH_USER@$SSH_HOST" 2>/dev/null || true
+        _SSH_CTRL_ACTIVE=false
+    fi
+    rm -f "$_SSH_CTRL_SOCKET" 2>/dev/null || true
+}
+
+# 构建当前 SSH 连接选项（自动选择复用或独立连接）
+_get_ssh_opts() {
+    if $_SSH_CTRL_ACTIVE && [[ -S "$_SSH_CTRL_SOCKET" ]]; then
+        echo "$_ssh_opts -o ControlPath=$_SSH_CTRL_SOCKET"
+    else
+        echo "$_ssh_opts"
+    fi
+}
+
 # 执行远程 SSH 命令（也支持管道输入）
 ssh_cmd() {
     local cmd=$1
-    local key_opt
-    key_opt=$(_build_ssh_key_opt)
+    local opts
+    opts=$(_get_ssh_opts)
 
-    if [[ -n "${SSH_PASSWORD:-}" ]]; then
-        sshpass -p "$SSH_PASSWORD" ssh $_ssh_opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
+    if $_SSH_CTRL_ACTIVE; then
+        ssh $opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
+    elif [[ -n "${SSH_PASSWORD:-}" ]]; then
+        sshpass -p "$SSH_PASSWORD" ssh $opts -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
     else
-        ssh $_ssh_opts $key_opt -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
+        local key_opt
+        key_opt=$(_build_ssh_key_opt)
+        ssh $opts $key_opt -p "$SSH_PORT" "$SSH_USER@$SSH_HOST" "$cmd"
     fi
 }
 
@@ -36,13 +75,17 @@ ssh_cmd() {
 scp_cmd() {
     local src=$1
     local dest=$2
-    local key_opt
-    key_opt=$(_build_ssh_key_opt)
+    local opts
+    opts=$(_get_ssh_opts)
 
-    if [[ -n "${SSH_PASSWORD:-}" ]]; then
-        sshpass -p "$SSH_PASSWORD" scp $_ssh_opts -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
+    if $_SSH_CTRL_ACTIVE; then
+        scp $opts -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
+    elif [[ -n "${SSH_PASSWORD:-}" ]]; then
+        sshpass -p "$SSH_PASSWORD" scp $opts -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
     else
-        scp $_ssh_opts $key_opt -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
+        local key_opt
+        key_opt=$(_build_ssh_key_opt)
+        scp $opts $key_opt -P "$SSH_PORT" "$src" "$SSH_USER@$SSH_HOST:$dest"
     fi
 }
 
@@ -60,7 +103,7 @@ check_ssh_dependencies() {
     fi
 }
 
-# 测试 SSH 连接
+# 测试 SSH 连接（同时建立 ControlMaster 复用连接）
 test_ssh_connection() {
     if $DRY_RUN; then
         log_dry "将测试 SSH 连接: $SSH_USER@$SSH_HOST:$SSH_PORT"
@@ -68,5 +111,6 @@ test_ssh_connection() {
     fi
 
     log_info "测试 SSH 连接..."
+    start_ssh_control
     ssh_cmd "echo 'SSH 连接成功'" >/dev/null || log_error "SSH 连接失败，请检查配置"
 }

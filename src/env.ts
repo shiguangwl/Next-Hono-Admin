@@ -54,6 +54,11 @@ export const env = createEnv({
 
     // 运行环境
     NODE_ENV: z.enum(['development', 'production', 'test']).default('development'),
+
+    // 日志级别（默认：开发=debug，生产=info）
+    LOG_LEVEL: z
+      .enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent'])
+      .optional(),
   },
 
   /**
@@ -76,6 +81,7 @@ export const env = createEnv({
     SESSION_TTL_DAYS: process.env.SESSION_TTL_DAYS,
     CORS_ORIGINS: process.env.CORS_ORIGINS,
     NODE_ENV: process.env.NODE_ENV,
+    LOG_LEVEL: process.env.LOG_LEVEL,
     COOKIE_SECURE: process.env.COOKIE_SECURE,
   },
 

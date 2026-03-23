@@ -44,7 +44,7 @@ const auth = new Hono<Env>()
       '登录成功'
     )
   })
-  .post('/logout', async (c) => {
+  .post('/logout', loginRateLimit, async (c) => {
     const sessionId = c.get('sessionId')
     const cookieToken = getCookie(c, env.SESSION_COOKIE_NAME)
 

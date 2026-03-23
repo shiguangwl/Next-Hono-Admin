@@ -4,6 +4,7 @@
  */
 
 import { createMiddleware } from 'hono/factory'
+import { HEALTH_CHECK_PATH } from '@/lib/constants'
 import { logger } from '@/lib/logging'
 import type { Env } from '@/server/context'
 
@@ -16,7 +17,14 @@ import type { Env } from '@/server/context'
  * - 管理员信息（如已登录）
  * - 客户端 IP（仅错误时记录，用于安全审计）
  */
+
+
 export const requestLoggerMiddleware = createMiddleware<Env>(async (c, next) => {
+  if (c.req.path === HEALTH_CHECK_PATH) {
+    await next()
+    return
+  }
+
   const start = Date.now()
 
   await next()

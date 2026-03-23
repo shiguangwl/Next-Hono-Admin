@@ -1,6 +1,7 @@
 import { Hono } from 'hono'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
+import { strictRateLimit } from '@/server/middleware/rate-limit'
 import { requirePermission } from '@/server/middleware/rbac'
 import { requireAuth } from '@/server/middleware/session-auth'
 import {
@@ -98,6 +99,7 @@ const roles = new Hono<Env>()
   .put(
     '/:id/menus',
     requirePermission('system:role:assignMenu'),
+    strictRateLimit,
     auditLog({
       module: '角色管理',
       operation: '分配权限',

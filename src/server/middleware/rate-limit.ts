@@ -29,7 +29,7 @@ interface RateLimitRecord {
   resetAt: number
 }
 
-/** 速率限制存储（简单内存存储，生产环境建议使用 Redis） */
+// TODO: 当前为单进程内存存储，多实例部署（PM2 cluster / 多 replica）时各实例计数独立，需改用 Redis 实现
 const rateLimitStore = new Map<string, RateLimitRecord>()
 
 /** 清理过期记录的间隔（1 分钟） */
@@ -56,9 +56,7 @@ function startCleanup() {
   }
 }
 
-/**
- * 默认 key 生成函数（基于 IP 地址）
- */
+// TODO: x-forwarded-for 可被客户端伪造，需在反向代理（Nginx/Caddy）层配置 set_real_ip_from 覆盖
 function defaultKeyGenerator(c: { req: { header: (name: string) => string | undefined } }): string {
   return (
     c.req.header('x-forwarded-for')?.split(',')[0]?.trim() || c.req.header('x-real-ip') || 'unknown'
@@ -121,8 +119,8 @@ export function rateLimit(options: RateLimitOptions) {
  * @description 每分钟 100 次请求
  */
 export const apiRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 分钟
-  max: 10000,
+  windowMs: 60 * 1000,
+  max: 100,
   message: '请求过于频繁，请稍后再试',
 })
 

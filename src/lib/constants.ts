@@ -2,3 +2,5 @@
 export const SUPER_ADMIN_ID = 1
 
 export const DEFAULT_SESSION_COOKIE_NAME = 'auth_session'
+
+export const HEALTH_CHECK_PATH = '/api/health'

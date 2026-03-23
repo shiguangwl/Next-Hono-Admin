@@ -14,9 +14,21 @@ import { getRequestContext } from './context'
  */
 function createLogger() {
   const isDev = env.NODE_ENV !== 'production'
+  const defaultLevel = isDev ? 'debug' : 'info'
 
   return pino({
-    level: isDev ? 'debug' : 'info',
+    level: env.LOG_LEVEL ?? defaultLevel,
+
+    // WHY: 防止 password/token/secret 等敏感字段泄漏到日志
+    redact: {
+      paths: [
+        'password', 'token', 'secret', 'apiKey',
+        'authorization', 'cookie',
+        '*.password', '*.token', '*.secret', '*.apiKey',
+        '*.authorization', '*.cookie',
+      ],
+      censor: '[REDACTED]',
+    },
 
     // 格式化配置
     formatters: {
@@ -117,6 +129,18 @@ export const logger = {
    */
   child(bindings: LogMeta): pino.Logger {
     return rootLogger.child(bindings)
+  },
+
+  /**
+   * 致命错误（进程级崩溃）
+   */
+  fatal(msg: string, meta?: LogMeta & { err?: Error }): void {
+    const log = getContextualLogger()
+    if (meta?.err) {
+      log.fatal({ ...meta, err: meta.err }, msg)
+    } else {
+      log.fatal(meta ?? {}, msg)
+    }
   },
 }
 

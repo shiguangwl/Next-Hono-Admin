@@ -2,6 +2,7 @@ import { Hono } from 'hono'
 import { UnauthorizedError } from '@/lib/errors'
 import type { Env } from '@/server/context'
 import { auditLog } from '@/server/middleware/audit-log'
+import { strictRateLimit } from '@/server/middleware/rate-limit'
 import { requirePermission } from '@/server/middleware/rbac'
 import { requireAuth } from '@/server/middleware/session-auth'
 import {
@@ -81,6 +82,7 @@ const admins = new Hono<Env>()
   .delete(
     '/:id',
     requirePermission('system:admin:delete'),
+    strictRateLimit,
     auditLog({
       module: '用户管理',
       operation: '删除',
@@ -100,6 +102,7 @@ const admins = new Hono<Env>()
   .put(
     '/:id/reset-password',
     requirePermission('system:admin:resetPwd'),
+    strictRateLimit,
     auditLog({
       module: '用户管理',
       operation: '重置密码',
@@ -117,6 +120,7 @@ const admins = new Hono<Env>()
   .put(
     '/:id/roles',
     requirePermission('system:admin:assignRole'),
+    strictRateLimit,
     auditLog({
       module: '用户管理',
       operation: '分配角色',

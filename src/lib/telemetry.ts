@@ -4,7 +4,12 @@
  * 未设置时完全不加载 OTel SDK，零开销
  */
 
+import pino from 'pino'
 import { type Attributes, trace } from '@opentelemetry/api'
+import { HEALTH_CHECK_PATH } from '@/lib/constants'
+
+// WHY: 独立 pino 实例避免循环依赖（telemetry ↔ logger）
+const bootstrapLog = pino({ name: 'telemetry', timestamp: pino.stdTimeFunctions.isoTime })
 
 /** OTel 是否已启用 */
 let otelEnabled = false
@@ -94,7 +99,7 @@ export async function initTelemetry(): Promise<void> {
       instrumentations: [
         getNodeAutoInstrumentations({
           '@opentelemetry/instrumentation-http': {
-            ignoreIncomingRequestHook: (req) => req.url === '/api/health',
+            ignoreIncomingRequestHook: (req) => req.url === HEALTH_CHECK_PATH,
           },
           // WHY: fs instrumentation 噪音太大，关闭
           '@opentelemetry/instrumentation-fs': { enabled: false },
@@ -117,9 +122,9 @@ export async function initTelemetry(): Promise<void> {
     process.on('SIGTERM', shutdown)
     process.on('SIGINT', shutdown)
 
-    console.log(`[telemetry] OpenTelemetry initialized → ${otlpEndpoint} (service: ${serviceName})`)
+    bootstrapLog.info({ endpoint: otlpEndpoint, service: serviceName }, 'OpenTelemetry initialized')
   } catch (err) {
     // WHY: OTel 是可选增强，初始化失败不应阻止应用启动
-    console.error('[telemetry] Failed to initialize OpenTelemetry, continuing without it:', err)
+    bootstrapLog.error({ err }, 'Failed to initialize OpenTelemetry, continuing without it')
   }
 }

@@ -109,7 +109,8 @@ export async function ensureDatabaseInitialized(): Promise<void> {
       durationMs: elapsed(startTime),
     })
   } catch (err) {
-    logger.error('[DB] Initialization failed', {
+    logger.fatal('[DB] Initialization failed', {
+      err: err instanceof Error ? err : undefined,
       error: err instanceof Error ? err.message : String(err),
       durationMs: elapsed(startTime),
     })

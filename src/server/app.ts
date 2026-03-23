@@ -1,4 +1,5 @@
 import { Hono } from 'hono'
+import { HEALTH_CHECK_PATH } from '@/lib/constants'
 import type { Env } from './context'
 import { setLogRecorder } from './middleware/audit-log'
 import { routes } from './route-defs'
@@ -12,7 +13,7 @@ setLogRecorder(createOperationLog)
 
 setupMiddlewares(app)
 
-app.get('/api/health', (c) => c.json({ status: 'ok' }))
+app.get(HEALTH_CHECK_PATH, (c) => c.json({ status: 'ok' }))
 app.route('/api', routes)
 
 setupErrorHandlers(app)
