@@ -111,18 +111,20 @@ export async function createRole(input: CreateRoleInput): Promise<RoleVo> {
     throw new ConflictError(`角色名 ${input.roleName} 已存在`)
   }
 
+  const uniqueMenuIds = input.menuIds?.length ? [...new Set(input.menuIds)] : []
+
   try {
     const result = await db.transaction(async (tx) => {
       // WHY: 在事务内校验 menuId 存在性，防止 TOCTOU
-      if (input.menuIds?.length) {
+      if (uniqueMenuIds.length > 0) {
         const existingMenus = await tx
           .select({ id: sysMenu.id })
           .from(sysMenu)
-          .where(inArray(sysMenu.id, input.menuIds))
+          .where(inArray(sysMenu.id, uniqueMenuIds))
 
-        if (existingMenus.length !== input.menuIds.length) {
+        if (existingMenus.length !== uniqueMenuIds.length) {
           const foundIds = new Set(existingMenus.map((m) => m.id))
-          const missing = input.menuIds.filter((id) => !foundIds.has(id))
+          const missing = uniqueMenuIds.filter((id) => !foundIds.has(id))
           throw new NotFoundError('Menu', missing[0])
         }
       }
@@ -136,8 +138,8 @@ export async function createRole(input: CreateRoleInput): Promise<RoleVo> {
 
       const roleId = Number(insertResult.insertId)
 
-      if (input.menuIds?.length) {
-        await tx.insert(sysRoleMenu).values(input.menuIds.map((menuId) => ({ roleId, menuId })))
+      if (uniqueMenuIds.length > 0) {
+        await tx.insert(sysRoleMenu).values(uniqueMenuIds.map((menuId) => ({ roleId, menuId })))
       }
 
       return roleId
@@ -236,26 +238,28 @@ export async function updateRoleMenus(id: number, menuIds: number[]): Promise<vo
     throw new NotFoundError('Role', id)
   }
 
+  const uniqueMenuIds = [...new Set(menuIds)]
+
   try {
     await db.transaction(async (tx) => {
       // WHY: 在事务内校验 menuId 存在性，防止 TOCTOU
-      if (menuIds.length > 0) {
+      if (uniqueMenuIds.length > 0) {
         const existingMenus = await tx
           .select({ id: sysMenu.id })
           .from(sysMenu)
-          .where(inArray(sysMenu.id, menuIds))
+          .where(inArray(sysMenu.id, uniqueMenuIds))
 
-        if (existingMenus.length !== menuIds.length) {
+        if (existingMenus.length !== uniqueMenuIds.length) {
           const foundIds = new Set(existingMenus.map((m) => m.id))
-          const missing = menuIds.filter((mid) => !foundIds.has(mid))
+          const missing = uniqueMenuIds.filter((mid) => !foundIds.has(mid))
           throw new NotFoundError('Menu', missing[0])
         }
       }
 
       await tx.delete(sysRoleMenu).where(eq(sysRoleMenu.roleId, id))
 
-      if (menuIds.length > 0) {
-        await tx.insert(sysRoleMenu).values(menuIds.map((menuId) => ({ roleId: id, menuId })))
+      if (uniqueMenuIds.length > 0) {
+        await tx.insert(sysRoleMenu).values(uniqueMenuIds.map((menuId) => ({ roleId: id, menuId })))
       }
     })
   } catch (err) {

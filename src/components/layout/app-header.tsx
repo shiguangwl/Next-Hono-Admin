@@ -36,8 +36,8 @@ function UserDropdown() {
   const displayName = admin?.nickname || admin?.username || 'Admin'
   const initials = displayName.charAt(0).toUpperCase()
 
-  const handleLogout = () => {
-    logout()
+  const handleLogout = async () => {
+    await logout()
     router.replace('/login')
   }
 

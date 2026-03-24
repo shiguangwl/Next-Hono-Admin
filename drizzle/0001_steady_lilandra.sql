@@ -1,0 +1,5 @@
+ALTER TABLE `sys_role` ADD CONSTRAINT `uk_role_name` UNIQUE(`role_name`);--> statement-breakpoint
+ALTER TABLE `sys_admin_role` ADD CONSTRAINT `sys_admin_role_admin_id_sys_admin_id_fk` FOREIGN KEY (`admin_id`) REFERENCES `sys_admin`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `sys_admin_role` ADD CONSTRAINT `sys_admin_role_role_id_sys_role_id_fk` FOREIGN KEY (`role_id`) REFERENCES `sys_role`(`id`) ON DELETE restrict ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `sys_role_menu` ADD CONSTRAINT `sys_role_menu_role_id_sys_role_id_fk` FOREIGN KEY (`role_id`) REFERENCES `sys_role`(`id`) ON DELETE cascade ON UPDATE no action;--> statement-breakpoint
+ALTER TABLE `sys_role_menu` ADD CONSTRAINT `sys_role_menu_menu_id_sys_menu_id_fk` FOREIGN KEY (`menu_id`) REFERENCES `sys_menu`(`id`) ON DELETE restrict ON UPDATE no action;

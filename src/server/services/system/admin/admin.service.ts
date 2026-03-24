@@ -147,17 +147,19 @@ export async function createAdmin(input: CreateAdminInput): Promise<AdminVo> {
   const hashedPassword = await hashPassword(input.password)
 
   try {
+    const uniqueRoleIds = input.roleIds?.length ? [...new Set(input.roleIds)] : []
+
     const result = await db.transaction(async (tx) => {
       // WHY: 在事务内校验 roleId 存在性，防止 TOCTOU
-      if (input.roleIds?.length) {
+      if (uniqueRoleIds.length > 0) {
         const existingRoles = await tx
           .select({ id: sysRole.id })
           .from(sysRole)
-          .where(inArray(sysRole.id, input.roleIds))
+          .where(inArray(sysRole.id, uniqueRoleIds))
 
-        if (existingRoles.length !== input.roleIds.length) {
+        if (existingRoles.length !== uniqueRoleIds.length) {
           const foundIds = new Set(existingRoles.map((r) => r.id))
-          const missing = input.roleIds.filter((id) => !foundIds.has(id))
+          const missing = uniqueRoleIds.filter((id) => !foundIds.has(id))
           throw new NotFoundError('Role', missing[0])
         }
       }
@@ -172,9 +174,9 @@ export async function createAdmin(input: CreateAdminInput): Promise<AdminVo> {
 
       const adminId = insertResult.insertId
 
-      if (input.roleIds?.length) {
+      if (uniqueRoleIds.length > 0) {
         await tx.insert(sysAdminRole).values(
-          input.roleIds.map((roleId) => ({
+          uniqueRoleIds.map((roleId) => ({
             adminId: Number(adminId),
             roleId,
           }))
@@ -251,70 +253,5 @@ export async function deleteAdmin(id: number, currentAdminId: number): Promise<v
   })
 
   await revokeSessionsByAdminId(id)
-  invalidatePermissionCache(id)
-}
-
-/** 重置密码 */
-export async function resetPassword(id: number, newPassword: string): Promise<void> {
-  if (id === SUPER_ADMIN_ID) {
-    throw new BusinessError('不能重置超级管理员密码', ErrorCode.CANNOT_MODIFY_SUPER_ADMIN)
-  }
-
-  const existing = await db
-    .select({ id: sysAdmin.id })
-    .from(sysAdmin)
-    .where(eq(sysAdmin.id, id))
-    .limit(1)
-    .then((rows) => rows[0])
-
-  if (!existing) {
-    throw new NotFoundError('Admin', id)
-  }
-
-  const hashedPassword = await hashPassword(newPassword)
-
-  await db.update(sysAdmin).set({ password: hashedPassword }).where(eq(sysAdmin.id, id))
-  await revokeSessionsByAdminId(id)
-}
-
-/** 更新管理员角色 */
-export async function updateAdminRoles(id: number, roleIds: number[]): Promise<void> {
-  if (id === SUPER_ADMIN_ID) {
-    throw new BusinessError('不能修改超级管理员的角色', ErrorCode.CANNOT_MODIFY_SUPER_ADMIN_ROLES)
-  }
-
-  const existing = await db
-    .select({ id: sysAdmin.id })
-    .from(sysAdmin)
-    .where(eq(sysAdmin.id, id))
-    .limit(1)
-    .then((rows) => rows[0])
-
-  if (!existing) {
-    throw new NotFoundError('Admin', id)
-  }
-
-  await db.transaction(async (tx) => {
-    // WHY: 在事务内校验 roleId 存在性，防止 TOCTOU
-    if (roleIds.length > 0) {
-      const existingRoles = await tx
-        .select({ id: sysRole.id })
-        .from(sysRole)
-        .where(inArray(sysRole.id, roleIds))
-
-      if (existingRoles.length !== roleIds.length) {
-        const foundIds = new Set(existingRoles.map((r) => r.id))
-        const missing = roleIds.filter((id) => !foundIds.has(id))
-        throw new NotFoundError('Role', missing[0])
-      }
-    }
-
-    await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id))
-
-    if (roleIds.length > 0) {
-      await tx.insert(sysAdminRole).values(roleIds.map((roleId) => ({ adminId: id, roleId })))
-    }
-  })
-
   invalidatePermissionCache(id)
 }

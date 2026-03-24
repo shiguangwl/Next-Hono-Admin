@@ -1,5 +1,6 @@
 export * from './admin/admin.service'
 export * from './admin/admin.utils'
+export * from './admin/admin-role.service'
 export type * from './admin/types'
 
 export * from './audit/audit.service'

@@ -9,9 +9,12 @@ const SAFE_METHODS = ['GET', 'HEAD', 'OPTIONS']
 // 未配置时回退为 Origin ⇔ Host 动态匹配。
 function isOriginAllowed(origin: string, host: string): boolean {
   if (env.CORS_ORIGINS.length > 0) {
-    return env.CORS_ORIGINS.some(
-      (allowed) => origin === allowed || origin.startsWith(`${allowed}/`)
-    )
+    try {
+      const originValue = new URL(origin).origin
+      return env.CORS_ORIGINS.some((allowed) => originValue === allowed)
+    } catch {
+      return false
+    }
   }
 
   // WHY: 从 Origin URL 中提取 host 部分，与请求的 Host 头对比
