@@ -26,15 +26,8 @@ import {
   useUpdateRole,
   useUpdateRoleMenus,
 } from '@/hooks/queries'
+import type { Role } from '@/server/routes/roles/dtos'
 import { MenuTreeItem, type MenuTreeNode } from './menu-tree-item'
-
-type Role = {
-  id: number
-  roleName: string
-  sort: number
-  status: number
-  remark: string | null
-}
 
 interface RoleFormDialogProps {
   open: boolean

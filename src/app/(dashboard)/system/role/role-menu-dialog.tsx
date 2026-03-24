@@ -15,9 +15,8 @@ import {
 import { useEffect, useMemo, useRef, useState } from 'react'
 
 import { useMenuTree, useRole, useUpdateRoleMenus } from '@/hooks/queries'
+import type { Role } from '@/server/routes/roles/dtos'
 import { MenuTreeItem, type MenuTreeNode } from './menu-tree-item'
-
-type Role = { id: number; roleName: string }
 
 interface RoleMenuDialogProps {
   open: boolean

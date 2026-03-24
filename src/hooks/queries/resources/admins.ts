@@ -21,7 +21,7 @@ const adminResource = createResource<
   AdminQuery
 >({
   resourceName: 'admins',
-  getClient: getClient as never,
+  getClient: getClient,
   messages: {
     list: '获取管理员列表失败',
     detail: '获取管理员详情失败',

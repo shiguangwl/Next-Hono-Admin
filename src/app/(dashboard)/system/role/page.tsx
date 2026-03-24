@@ -5,31 +5,25 @@ import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
 import { IconPencil, IconPlus, IconRefresh, IconShieldCheck, IconTrash } from '@tabler/icons-react'
 import { DataTable, type DataTableColumn, type DataTableSortStatus } from 'mantine-datatable'
+import { parseAsInteger, parseAsString, useQueryStates } from 'nuqs'
 import { useState } from 'react'
 
 import { PermissionGuard } from '@/components/permission-guard'
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
 import { EnableStatusChip } from '@/components/ui/status-chip'
 import { useDeleteRole, useRoles } from '@/hooks/queries'
+import type { Role } from '@/server/routes/roles/dtos'
 import { RoleFormDialog } from './role-form-dialog'
 import { RoleMenuDialog } from './role-menu-dialog'
-
-type Role = {
-  id: number
-  roleName: string
-  sort: number
-  status: number
-  remark: string | null
-  createdAt: string
-  updatedAt: string
-}
 
 const PAGE_SIZE = 20
 
 export default function RolePage() {
-  const [page, setPage] = useState(1)
-  const [keyword, setKeyword] = useState('')
-  const [searchKeyword, setSearchKeyword] = useState('')
+  const [{ page, keyword: searchKeyword }, setQueryParams] = useQueryStates({
+    page: parseAsInteger.withDefault(1),
+    keyword: parseAsString.withDefault(''),
+  })
+  const [keyword, setKeyword] = useState(searchKeyword)
   const [dialogOpen, setDialogOpen] = useState(false)
   const [editingRole, setEditingRole] = useState<Role | null>(null)
   const [menuDialogRole, setMenuDialogRole] = useState<Role | null>(null)
@@ -48,8 +42,7 @@ export default function RolePage() {
   const deleteRole = useDeleteRole()
 
   const handleSearch = () => {
-    setSearchKeyword(keyword)
-    setPage(1)
+    setQueryParams({ keyword, page: 1 })
   }
 
   const handleCreate = () => {
@@ -198,7 +191,7 @@ export default function RolePage() {
         totalRecords={data?.total ?? 0}
         recordsPerPage={PAGE_SIZE}
         page={page}
-        onPageChange={setPage}
+        onPageChange={(p) => setQueryParams({ page: p })}
         sortStatus={sortStatus}
         onSortStatusChange={setSortStatus}
         paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}

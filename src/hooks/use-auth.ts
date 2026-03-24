@@ -31,7 +31,7 @@ interface AuthActions {
   /** 登录 */
   login: (username: string, password: string) => Promise<void>
   /** 登出 */
-  logout: () => void
+  logout: () => Promise<void>
   /** 刷新认证信息 */
   refreshAuth: () => Promise<void>
   /** 设置初始化状态 */
@@ -81,11 +81,14 @@ export const useAuthStore = create<AuthStore>()((set) => ({
     }
   },
 
-  logout: () => {
-    set({ ...initialState, initialized: true })
-    getApiClient()
-      .auth.logout.$post()
-      .catch((err: unknown) => console.warn('[auth] logout API failed:', err))
+  logout: async () => {
+    try {
+      await getApiClient().auth.logout.$post()
+    } catch (err) {
+      console.warn('[auth] logout API failed:', err)
+    } finally {
+      set({ ...initialState, initialized: true })
+    }
   },
 
   refreshAuth: async () => {

@@ -9,7 +9,7 @@ type OperationLogPage = PaginatedResponse<OperationLog>
 
 const operationLogResource = createReadonlyResource<OperationLogPage, LogQuery>({
   resourceName: 'operation-logs',
-  getClient: getClient as never,
+  getClient: getClient,
   messages: {
     list: '获取操作日志列表失败',
     delete: '删除操作日志失败',

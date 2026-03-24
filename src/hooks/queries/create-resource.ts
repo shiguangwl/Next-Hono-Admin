@@ -76,18 +76,22 @@ export function createResource<
   TQuery extends BasePaginationQuery = BasePaginationQuery,
 >(
   config: ResourceConfig<TQuery> & {
-    getClient: () => {
-      $get: (args: { query: Record<string, string> }) => Promise<unknown>
-      $post: (args: { json: unknown }) => Promise<unknown>
-      ':id': {
-        $get: (args: { param: { id: string } }) => Promise<unknown>
-        $put: (args: { param: { id: string }; json: unknown }) => Promise<unknown>
-        $delete: (args: { param: { id: string } }) => Promise<unknown>
-      }
-    }
+    getClient: () => unknown
   }
 ) {
-  const { resourceName, getClient, defaultPageSize = 20, messages = {} } = config
+  // WHY: 集中类型断言，各 resource 文件无需 as never
+  type ResourceClient = {
+    $get: (args: { query: Record<string, string> }) => Promise<unknown>
+    $post: (args: { json: unknown }) => Promise<unknown>
+    ':id': {
+      $get: (args: { param: { id: string } }) => Promise<unknown>
+      $put: (args: { param: { id: string }; json: unknown }) => Promise<unknown>
+      $delete: (args: { param: { id: string } }) => Promise<unknown>
+    }
+  }
+
+  const getClient = () => config.getClient() as ResourceClient
+  const { resourceName, defaultPageSize = 20, messages = {} } = config
 
   const {
     list: listMsg = `获取${resourceName}列表失败`,
@@ -184,15 +188,18 @@ export function createReadonlyResource<
   TQuery extends BasePaginationQuery = BasePaginationQuery,
 >(
   config: ResourceConfig<TQuery> & {
-    getClient: () => {
-      $get: (args: { query: Record<string, string> }) => Promise<unknown>
-      ':id': {
-        $delete: (args: { param: { id: string } }) => Promise<unknown>
-      }
-    }
+    getClient: () => unknown
   }
 ) {
-  const { resourceName, getClient, defaultPageSize = 20, messages = {} } = config
+  type ReadonlyResourceClient = {
+    $get: (args: { query: Record<string, string> }) => Promise<unknown>
+    ':id': {
+      $delete: (args: { param: { id: string } }) => Promise<unknown>
+    }
+  }
+
+  const getClient = () => config.getClient() as ReadonlyResourceClient
+  const { resourceName, defaultPageSize = 20, messages = {} } = config
 
   const {
     list: listMsg = `获取${resourceName}列表失败`,

@@ -5,19 +5,9 @@ import type { DataTableColumn } from 'mantine-datatable'
 import { PermissionGuard } from '@/components/permission-guard'
 import { EnableStatusChip } from '@/components/ui/status-chip'
 import { SUPER_ADMIN_ID } from '@/lib/constants'
+import type { Admin } from '@/server/routes/admins/dtos'
 
-export type Admin = {
-  id: number
-  username: string
-  nickname: string
-  status: number
-  loginIp: string | null
-  loginTime: string | null
-  remark: string | null
-  createdAt: string
-  updatedAt: string
-  roles?: Array<{ id: number; roleName: string }>
-}
+export type { Admin }
 
 interface ColumnActions {
   onEdit: (admin: Admin) => void

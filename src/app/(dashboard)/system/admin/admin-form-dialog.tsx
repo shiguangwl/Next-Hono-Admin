@@ -19,15 +19,7 @@ import { useEffect } from 'react'
 
 import { useAllRoles, useCreateAdmin, useUpdateAdmin, useUpdateAdminRoles } from '@/hooks/queries'
 import { SUPER_ADMIN_ID } from '@/lib/constants'
-
-type Admin = {
-  id: number
-  username: string
-  nickname: string
-  status: number
-  remark: string | null
-  roles?: Array<{ id: number; roleName: string }>
-}
+import type { Admin } from '@/server/routes/admins/dtos'
 
 interface AdminFormDialogProps {
   open: boolean
