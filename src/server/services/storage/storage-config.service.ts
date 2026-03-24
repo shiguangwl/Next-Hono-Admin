@@ -1,13 +1,9 @@
 import { eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysConfig } from '@/db/schema'
-import {
-  STORAGE_CONFIG_GROUP,
-  STORAGE_CONFIG_KEYS,
-  STORAGE_DEFAULTS,
-} from '@/lib/constants'
+import { STORAGE_CONFIG_GROUP, STORAGE_CONFIG_KEYS, STORAGE_DEFAULTS } from '@/lib/constants'
 import { getConfigValue, removeConfigCache } from '../system/config/config.utils'
-import { encryptSecret, decryptSecret, maskSecret } from './crypto'
+import { decryptSecret, encryptSecret, maskSecret } from './crypto'
 import { invalidateS3Client, testConnection, testConnectionWithParams } from './s3-client'
 import type { StorageConfigVo, UpdateStorageConfigInput } from './types'
 
@@ -47,9 +43,15 @@ export async function getStorageConfig(): Promise<StorageConfigVo> {
   const K = STORAGE_CONFIG_KEYS
 
   const [
-    endpoint, region, bucket, accessKeyId,
-    encryptedSecret, publicUrl, forcePathStyle,
-    maxFileSize, extensions,
+    endpoint,
+    region,
+    bucket,
+    accessKeyId,
+    encryptedSecret,
+    publicUrl,
+    forcePathStyle,
+    maxFileSize,
+    extensions,
   ] = await Promise.all([
     getConfigValue<string>(K.ENDPOINT),
     getConfigValue<string>(K.REGION),
@@ -62,18 +64,14 @@ export async function getStorageConfig(): Promise<StorageConfigVo> {
     getConfigValue<string[]>(K.ALLOWED_EXTENSIONS),
   ])
 
-  const isConfigured = Boolean(
-    endpoint && bucket && accessKeyId && encryptedSecret
-  )
+  const isConfigured = Boolean(endpoint && bucket && accessKeyId && encryptedSecret)
 
   return {
     endpoint: endpoint ?? null,
     region: region ?? null,
     bucket: bucket ?? null,
     accessKeyId: accessKeyId ?? null,
-    secretAccessKeyMasked: encryptedSecret
-      ? maskSecret('configured')
-      : null,
+    secretAccessKeyMasked: encryptedSecret ? maskSecret('configured') : null,
     publicUrl: publicUrl ?? null,
     forcePathStyle: forcePathStyle ?? false,
     maxFileSize: maxFileSize ?? STORAGE_DEFAULTS.MAX_FILE_SIZE,
@@ -97,9 +95,7 @@ export async function updateStorageConfig(
     await upsertConfigItem(K.SECRET_ACCESS_KEY, encrypted, 'S3密钥')
   }
 
-  await upsertConfigItem(
-    K.PUBLIC_URL, input.publicUrl ?? '', 'S3公开URL前缀'
-  )
+  await upsertConfigItem(K.PUBLIC_URL, input.publicUrl ?? '', 'S3公开URL前缀')
   await upsertConfigItem(
     K.FORCE_PATH_STYLE,
     String(input.forcePathStyle ?? false),
@@ -114,9 +110,7 @@ export async function updateStorageConfig(
   )
   await upsertConfigItem(
     K.ALLOWED_EXTENSIONS,
-    JSON.stringify(
-      input.allowedExtensions ?? STORAGE_DEFAULTS.ALLOWED_EXTENSIONS
-    ),
+    JSON.stringify(input.allowedExtensions ?? STORAGE_DEFAULTS.ALLOWED_EXTENSIONS),
     '允许的扩展名',
     'array'
   )
@@ -142,9 +136,7 @@ export async function testStorageConnection(
       let secret = input.secretAccessKey ?? ''
       if (!secret) {
         // WHY: 表单未填新密钥时，使用数据库中已加密存储的密钥
-        const encrypted = await getConfigValue<string>(
-          STORAGE_CONFIG_KEYS.SECRET_ACCESS_KEY
-        )
+        const encrypted = await getConfigValue<string>(STORAGE_CONFIG_KEYS.SECRET_ACCESS_KEY)
         if (!encrypted) {
           return { success: false, message: '请提供 Secret Access Key' }
         }

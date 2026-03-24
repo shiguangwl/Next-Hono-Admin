@@ -17,8 +17,7 @@ export default function StorageFilesPage() {
   const [uploadOpen, setUploadOpen] = useState(false)
   const [folderCreateOpen, setFolderCreateOpen] = useState(false)
 
-  const { data: folders, isLoading: foldersLoading } =
-    useStorageFolders('')
+  const { data: folders, isLoading: foldersLoading } = useStorageFolders('')
 
   const createFolder = useCreateFolder()
   const deleteFolder = useDeleteFolder()
@@ -74,13 +73,7 @@ export default function StorageFilesPage() {
 
   return (
     <PageContainer>
-      <PageHeader
-        title="文件管理"
-        breadcrumbs={[
-          { label: '存储管理' },
-          { label: '文件管理' },
-        ]}
-      />
+      <PageHeader title="文件管理" breadcrumbs={[{ label: '存储管理' }, { label: '文件管理' }]} />
 
       <Flex gap="md" align="flex-start">
         <Paper

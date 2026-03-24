@@ -29,13 +29,9 @@ export function toFileVo(row: typeof storageFile.$inferSelect): FileVo {
   }
 }
 
-export async function listFiles(
-  query: FileQuery
-): Promise<PaginatedResult<FileVo>> {
+export async function listFiles(query: FileQuery): Promise<PaginatedResult<FileVo>> {
   const { page, pageSize, offset } = normalizePagination(query)
-  const whereClauses = [
-    not(eq(storageFile.mimeType, FOLDER_PLACEHOLDER_MIME)),
-  ]
+  const whereClauses = [not(eq(storageFile.mimeType, FOLDER_PLACEHOLDER_MIME))]
 
   if (query.prefix) {
     const escaped = escapeLikePattern(query.prefix)
@@ -63,21 +59,14 @@ export async function listFiles(
       .then((rows) => rows[0]),
   ])
 
-  return buildPaginatedResult(
-    items.map(toFileVo),
-    Number(totalResult?.count ?? 0),
-    page,
-    pageSize
-  )
+  return buildPaginatedResult(items.map(toFileVo), Number(totalResult?.count ?? 0), page, pageSize)
 }
 
 export async function listFolders(prefix: string): Promise<FolderInfo[]> {
   const normalizedPrefix = prefix.replace(/\/+$/, '')
   const escaped = escapeLikePattern(normalizedPrefix)
   const likePattern = normalizedPrefix ? `${escaped}/%` : '%'
-  const prefixDepth = normalizedPrefix
-    ? normalizedPrefix.split('/').length
-    : 0
+  const prefixDepth = normalizedPrefix ? normalizedPrefix.split('/').length : 0
 
   const rows = await db
     .select({
@@ -101,17 +90,13 @@ export async function listFolders(prefix: string): Promise<FolderInfo[]> {
   return Array.from(folderMap.entries())
     .map(([name, fileCount]) => ({
       name,
-      prefix: normalizedPrefix
-        ? `${normalizedPrefix}/${name}`
-        : name,
+      prefix: normalizedPrefix ? `${normalizedPrefix}/${name}` : name,
       fileCount,
     }))
     .sort((a, b) => a.name.localeCompare(b.name))
 }
 
-export async function getFileUrl(
-  id: number
-): Promise<{ url: string; isPublic: boolean }> {
+export async function getFileUrl(id: number): Promise<{ url: string; isPublic: boolean }> {
   const row = await db
     .select()
     .from(storageFile)
@@ -122,9 +107,7 @@ export async function getFileUrl(
   if (!row) throw new NotFoundError('StorageFile', id)
 
   if (row.isPublic === 1) {
-    const publicUrl = await getConfigValue<string>(
-      STORAGE_CONFIG_KEYS.PUBLIC_URL
-    )
+    const publicUrl = await getConfigValue<string>(STORAGE_CONFIG_KEYS.PUBLIC_URL)
     if (publicUrl) {
       const base = publicUrl.replace(/\/+$/, '')
       return { url: `${base}/${row.fileKey}`, isPublic: true }

@@ -1,12 +1,6 @@
 'use client'
 
-import {
-  Image,
-  Modal,
-  Stack,
-  Table,
-  Text,
-} from '@mantine/core'
+import { Image, Modal, Stack, Table, Text } from '@mantine/core'
 
 import type { FileRecord } from './file-columns'
 
@@ -16,35 +10,23 @@ interface FilePreviewDialogProps {
   onClose: () => void
 }
 
-export function FilePreviewDialog({
-  file,
-  fileUrl,
-  onClose,
-}: FilePreviewDialogProps) {
+export function FilePreviewDialog({ file, fileUrl, onClose }: FilePreviewDialogProps) {
   if (!file) return null
 
   const isImage = file.mimeType.startsWith('image/')
   const isVideo = file.mimeType.startsWith('video/')
 
   return (
-    <Modal
-      opened={!!file}
-      onClose={onClose}
-      title={file.fileName}
-      size="lg"
-      centered
-    >
+    <Modal opened={!!file} onClose={onClose} title={file.fileName} size="lg" centered>
       <Stack gap="md">
         {isImage && fileUrl && (
           <Image src={fileUrl} alt={file.fileName} radius="md" fit="contain" mah={400} />
         )}
 
         {isVideo && fileUrl && (
-          <video
-            src={fileUrl}
-            controls
-            style={{ maxHeight: 400, borderRadius: 8, width: '100%' }}
-          />
+          <video src={fileUrl} controls style={{ maxHeight: 400, borderRadius: 8, width: '100%' }}>
+            <track kind="captions" />
+          </video>
         )}
 
         {!isImage && !isVideo && (
@@ -56,7 +38,9 @@ export function FilePreviewDialog({
         <Table>
           <Table.Tbody>
             <Table.Tr>
-              <Table.Td fw={500} w={100}>文件名</Table.Td>
+              <Table.Td fw={500} w={100}>
+                文件名
+              </Table.Td>
               <Table.Td>{file.fileName}</Table.Td>
             </Table.Tr>
             <Table.Tr>

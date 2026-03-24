@@ -81,4 +81,3 @@ export const FOLDER_PLACEHOLDER_MIME = 'application/x-directory'
 export function escapeLikePattern(input: string): string {
   return input.replace(/[%_\\]/g, '\\$&')
 }
-

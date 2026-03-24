@@ -1,12 +1,7 @@
 'use client'
 
 import { Badge, Group, Text } from '@mantine/core'
-import {
-  IconFile,
-  IconFileText,
-  IconMovie,
-  IconPhoto,
-} from '@tabler/icons-react'
+import { IconFile, IconFileText, IconMovie, IconPhoto } from '@tabler/icons-react'
 import type { DataTableColumn } from 'mantine-datatable'
 
 function formatFileSize(bytes: number): string {
@@ -44,9 +39,7 @@ interface ColumnActions {
   onDelete: (file: FileRecord) => void
 }
 
-export function buildFileColumns(
-  actions: ColumnActions
-): DataTableColumn<FileRecord>[] {
+export function buildFileColumns(actions: ColumnActions): DataTableColumn<FileRecord>[] {
   return [
     {
       accessor: 'fileName',
@@ -70,9 +63,7 @@ export function buildFileColumns(
       accessor: 'fileSize',
       title: '大小',
       width: 100,
-      render: (record) => (
-        <Text size="sm">{formatFileSize(record.fileSize)}</Text>
-      ),
+      render: (record) => <Text size="sm">{formatFileSize(record.fileSize)}</Text>,
     },
     {
       accessor: 'mimeType',
@@ -89,11 +80,7 @@ export function buildFileColumns(
       title: '访问',
       width: 80,
       render: (record) => (
-        <Badge
-          size="sm"
-          variant="light"
-          color={record.isPublic === 1 ? 'green' : 'gray'}
-        >
+        <Badge size="sm" variant="light" color={record.isPublic === 1 ? 'green' : 'gray'}>
           {record.isPublic === 1 ? '公开' : '私有'}
         </Badge>
       ),
@@ -102,9 +89,7 @@ export function buildFileColumns(
       accessor: 'uploaderName',
       title: '上传者',
       width: 100,
-      render: (record) => (
-        <Text size="sm">{record.uploaderName ?? '-'}</Text>
-      ),
+      render: (record) => <Text size="sm">{record.uploaderName ?? '-'}</Text>,
     },
     {
       accessor: 'createdAt',

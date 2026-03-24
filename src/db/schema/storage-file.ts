@@ -1,12 +1,5 @@
 import { sql } from 'drizzle-orm'
-import {
-  bigint,
-  index,
-  mysqlTable,
-  tinyint,
-  uniqueIndex,
-  varchar,
-} from 'drizzle-orm/mysql-core'
+import { bigint, index, mysqlTable, tinyint, uniqueIndex, varchar } from 'drizzle-orm/mysql-core'
 import { localDatetime } from '../custom-types'
 
 export const storageFile = mysqlTable(

@@ -82,10 +82,7 @@ export async function testConnectionWithParams(params: {
   }
 }
 
-export async function presignUploadUrl(
-  key: string,
-  contentType: string
-): Promise<string> {
+export async function presignUploadUrl(key: string, contentType: string): Promise<string> {
   const client = await getS3Client()
   const bucket = await getBucket()
   const command = new PutObjectCommand({
@@ -107,9 +104,4 @@ export async function presignDownloadUrl(key: string): Promise<string> {
   })
 }
 
-export {
-  DeleteObjectCommand,
-  GetObjectCommand,
-  ListObjectsV2Command,
-  PutObjectCommand,
-}
+export { DeleteObjectCommand, GetObjectCommand, ListObjectsV2Command, PutObjectCommand }

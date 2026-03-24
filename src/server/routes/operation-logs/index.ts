@@ -1,5 +1,6 @@
 import { Hono } from 'hono'
 import type { Env } from '@/server/context'
+import { auditLog } from '@/server/middleware/audit-log'
 import { requirePermission } from '@/server/middleware/rbac'
 import { requireAuth } from '@/server/middleware/session-auth'
 import { deleteOperationLog, getOperationLogById, getOperationLogList } from '@/server/services'
@@ -33,6 +34,11 @@ const operationLogs = new Hono<Env>()
   .delete(
     '/:id',
     requirePermission('system:log:delete'),
+    auditLog({
+      module: '操作日志',
+      operation: '删除',
+      description: '删除操作日志',
+    }),
     zValidator('param', IdParamSchema),
     async (c) => {
       const { id } = c.req.valid('param')

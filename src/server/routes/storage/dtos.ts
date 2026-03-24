@@ -14,7 +14,9 @@ export const UpdateStorageConfigSchema = z.object({
     .union([
       z.array(z.string().max(10)),
       // WHY: Hono client 序列化数组时可能变成 {"0":"jpg","1":"jpeg",...} 对象
-      z.record(z.string(), z.string().max(10)).transform((obj) => Object.values(obj)),
+      z
+        .record(z.string(), z.string().max(10))
+        .transform((obj) => Object.values(obj)),
     ])
     .optional(),
 })
@@ -59,7 +61,10 @@ export const FolderPrefixSchema = z.object({
 
 export const FolderCreateSchema = z.object({
   prefix: z.string().max(500).default(''),
-  folderName: z.string().min(1).max(100)
+  folderName: z
+    .string()
+    .min(1)
+    .max(100)
     .regex(/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/, '目录名仅支持中英文、数字、下划线和短横线'),
 })
 

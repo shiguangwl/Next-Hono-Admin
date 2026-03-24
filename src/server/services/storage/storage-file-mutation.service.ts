@@ -2,15 +2,14 @@ import { eq, inArray, like } from 'drizzle-orm'
 import { db } from '@/db'
 import { storageFile } from '@/db/schema'
 import { STORAGE_CONFIG_KEYS, STORAGE_DEFAULTS } from '@/lib/constants'
-import { BusinessError, NotFoundError, ValidationError } from '@/lib/errors'
-import { handleDatabaseError } from '@/lib/errors'
+import { BusinessError, handleDatabaseError, NotFoundError, ValidationError } from '@/lib/errors'
 import { getConfigValue } from '../system/config/config.utils'
 import {
   DeleteObjectCommand,
   getBucket,
   getS3Client,
-  presignUploadUrl,
   PutObjectCommand,
+  presignUploadUrl,
 } from './s3-client'
 import { toFileVo } from './storage-file-query.service'
 import type {
@@ -20,16 +19,9 @@ import type {
   PresignResult,
   UploadViaServerInput,
 } from './types'
-import {
-  escapeLikePattern,
-  FOLDER_PLACEHOLDER_MIME,
-  FOLDER_PLACEHOLDER_NAME,
-} from './types'
+import { escapeLikePattern, FOLDER_PLACEHOLDER_MIME, FOLDER_PLACEHOLDER_NAME } from './types'
 
-async function validateUpload(
-  fileName: string,
-  fileSize: number
-): Promise<void> {
+async function validateUpload(fileName: string, fileSize: number): Promise<void> {
   const maxSize =
     (await getConfigValue<number>(STORAGE_CONFIG_KEYS.MAX_FILE_SIZE)) ??
     STORAGE_DEFAULTS.MAX_FILE_SIZE
@@ -64,9 +56,7 @@ export async function createFolder(
   uploaderName: string | null
 ): Promise<FolderInfo> {
   const normalized = prefix.replace(/\/+$/, '')
-  const folderPath = normalized
-    ? `${normalized}/${folderName}`
-    : folderName
+  const folderPath = normalized ? `${normalized}/${folderName}` : folderName
   const fileKey = `${folderPath}/${FOLDER_PLACEHOLDER_NAME}`
 
   const client = await getS3Client()
@@ -137,9 +127,7 @@ export async function confirmUpload(
   return toFileVo(row)
 }
 
-export async function uploadViaServer(
-  input: UploadViaServerInput
-): Promise<FileVo> {
+export async function uploadViaServer(input: UploadViaServerInput): Promise<FileVo> {
   await validateUpload(input.fileName, input.fileBuffer.length)
 
   const fileKey = buildUniqueKey(input.prefix, input.fileName)
@@ -181,9 +169,7 @@ export async function deleteFile(id: number): Promise<void> {
   // WHY: 先删 S3 再删 DB，S3 失败时 DB 记录完好无损
   const client = await getS3Client()
   const bucket = await getBucket()
-  await client.send(
-    new DeleteObjectCommand({ Bucket: bucket, Key: row.fileKey })
-  )
+  await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: row.fileKey }))
   await db.delete(storageFile).where(eq(storageFile.id, id))
 }
 
@@ -219,9 +205,7 @@ export async function updateFile(
   return toFileVo(updated)
 }
 
-export async function deleteFolder(
-  prefix: string
-): Promise<{ deleted: number }> {
+export async function deleteFolder(prefix: string): Promise<{ deleted: number }> {
   const normalized = prefix.replace(/\/+$/, '')
   if (!normalized) throw new ValidationError('不能删除根目录')
 
@@ -245,9 +229,7 @@ export async function deleteFolder(
 
   // WHY: 先全部删 S3，再事务批量删 DB，减少不一致窗口
   for (const file of files) {
-    await client.send(
-      new DeleteObjectCommand({ Bucket: bucket, Key: file.fileKey })
-    )
+    await client.send(new DeleteObjectCommand({ Bucket: bucket, Key: file.fileKey }))
   }
 
   const fileIds = files.map((f) => f.id)

@@ -1,13 +1,6 @@
 'use client'
 
-import {
-  Button,
-  Group,
-  Modal,
-  Stack,
-  Switch,
-  Text,
-} from '@mantine/core'
+import { Button, Group, Modal, Stack, Switch, Text } from '@mantine/core'
 import { Dropzone } from '@mantine/dropzone'
 import { notifications } from '@mantine/notifications'
 import { IconUpload, IconX } from '@tabler/icons-react'
@@ -22,11 +15,7 @@ interface FileUploadDialogProps {
   currentPrefix: string
 }
 
-async function uploadFile(
-  file: File,
-  prefix: string,
-  isPublic: boolean
-): Promise<void> {
+async function uploadFile(file: File, prefix: string, isPublic: boolean): Promise<void> {
   const formData = new FormData()
   formData.append('file', file)
   formData.append('prefix', prefix)
@@ -47,11 +36,7 @@ async function uploadFile(
   }
 }
 
-export function FileUploadDialog({
-  isOpen,
-  onClose,
-  currentPrefix,
-}: FileUploadDialogProps) {
+export function FileUploadDialog({ isOpen, onClose, currentPrefix }: FileUploadDialogProps) {
   const [isPublic, setIsPublic] = useState(false)
   const [uploading, setUploading] = useState(false)
   const qc = useQueryClient()
@@ -85,13 +70,7 @@ export function FileUploadDialog({
   }
 
   return (
-    <Modal
-      opened={isOpen}
-      onClose={onClose}
-      title="上传文件"
-      size="lg"
-      centered
-    >
+    <Modal opened={isOpen} onClose={onClose} title="上传文件" size="lg" centered>
       <Stack gap="md">
         <Dropzone
           onDrop={handleDrop}
@@ -99,12 +78,7 @@ export function FileUploadDialog({
           disabled={uploading}
           maxSize={200 * 1024 * 1024}
         >
-          <Group
-            justify="center"
-            gap="xl"
-            mih={180}
-            style={{ pointerEvents: 'none' }}
-          >
+          <Group justify="center" gap="xl" mih={180} style={{ pointerEvents: 'none' }}>
             <Dropzone.Accept>
               <IconUpload size={48} stroke={1.5} />
             </Dropzone.Accept>

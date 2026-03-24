@@ -14,20 +14,11 @@ import {
   TextInput,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
-import {
-  IconCheck,
-  IconDeviceFloppy,
-  IconPlugConnected,
-  IconX,
-} from '@tabler/icons-react'
+import { IconCheck, IconDeviceFloppy, IconPlugConnected, IconX } from '@tabler/icons-react'
 import { useEffect, useState } from 'react'
 
 import { PageContainer, PageHeader } from '@/components/ui/page-header'
-import {
-  useStorageConfig,
-  useTestStorageConnection,
-  useUpdateStorageConfig,
-} from '@/hooks/queries'
+import { useStorageConfig, useTestStorageConnection, useUpdateStorageConfig } from '@/hooks/queries'
 
 interface ConfigForm {
   endpoint: string
@@ -75,9 +66,7 @@ export default function StorageConfigPage() {
       publicUrl: (c.publicUrl as string) ?? '',
       forcePathStyle: (c.forcePathStyle as boolean) ?? false,
       maxFileSize: Math.round(
-        ((c.maxFileSize as number) ?? DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024) /
-          1024 /
-          1024
+        ((c.maxFileSize as number) ?? DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024) / 1024 / 1024
       ),
       allowedExtensions: (c.allowedExtensions as string[]) ?? [],
     })
@@ -154,10 +143,7 @@ export default function StorageConfigPage() {
     <PageContainer>
       <PageHeader
         title="存储配置"
-        breadcrumbs={[
-          { label: '存储管理' },
-          { label: '存储配置' },
-        ]}
+        breadcrumbs={[{ label: '存储管理' }, { label: '存储配置' }]}
         actions={
           <Group gap="sm">
             <Button
@@ -218,9 +204,7 @@ export default function StorageConfigPage() {
               label="Secret Access Key"
               placeholder="留空则不更新"
               value={form.secretAccessKey}
-              onChange={(e) =>
-                update('secretAccessKey', e.currentTarget.value)
-              }
+              onChange={(e) => update('secretAccessKey', e.currentTarget.value)}
             />
             <TextInput
               label="公开访问 URL 前缀"
@@ -234,9 +218,7 @@ export default function StorageConfigPage() {
             label="Force Path Style"
             description="MinIO 等自托管服务需要开启"
             checked={form.forcePathStyle}
-            onChange={(e) =>
-              update('forcePathStyle', e.currentTarget.checked)
-            }
+            onChange={(e) => update('forcePathStyle', e.currentTarget.checked)}
           />
 
           <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">

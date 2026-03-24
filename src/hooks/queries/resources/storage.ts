@@ -54,10 +54,7 @@ export function useTestStorageConnection() {
       forcePathStyle?: boolean
     }) => {
       const response = await getClient().config.test.$post({ json: input })
-      return unwrapApiData<{ success: boolean; message: string }>(
-        response,
-        '测试连接失败'
-      )
+      return unwrapApiData<{ success: boolean; message: string }>(response, '测试连接失败')
     },
   })
 }
@@ -96,10 +93,7 @@ export function useStorageFolders(prefix: string) {
 export function useCreateFolder() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (input: {
-      prefix: string
-      folderName: string
-    }) => {
+    mutationFn: async (input: { prefix: string; folderName: string }) => {
       const response = await getClient().files.folder.$post({
         json: input,
       })
@@ -123,10 +117,7 @@ export function usePresignUpload() {
       const response = await getClient().files.presign.$post({
         json: input,
       })
-      return unwrapApiData<{ uploadUrl: string; fileKey: string }>(
-        response,
-        '获取上传链接失败'
-      )
+      return unwrapApiData<{ uploadUrl: string; fileKey: string }>(response, '获取上传链接失败')
     },
     onSuccess: () => {
       qc.invalidateQueries({ queryKey: storageKeys.all })
@@ -161,10 +152,7 @@ export function useGetFileUrl() {
       const response = await getClient().files[':id'].url.$get({
         param: { id: String(id) },
       })
-      return unwrapApiData<{ url: string; isPublic: boolean }>(
-        response,
-        '获取文件链接失败'
-      )
+      return unwrapApiData<{ url: string; isPublic: boolean }>(response, '获取文件链接失败')
     },
   })
 }
@@ -187,10 +175,7 @@ export function useDeleteFile() {
 export function useUpdateFile() {
   const qc = useQueryClient()
   return useMutation({
-    mutationFn: async (args: {
-      id: number
-      input: { fileName?: string; isPublic?: number }
-    }) => {
+    mutationFn: async (args: { id: number; input: { fileName?: string; isPublic?: number } }) => {
       const response = await getClient().files[':id'].$patch({
         param: { id: String(args.id) },
         json: args.input,

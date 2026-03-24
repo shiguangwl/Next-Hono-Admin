@@ -16,19 +16,15 @@ import {
   IconCopy,
   IconDownload,
   IconEye,
+  IconFolderPlus,
   IconTrash,
   IconUpload,
-  IconFolderPlus,
 } from '@tabler/icons-react'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 
 import { PermissionGuard } from '@/components/permission-guard'
-import {
-  useDeleteFile,
-  useGetFileUrl,
-  useStorageFiles,
-} from '@/hooks/queries'
+import { useDeleteFile, useGetFileUrl, useStorageFiles } from '@/hooks/queries'
 import { copyToClipboard } from '@/lib/clipboard'
 import { buildFileColumns, type FileRecord } from './file-columns'
 import { FilePreviewDialog } from './file-preview-dialog'
@@ -56,11 +52,7 @@ interface FileListProps {
   onCreateFolderClick: () => void
 }
 
-export function FileList({
-  currentPrefix,
-  onUploadClick,
-  onCreateFolderClick,
-}: FileListProps) {
+export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: FileListProps) {
   const [page, setPage] = useState(1)
   const [previewFile, setPreviewFile] = useState<FileRecord | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
@@ -125,9 +117,7 @@ export function FileList({
     })
   }
 
-  const breadcrumbParts = currentPrefix
-    .split('/')
-    .filter(Boolean)
+  const breadcrumbParts = currentPrefix.split('/').filter(Boolean)
 
   const columns = [
     ...buildFileColumns({
@@ -142,20 +132,12 @@ export function FileList({
       render: (record: FileRecord) => (
         <Group gap={4} wrap="nowrap">
           <Tooltip label="预览">
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              onClick={() => handlePreview(record)}
-            >
+            <ActionIcon variant="subtle" size="sm" onClick={() => handlePreview(record)}>
               <IconEye size={14} />
             </ActionIcon>
           </Tooltip>
           <Tooltip label="复制链接">
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              onClick={() => handleCopyUrl(record)}
-            >
+            <ActionIcon variant="subtle" size="sm" onClick={() => handleCopyUrl(record)}>
               <IconCopy size={14} />
             </ActionIcon>
           </Tooltip>
@@ -196,11 +178,7 @@ export function FileList({
       <Paper withBorder p="md" radius="md">
         <Group justify="space-between" mb="md">
           <Breadcrumbs>
-            <Text
-              size="sm"
-              style={{ cursor: 'pointer' }}
-              fw={currentPrefix === '' ? 700 : 400}
-            >
+            <Text size="sm" style={{ cursor: 'pointer' }} fw={currentPrefix === '' ? 700 : 400}>
               根目录
             </Text>
             {breadcrumbParts.map((part) => (
@@ -220,11 +198,7 @@ export function FileList({
               >
                 新建目录
               </Button>
-              <Button
-                size="xs"
-                leftSection={<IconUpload size={14} />}
-                onClick={onUploadClick}
-              >
+              <Button size="xs" leftSection={<IconUpload size={14} />} onClick={onUploadClick}>
                 上传文件
               </Button>
             </PermissionGuard>
@@ -245,9 +219,7 @@ export function FileList({
           recordsPerPage={PAGE_SIZE}
           page={page}
           onPageChange={setPage}
-          paginationText={({ from, to, totalRecords }) =>
-            `${from}-${to} / 共 ${totalRecords} 条`
-          }
+          paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
         />
       </Paper>
 

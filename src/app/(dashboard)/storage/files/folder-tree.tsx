@@ -73,13 +73,7 @@ export function FolderTree({
                   </PermissionGuard>
                 </Group>
               }
-              leftSection={
-                isActive ? (
-                  <IconFolderOpen size={16} />
-                ) : (
-                  <IconFolder size={16} />
-                )
-              }
+              leftSection={isActive ? <IconFolderOpen size={16} /> : <IconFolder size={16} />}
               active={isActive}
               onClick={() => onSelect(`${folder.prefix}/`)}
             />

@@ -9,11 +9,7 @@ interface FolderCreateDialogProps {
   onConfirm: (folderName: string) => void
 }
 
-export function FolderCreateDialog({
-  isOpen,
-  onClose,
-  onConfirm,
-}: FolderCreateDialogProps) {
+export function FolderCreateDialog({ isOpen, onClose, onConfirm }: FolderCreateDialogProps) {
   const [name, setName] = useState('')
 
   const handleSubmit = () => {
@@ -25,13 +21,7 @@ export function FolderCreateDialog({
   }
 
   return (
-    <Modal
-      opened={isOpen}
-      onClose={onClose}
-      title="新建目录"
-      centered
-      size="sm"
-    >
+    <Modal opened={isOpen} onClose={onClose} title="新建目录" centered size="sm">
       <Stack gap="md">
         <TextInput
           label="目录名称"

@@ -38,14 +38,10 @@ import {
 export const storage = new Hono<Env>()
   .use('/*', requireAuth)
 
-  .get(
-    '/config',
-    requirePermission('storage:config:query'),
-    async (c) => {
-      const config = await getStorageConfig()
-      return R.ok(c, config)
-    }
-  )
+  .get('/config', requirePermission('storage:config:query'), async (c) => {
+    const config = await getStorageConfig()
+    return R.ok(c, config)
+  })
   .put(
     '/config',
     requirePermission('storage:config:update'),
@@ -145,11 +141,7 @@ export const storage = new Hono<Env>()
     async (c) => {
       const input = c.req.valid('json')
       const admin = c.get('admin')
-      const file = await confirmUpload(
-        input,
-        admin?.adminId ?? null,
-        admin?.username ?? null
-      )
+      const file = await confirmUpload(input, admin?.adminId ?? null, admin?.username ?? null)
       return R.ok(c, file)
     }
   )
