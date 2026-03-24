@@ -57,6 +57,9 @@ export const env = createEnv({
 
     // 日志级别（默认：开发=debug，生产=info）
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
+
+    // 存储加密密钥（用于加密 S3 SecretAccessKey）
+    STORAGE_ENCRYPTION_KEY: z.string().min(32).optional(),
   },
 
   /**
@@ -81,6 +84,7 @@ export const env = createEnv({
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
     COOKIE_SECURE: process.env.COOKIE_SECURE,
+    STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY,
   },
 
   /**

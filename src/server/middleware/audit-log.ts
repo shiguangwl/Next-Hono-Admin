@@ -75,6 +75,7 @@ function getClientIp(c: { req: { header: (name: string) => string | undefined } 
 async function getRequestParams(c: {
   req: {
     method: string
+    header: (name: string) => string | undefined
     query: () => Record<string, string>
     json: () => Promise<unknown>
   }
@@ -87,10 +88,14 @@ async function getRequestParams(c: {
       return Object.keys(query).length > 0 ? JSON.stringify(query) : null
     }
 
-    // POST/PUT/PATCH 请求尝试获取 body
+    // WHY: multipart/form-data (文件上传) 无法用 json() 解析，且 body 消费后不可重读
+    const contentType = c.req.header('content-type') ?? ''
+    if (!contentType.includes('application/json')) {
+      return null
+    }
+
     const body = await c.req.json().catch(() => null)
     if (body) {
-      // 过滤敏感字段
       const sanitized = sanitizeBody(body as Record<string, unknown>)
       return JSON.stringify(sanitized)
     }

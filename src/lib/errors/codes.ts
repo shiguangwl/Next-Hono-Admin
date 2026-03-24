@@ -53,6 +53,12 @@ export const ErrorCode = {
   /** 角色已被使用 */
   ROLE_IN_USE: 'ROLE_IN_USE',
 
+  /** 存储服务未配置 */
+  STORAGE_NOT_CONFIGURED: 'STORAGE_NOT_CONFIGURED',
+
+  /** 存储服务不可用 */
+  STORAGE_UNAVAILABLE: 'STORAGE_UNAVAILABLE',
+
   // ========== 服务器错误 5xx ==========
 
   /** 服务器内部错误 (500) */

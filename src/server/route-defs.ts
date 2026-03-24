@@ -6,6 +6,7 @@ import { configs } from './routes/configs'
 import { menus } from './routes/menus'
 import { operationLogs } from './routes/operation-logs'
 import { roles } from './routes/roles'
+import { storage } from './routes/storage'
 
 export const routes = new Hono<Env>()
   .route('/auth', auth)
@@ -14,5 +15,6 @@ export const routes = new Hono<Env>()
   .route('/menus', menus)
   .route('/operation-logs', operationLogs)
   .route('/configs', configs)
+  .route('/storage', storage)
 
 export type AppType = typeof routes
