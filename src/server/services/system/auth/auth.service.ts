@@ -5,14 +5,19 @@
 import { and, eq, inArray } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysAdmin, sysAdminRole, sysMenu, sysRole, sysRoleMenu } from '@/db/schema'
-import { verifyPassword } from '@/lib/auth'
+import { hashPassword, verifyPassword } from '@/lib/auth'
 import { SUPER_ADMIN_ID } from '@/lib/constants'
-import { BusinessError, ErrorCode, UnauthorizedError } from '@/lib/errors'
+import { UnauthorizedError } from '@/lib/errors'
+import { logger } from '@/lib/logging'
 import { toAdminVo } from '../admin/admin.utils'
 import { buildMenuTree, toMenuTreeNode } from '../menu/menu.utils'
 import type { MenuTreeNode } from '../menu/types'
 import { createAdminSession } from './session.service'
 import type { LoginInput, LoginResultVo } from './types'
+
+// WHY: 预计算 dummy hash，使不存在用户和禁用用户也执行 verifyPassword，
+// 消除通过响应时间差异枚举用户名的时序攻击
+const TIMING_DEFENSE_HASH = await hashPassword('timing-defense-dummy')
 
 async function findAdminByUsername(username: string) {
   return db
@@ -21,16 +26,6 @@ async function findAdminByUsername(username: string) {
     .where(eq(sysAdmin.username, username))
     .limit(1)
     .then((rows) => rows[0])
-}
-
-function assertAdminIsActive(admin: typeof sysAdmin.$inferSelect | undefined): asserts admin {
-  if (!admin) {
-    throw new UnauthorizedError('用户名或密码错误')
-  }
-
-  if (admin.status === 0) {
-    throw new BusinessError('账号已禁用', ErrorCode.ACCOUNT_DISABLED)
-  }
 }
 
 async function updateAdminLoginMetadata(adminId: number, ip?: string): Promise<void> {
@@ -80,10 +75,17 @@ async function getGrantedMenus(adminId: number) {
 /** 管理员登录 */
 export async function login(input: LoginInput): Promise<LoginResultVo> {
   const admin = await findAdminByUsername(input.username)
-  assertAdminIsActive(admin)
 
-  const isValid = await verifyPassword(input.password, admin.password)
-  if (!isValid) {
+  // WHY: 无论用户是否存在或禁用，都执行 verifyPassword 消除时序差异
+  const passwordToCompare = admin?.password ?? TIMING_DEFENSE_HASH
+  const isValid = await verifyPassword(input.password, passwordToCompare)
+
+  if (!admin || !isValid) {
+    throw new UnauthorizedError('用户名或密码错误')
+  }
+
+  if (admin.status === 0) {
+    logger.warn('登录失败: 账号已禁用', { username: input.username, adminId: admin.id })
     throw new UnauthorizedError('用户名或密码错误')
   }
 

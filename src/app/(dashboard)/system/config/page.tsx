@@ -113,7 +113,6 @@ export default function ConfigPage() {
         configType: createForm.configType,
         configValue: createForm.configValue === '' ? null : createForm.configValue,
         remark: createForm.remark.trim() || null,
-        isSystem: createForm.isSystem,
         status: createForm.status,
       })
       setCreateDialogOpen(false)

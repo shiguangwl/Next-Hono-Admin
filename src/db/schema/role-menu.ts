@@ -4,13 +4,19 @@ import { sql } from 'drizzle-orm'
  */
 import { bigint, index, mysqlTable, uniqueIndex } from 'drizzle-orm/mysql-core'
 import { localDatetime } from '../custom-types'
+import { sysMenu } from './menu'
+import { sysRole } from './role'
 
 export const sysRoleMenu = mysqlTable(
   'sys_role_menu',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).primaryKey().autoincrement(),
-    roleId: bigint('role_id', { mode: 'number', unsigned: true }).notNull(),
-    menuId: bigint('menu_id', { mode: 'number', unsigned: true }).notNull(),
+    roleId: bigint('role_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => sysRole.id, { onDelete: 'cascade' }),
+    menuId: bigint('menu_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => sysMenu.id, { onDelete: 'restrict' }),
     createdAt: localDatetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({

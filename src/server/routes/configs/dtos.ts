@@ -29,7 +29,6 @@ export const CreateConfigInputSchema = z.object({
   configGroup: z.string().max(50).default('general'),
   configName: z.string().max(100),
   remark: z.string().max(255).nullable().optional(),
-  isSystem: z.number().int().min(0).max(1).optional().default(0),
   status: z.number().int().min(0).max(1).optional().default(1),
 })
 
@@ -40,7 +39,6 @@ export const UpdateConfigInputSchema = z.object({
   configGroup: z.string().max(50).optional(),
   configName: z.string().max(100).optional(),
   remark: z.string().max(255).nullable().optional(),
-  isSystem: z.number().int().min(0).max(1).optional(),
   status: z.number().int().min(0).max(1).optional(),
 })
 

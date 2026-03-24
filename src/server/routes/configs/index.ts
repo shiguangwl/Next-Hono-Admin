@@ -61,7 +61,6 @@ const configs = new Hono<Env>()
         configGroup: body.configGroup,
         configName: body.configName,
         remark: body.remark ?? null,
-        isSystem: body.isSystem,
         status: body.status,
       })
       await preloadAllActiveConfigs()

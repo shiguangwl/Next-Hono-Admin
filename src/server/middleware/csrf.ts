@@ -24,9 +24,16 @@ function isOriginAllowed(origin: string, host: string): boolean {
   }
 }
 
+// WHY: 从 Referer URL 中提取 origin 后严格等值比较，避免前缀伪造
+// （如 http://trusted.com.attacker.tld 不会被 http://trusted.com 误匹配）
 function isRefererAllowed(referer: string, host: string): boolean {
   if (env.CORS_ORIGINS.length > 0) {
-    return env.CORS_ORIGINS.some((allowed) => referer.startsWith(allowed))
+    try {
+      const refererOrigin = new URL(referer).origin
+      return env.CORS_ORIGINS.some((allowed) => refererOrigin === allowed)
+    } catch {
+      return false
+    }
   }
 
   try {

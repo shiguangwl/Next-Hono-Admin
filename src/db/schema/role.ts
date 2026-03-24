@@ -2,7 +2,15 @@ import { sql } from 'drizzle-orm'
 /**
  * 角色表 Schema
  */
-import { bigint, index, int, mysqlTable, tinyint, varchar } from 'drizzle-orm/mysql-core'
+import {
+  bigint,
+  index,
+  int,
+  mysqlTable,
+  tinyint,
+  uniqueIndex,
+  varchar,
+} from 'drizzle-orm/mysql-core'
 import { localDatetime } from '../custom-types'
 
 export const sysRole = mysqlTable(
@@ -21,6 +29,7 @@ export const sysRole = mysqlTable(
   (table) => ({
     statusIdx: index('idx_status').on(table.status),
     sortIdx: index('idx_sort').on(table.sort),
+    roleNameIdx: uniqueIndex('uk_role_name').on(table.roleName),
   })
 )
 

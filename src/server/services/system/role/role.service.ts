@@ -2,10 +2,16 @@
  * 角色服务
  */
 
-import { and, asc, count, eq, like, ne } from 'drizzle-orm'
+import { and, asc, count, eq, inArray, like, ne } from 'drizzle-orm'
 import { db } from '@/db'
-import { sysAdminRole, sysRole, sysRoleMenu } from '@/db/schema'
-import { BusinessError, ConflictError, ErrorCode, NotFoundError } from '@/lib/errors'
+import { sysAdminRole, sysMenu, sysRole, sysRoleMenu } from '@/db/schema'
+import {
+  BusinessError,
+  ConflictError,
+  ErrorCode,
+  handleDatabaseError,
+  NotFoundError,
+} from '@/lib/errors'
 import {
   buildPaginatedResult,
   buildSortOrder,
@@ -105,24 +111,42 @@ export async function createRole(input: CreateRoleInput): Promise<RoleVo> {
     throw new ConflictError(`角色名 ${input.roleName} 已存在`)
   }
 
-  const result = await db.transaction(async (tx) => {
-    const [insertResult] = await tx.insert(sysRole).values({
-      roleName: input.roleName,
-      sort: input.sort ?? 0,
-      status: input.status ?? 1,
-      remark: input.remark,
+  try {
+    const result = await db.transaction(async (tx) => {
+      // WHY: 在事务内校验 menuId 存在性，防止 TOCTOU
+      if (input.menuIds?.length) {
+        const existingMenus = await tx
+          .select({ id: sysMenu.id })
+          .from(sysMenu)
+          .where(inArray(sysMenu.id, input.menuIds))
+
+        if (existingMenus.length !== input.menuIds.length) {
+          const foundIds = new Set(existingMenus.map((m) => m.id))
+          const missing = input.menuIds.filter((id) => !foundIds.has(id))
+          throw new NotFoundError('Menu', missing[0])
+        }
+      }
+
+      const [insertResult] = await tx.insert(sysRole).values({
+        roleName: input.roleName,
+        sort: input.sort ?? 0,
+        status: input.status ?? 1,
+        remark: input.remark,
+      })
+
+      const roleId = Number(insertResult.insertId)
+
+      if (input.menuIds?.length) {
+        await tx.insert(sysRoleMenu).values(input.menuIds.map((menuId) => ({ roleId, menuId })))
+      }
+
+      return roleId
     })
 
-    const roleId = Number(insertResult.insertId)
-
-    if (input.menuIds?.length) {
-      await tx.insert(sysRoleMenu).values(input.menuIds.map((menuId) => ({ roleId, menuId })))
-    }
-
-    return roleId
-  })
-
-  return getRoleById(result)
+    return getRoleById(result)
+  } catch (err) {
+    throw handleDatabaseError(err)
+  }
 }
 
 /** 更新角色 */
@@ -212,13 +236,31 @@ export async function updateRoleMenus(id: number, menuIds: number[]): Promise<vo
     throw new NotFoundError('Role', id)
   }
 
-  await db.transaction(async (tx) => {
-    await tx.delete(sysRoleMenu).where(eq(sysRoleMenu.roleId, id))
+  try {
+    await db.transaction(async (tx) => {
+      // WHY: 在事务内校验 menuId 存在性，防止 TOCTOU
+      if (menuIds.length > 0) {
+        const existingMenus = await tx
+          .select({ id: sysMenu.id })
+          .from(sysMenu)
+          .where(inArray(sysMenu.id, menuIds))
 
-    if (menuIds.length > 0) {
-      await tx.insert(sysRoleMenu).values(menuIds.map((menuId) => ({ roleId: id, menuId })))
-    }
-  })
+        if (existingMenus.length !== menuIds.length) {
+          const foundIds = new Set(existingMenus.map((m) => m.id))
+          const missing = menuIds.filter((mid) => !foundIds.has(mid))
+          throw new NotFoundError('Menu', missing[0])
+        }
+      }
+
+      await tx.delete(sysRoleMenu).where(eq(sysRoleMenu.roleId, id))
+
+      if (menuIds.length > 0) {
+        await tx.insert(sysRoleMenu).values(menuIds.map((menuId) => ({ roleId: id, menuId })))
+      }
+    })
+  } catch (err) {
+    throw handleDatabaseError(err)
+  }
 
   invalidateAllPermissionCache()
 }

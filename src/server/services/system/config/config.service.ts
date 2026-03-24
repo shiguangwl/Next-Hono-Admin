@@ -5,7 +5,6 @@
 import { and, asc, count, eq } from 'drizzle-orm'
 import { db } from '@/db'
 import { sysConfig } from '@/db/schema'
-import { formatDateToLocal } from '@/lib/date'
 import { ConflictError, NotFoundError } from '@/lib/errors'
 import {
   buildPaginatedResult,
@@ -13,8 +12,14 @@ import {
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
+import {
+  getConfigById,
+  getConfigByKey,
+  removeConfigCache,
+  toConfigVo,
+  validateConfigValue,
+} from './config.utils'
 import type {
-  ConfigCacheEntry,
   ConfigQuery,
   ConfigValueType,
   ConfigVo,
@@ -22,147 +27,21 @@ import type {
   UpsertConfigInput,
 } from './types'
 
-// ========== 缓存管理 ==========
-
-const configCache = new Map<string, ConfigCacheEntry>()
-
-export function clearConfigCache(): void {
-  configCache.clear()
-}
-
-export function removeConfigCache(key: string): void {
-  configCache.delete(key)
-}
-
-export function getConfigCacheSize(): number {
-  return configCache.size
-}
-
-// ========== 内部工具 ==========
-
-function parseConfigValue(value: string | null, type: ConfigValueType): unknown {
-  if (value === null) return null
-
-  if (type === 'string') return value
-
-  if (type === 'boolean') {
-    const normalized = value.trim().toLowerCase()
-    if (normalized === 'true' || normalized === '1') return true
-    if (normalized === 'false' || normalized === '0') return false
-    throw new Error(`Invalid boolean config value: ${value}`)
-  }
-
-  if (type === 'number') {
-    const num = Number(value)
-    if (Number.isNaN(num)) {
-      throw new Error(`Invalid number config value: ${value}`)
-    }
-    return num
-  }
-
-  try {
-    const parsed = JSON.parse(value)
-    if (type === 'array' && !Array.isArray(parsed)) {
-      throw new Error('Expected array config value')
-    }
-    return parsed
-  } catch (error) {
-    throw new Error(`Invalid JSON config value: ${(error as Error).message}`)
-  }
-}
-
-function toConfigVo(row: typeof sysConfig.$inferSelect): ConfigVo {
-  return {
-    id: row.id,
-    configKey: row.configKey,
-    configValue: row.configValue,
-    configType: row.configType as ConfigValueType,
-    configGroup: row.configGroup,
-    configName: row.configName,
-    remark: row.remark,
-    isSystem: row.isSystem,
-    status: row.status,
-    createdAt: formatDateToLocal(row.createdAt) ?? '',
-    updatedAt: formatDateToLocal(row.updatedAt) ?? '',
-  }
-}
+// WHY: re-export 工具函数，保持 index.ts 的 export * 不受影响
+export {
+  clearConfigCache,
+  getConfigById,
+  getConfigByKey,
+  getConfigCacheSize,
+  getConfigValue,
+  parseConfigValue,
+  preloadAllActiveConfigs,
+  removeConfigCache,
+  toConfigVo,
+  validateConfigValue,
+} from './config.utils'
 
 // ========== 服务方法 ==========
-
-/** 获取配置值（带缓存） */
-export async function getConfigValue<T = unknown>(key: string): Promise<T | null> {
-  const cached = configCache.get(key)
-  if (cached) {
-    return cached.parsedValue as T
-  }
-
-  const row = await db
-    .select()
-    .from(sysConfig)
-    .where(and(eq(sysConfig.configKey, key), eq(sysConfig.status, 1)))
-    .limit(1)
-    .then((rows) => rows[0])
-
-  if (!row) return null
-
-  const parsedValue = parseConfigValue(row.configValue, row.configType as ConfigValueType)
-  configCache.set(key, {
-    rawValue: row.configValue,
-    parsedValue,
-    type: row.configType as ConfigValueType,
-  })
-
-  return parsedValue as T
-}
-
-/** 预加载所有启用的配置 */
-export async function preloadAllActiveConfigs(): Promise<void> {
-  const rows = await db.select().from(sysConfig).where(eq(sysConfig.status, 1))
-
-  configCache.clear()
-
-  for (const row of rows) {
-    const type = row.configType as ConfigValueType
-    const parsedValue = parseConfigValue(row.configValue, type)
-    configCache.set(row.configKey, {
-      rawValue: row.configValue,
-      parsedValue,
-      type,
-    })
-  }
-}
-
-/** 根据 ID 获取配置 */
-export async function getConfigById(id: number): Promise<ConfigVo> {
-  const row = await db
-    .select()
-    .from(sysConfig)
-    .where(eq(sysConfig.id, id))
-    .limit(1)
-    .then((rows) => rows[0])
-
-  if (!row) {
-    throw new NotFoundError('SysConfig', id)
-  }
-
-  return toConfigVo(row)
-}
-
-/** 根据 Key 获取配置 */
-export async function getConfigByKey(key: string): Promise<ConfigVo> {
-  const row = await db
-    .select()
-    .from(sysConfig)
-    .where(eq(sysConfig.configKey, key))
-    .limit(1)
-    .then((rows) => rows[0])
-
-  if (!row) {
-    throw new NotFoundError('SysConfig', key)
-  }
-
-  return toConfigVo(row)
-}
 
 const CONFIG_SORTABLE_FIELDS = [
   'id',
@@ -232,14 +111,16 @@ export async function createConfig(input: UpsertConfigInput): Promise<ConfigVo> 
     throw new ConflictError(`配置键 ${input.configKey} 已存在`)
   }
 
+  const validatedValue = validateConfigValue(input.configValue, input.configType)
+
   const [insertResult] = await db.insert(sysConfig).values({
     configKey: input.configKey,
-    configValue: input.configValue,
+    configValue: validatedValue,
     configType: input.configType,
     configGroup: input.configGroup,
     configName: input.configName,
     remark: input.remark ?? null,
-    isSystem: input.isSystem ?? 0,
+    isSystem: 0,
     status: input.status ?? 1,
   })
 
@@ -281,6 +162,13 @@ export async function updateConfig(
     }
   }
 
+  // WHY: configValue 或 configType 变更时校验值与类型匹配
+  const resolvedType = input.configType ?? (existing.configType as ConfigValueType)
+  const resolvedValue = input.configValue !== undefined ? input.configValue : existing.configValue
+  if (input.configValue !== undefined || input.configType) {
+    validateConfigValue(resolvedValue, resolvedType)
+  }
+
   await db
     .update(sysConfig)
     .set({
@@ -291,7 +179,7 @@ export async function updateConfig(
       configGroup: input.configGroup ?? existing.configGroup,
       configName: input.configName ?? existing.configName,
       remark: input.remark !== undefined ? input.remark : existing.remark,
-      isSystem: input.isSystem ?? existing.isSystem,
+      isSystem: existing.isSystem,
       status: input.status ?? existing.status,
     })
     .where(eq(sysConfig.id, id))
@@ -319,6 +207,10 @@ export async function updateConfigValueByKey(
   if (!existing) {
     throw new NotFoundError('SysConfig', key)
   }
+
+  // WHY: configValue 或 configType 变更时校验值与类型匹配
+  const resolvedType = input.configType ?? (existing.configType as ConfigValueType)
+  validateConfigValue(input.configValue, resolvedType)
 
   await db
     .update(sysConfig)

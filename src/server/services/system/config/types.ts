@@ -20,7 +20,6 @@ export interface UpsertConfigInput {
   configGroup: string
   configName: string
   remark?: string | null
-  isSystem?: number
   status?: number
 }
 

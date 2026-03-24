@@ -4,13 +4,19 @@ import { sql } from 'drizzle-orm'
  */
 import { bigint, index, mysqlTable, uniqueIndex } from 'drizzle-orm/mysql-core'
 import { localDatetime } from '../custom-types'
+import { sysAdmin } from './admin'
+import { sysRole } from './role'
 
 export const sysAdminRole = mysqlTable(
   'sys_admin_role',
   {
     id: bigint('id', { mode: 'number', unsigned: true }).primaryKey().autoincrement(),
-    adminId: bigint('admin_id', { mode: 'number', unsigned: true }).notNull(),
-    roleId: bigint('role_id', { mode: 'number', unsigned: true }).notNull(),
+    adminId: bigint('admin_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => sysAdmin.id, { onDelete: 'cascade' }),
+    roleId: bigint('role_id', { mode: 'number', unsigned: true })
+      .notNull()
+      .references(() => sysRole.id, { onDelete: 'restrict' }),
     createdAt: localDatetime('created_at').notNull().default(sql`CURRENT_TIMESTAMP`),
   },
   (table) => ({

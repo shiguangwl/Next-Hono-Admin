@@ -148,6 +148,20 @@ export async function createAdmin(input: CreateAdminInput): Promise<AdminVo> {
 
   try {
     const result = await db.transaction(async (tx) => {
+      // WHY: 在事务内校验 roleId 存在性，防止 TOCTOU
+      if (input.roleIds?.length) {
+        const existingRoles = await tx
+          .select({ id: sysRole.id })
+          .from(sysRole)
+          .where(inArray(sysRole.id, input.roleIds))
+
+        if (existingRoles.length !== input.roleIds.length) {
+          const foundIds = new Set(existingRoles.map((r) => r.id))
+          const missing = input.roleIds.filter((id) => !foundIds.has(id))
+          throw new NotFoundError('Role', missing[0])
+        }
+      }
+
       const [insertResult] = await tx.insert(sysAdmin).values({
         username: input.username,
         password: hashedPassword,
@@ -281,6 +295,20 @@ export async function updateAdminRoles(id: number, roleIds: number[]): Promise<v
   }
 
   await db.transaction(async (tx) => {
+    // WHY: 在事务内校验 roleId 存在性，防止 TOCTOU
+    if (roleIds.length > 0) {
+      const existingRoles = await tx
+        .select({ id: sysRole.id })
+        .from(sysRole)
+        .where(inArray(sysRole.id, roleIds))
+
+      if (existingRoles.length !== roleIds.length) {
+        const foundIds = new Set(existingRoles.map((r) => r.id))
+        const missing = roleIds.filter((id) => !foundIds.has(id))
+        throw new NotFoundError('Role', missing[0])
+      }
+    }
+
     await tx.delete(sysAdminRole).where(eq(sysAdminRole.adminId, id))
 
     if (roleIds.length > 0) {
