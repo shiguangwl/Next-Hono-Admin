@@ -129,18 +129,19 @@ export const apiRateLimit = rateLimit({
  * @description 每分钟 5 次请求（防止暴力破解）
  */
 export const loginRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 分钟
+  windowMs: 60 * 1000,
   max: 5,
   message: '登录尝试过于频繁，请稍后再试',
 })
 
+// WHY: 存储操作（上传/删除）需要更高频率，但仍需限制以防滥用
 /**
  * 预设：严格速率限制
- * @description 每分钟 10 次请求（用于敏感操作）
+ * @description 每分钟 20 次请求（用于敏感操作）
  */
 export const strictRateLimit = rateLimit({
-  windowMs: 60 * 1000, // 1 分钟
-  max: 10,
+  windowMs: 60 * 1000,
+  max: 20,
   message: '操作过于频繁，请稍后再试',
 })
 

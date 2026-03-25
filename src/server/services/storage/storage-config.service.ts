@@ -7,13 +7,15 @@ import { decryptSecret, encryptSecret, maskSecret } from './crypto'
 import { invalidateS3Client, testConnection, testConnectionWithParams } from './s3-client'
 import type { StorageConfigVo, UpdateStorageConfigInput } from './types'
 
+// WHY: executor 参数允许在事务/非事务环境下共用同一逻辑
 async function upsertConfigItem(
+  executor: Pick<typeof db, 'select' | 'insert' | 'update'>,
   key: string,
   value: string | null,
   name: string,
   type = 'string'
 ): Promise<void> {
-  const existing = await db
+  const existing = await executor
     .select({ id: sysConfig.id })
     .from(sysConfig)
     .where(eq(sysConfig.configKey, key))
@@ -21,12 +23,12 @@ async function upsertConfigItem(
     .then((rows) => rows[0])
 
   if (existing) {
-    await db
+    await executor
       .update(sysConfig)
       .set({ configValue: value, configType: type })
       .where(eq(sysConfig.id, existing.id))
   } else {
-    await db.insert(sysConfig).values({
+    await executor.insert(sysConfig).values({
       configKey: key,
       configValue: value,
       configType: type,
@@ -85,35 +87,41 @@ export async function updateStorageConfig(
 ): Promise<StorageConfigVo> {
   const K = STORAGE_CONFIG_KEYS
 
-  await upsertConfigItem(K.ENDPOINT, input.endpoint, 'S3端点')
-  await upsertConfigItem(K.REGION, input.region ?? 'auto', 'S3区域')
-  await upsertConfigItem(K.BUCKET, input.bucket, 'S3桶名')
-  await upsertConfigItem(K.ACCESS_KEY_ID, input.accessKeyId, 'S3访问密钥ID')
+  // WHY: 事务保证配置原子更新，中途失败时自动回滚
+  await db.transaction(async (tx) => {
+    await upsertConfigItem(tx, K.ENDPOINT, input.endpoint, 'S3端点')
+    await upsertConfigItem(tx, K.REGION, input.region ?? 'auto', 'S3区域')
+    await upsertConfigItem(tx, K.BUCKET, input.bucket, 'S3桶名')
+    await upsertConfigItem(tx, K.ACCESS_KEY_ID, input.accessKeyId, 'S3访问密钥ID')
 
-  if (input.secretAccessKey) {
-    const encrypted = encryptSecret(input.secretAccessKey)
-    await upsertConfigItem(K.SECRET_ACCESS_KEY, encrypted, 'S3密钥')
-  }
+    if (input.secretAccessKey) {
+      const encrypted = encryptSecret(input.secretAccessKey)
+      await upsertConfigItem(tx, K.SECRET_ACCESS_KEY, encrypted, 'S3密钥')
+    }
 
-  await upsertConfigItem(K.PUBLIC_URL, input.publicUrl ?? '', 'S3公开URL前缀')
-  await upsertConfigItem(
-    K.FORCE_PATH_STYLE,
-    String(input.forcePathStyle ?? false),
-    'S3路径风格',
-    'boolean'
-  )
-  await upsertConfigItem(
-    K.MAX_FILE_SIZE,
-    String(input.maxFileSize ?? STORAGE_DEFAULTS.MAX_FILE_SIZE),
-    '最大文件大小',
-    'number'
-  )
-  await upsertConfigItem(
-    K.ALLOWED_EXTENSIONS,
-    JSON.stringify(input.allowedExtensions ?? STORAGE_DEFAULTS.ALLOWED_EXTENSIONS),
-    '允许的扩展名',
-    'array'
-  )
+    await upsertConfigItem(tx, K.PUBLIC_URL, input.publicUrl ?? '', 'S3公开URL前缀')
+    await upsertConfigItem(
+      tx,
+      K.FORCE_PATH_STYLE,
+      String(input.forcePathStyle ?? false),
+      'S3路径风格',
+      'boolean'
+    )
+    await upsertConfigItem(
+      tx,
+      K.MAX_FILE_SIZE,
+      String(input.maxFileSize ?? STORAGE_DEFAULTS.MAX_FILE_SIZE),
+      '最大文件大小',
+      'number'
+    )
+    await upsertConfigItem(
+      tx,
+      K.ALLOWED_EXTENSIONS,
+      JSON.stringify(input.allowedExtensions ?? STORAGE_DEFAULTS.ALLOWED_EXTENSIONS),
+      '允许的扩展名',
+      'array'
+    )
+  })
 
   invalidateS3Client()
   return getStorageConfig()

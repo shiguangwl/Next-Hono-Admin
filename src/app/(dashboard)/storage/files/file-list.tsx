@@ -1,33 +1,48 @@
 'use client'
 
-import {
-  ActionIcon,
-  Breadcrumbs,
-  Button,
-  Group,
-  Paper,
-  Text,
-  TextInput,
-  Tooltip,
-} from '@mantine/core'
+import { TextInput } from '@mantine/core'
 import { modals } from '@mantine/modals'
 import { notifications } from '@mantine/notifications'
-import {
-  IconCopy,
-  IconDownload,
-  IconEye,
-  IconFolderPlus,
-  IconTrash,
-  IconUpload,
-} from '@tabler/icons-react'
 import { DataTable } from 'mantine-datatable'
 import { useState } from 'react'
 
-import { PermissionGuard } from '@/components/permission-guard'
 import { useDeleteFile, useGetFileUrl, useStorageFiles } from '@/hooks/queries'
 import { copyToClipboard } from '@/lib/clipboard'
-import { buildFileColumns, type FileRecord } from './file-columns'
+import { createColumns } from './file-list-columns'
 import { FilePreviewDialog } from './file-preview-dialog'
+
+export interface FileRecord {
+  id: number
+  fileKey: string
+  fileName: string
+  fileSize: number
+  mimeType: string
+  isPublic: number
+  uploaderId: number | null
+  uploaderName: string | null
+  createdAt: string
+  updatedAt: string
+}
+
+export interface FolderInfo {
+  name: string
+  prefix: string
+  fileCount: number
+}
+
+export type StorageItem =
+  | ({ type: 'folder'; id: string } & FolderInfo)
+  | ({ type: 'file' } & FileRecord)
+
+interface FileListProps {
+  currentPrefix: string
+  folders: FolderInfo[]
+  foldersLoading: boolean
+  onNavigate: (prefix: string) => void
+  onDeleteFolder: (prefix: string, name: string) => void
+}
+
+const PAGE_SIZE = 20
 
 function showManualCopyModal(url: string) {
   modals.open({
@@ -44,20 +59,18 @@ function showManualCopyModal(url: string) {
   })
 }
 
-const PAGE_SIZE = 20
-
-interface FileListProps {
-  currentPrefix: string
-  onUploadClick: () => void
-  onCreateFolderClick: () => void
-}
-
-export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: FileListProps) {
+export function FileList({
+  currentPrefix,
+  folders,
+  foldersLoading,
+  onNavigate,
+  onDeleteFolder,
+}: FileListProps) {
   const [page, setPage] = useState(1)
   const [previewFile, setPreviewFile] = useState<FileRecord | null>(null)
   const [previewUrl, setPreviewUrl] = useState<string | null>(null)
 
-  const { data, isLoading } = useStorageFiles({
+  const { data, isLoading: filesLoading } = useStorageFiles({
     prefix: currentPrefix || undefined,
     page,
     pageSize: PAGE_SIZE,
@@ -66,10 +79,11 @@ export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: 
   const deleteFile = useDeleteFile()
   const getFileUrl = useGetFileUrl()
 
-  const handlePreview = async (file: FileRecord) => {
+  const handlePreview = async (item: StorageItem) => {
+    if (item.type === 'folder') return
     try {
-      const result = await getFileUrl.mutateAsync(file.id)
-      setPreviewFile(file)
+      const result = await getFileUrl.mutateAsync(item.id)
+      setPreviewFile(item)
       setPreviewUrl(result.url)
     } catch (err) {
       notifications.show({
@@ -79,9 +93,10 @@ export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: 
     }
   }
 
-  const handleCopyUrl = async (file: FileRecord) => {
+  const handleCopyUrl = async (item: StorageItem) => {
+    if (item.type === 'folder') return
     try {
-      const result = await getFileUrl.mutateAsync(file.id)
+      const result = await getFileUrl.mutateAsync(item.id)
       const copied = await copyToClipboard(result.url)
       if (copied) {
         notifications.show({ message: '链接已复制', color: 'green' })
@@ -96,16 +111,30 @@ export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: 
     }
   }
 
-  const handleDelete = (file: FileRecord) => {
+  const handleDownload = async (item: StorageItem) => {
+    if (item.type === 'folder') return
+    try {
+      const result = await getFileUrl.mutateAsync(item.id)
+      window.open(result.url, '_blank')
+    } catch (err) {
+      notifications.show({
+        message: err instanceof Error ? err.message : '获取下载链接失败',
+        color: 'red',
+      })
+    }
+  }
+
+  const handleDeleteFile = (item: StorageItem) => {
+    if (item.type === 'folder') return
     modals.openConfirmModal({
       title: '删除文件',
-      children: `确定要删除文件 "${file.fileName}" 吗？此操作不可恢复。`,
+      children: `确定要删除文件 "${item.fileName}" 吗？此操作不可恢复。`,
       labels: { confirm: '删除', cancel: '取消' },
       confirmProps: { color: 'red' },
       centered: true,
       onConfirm: async () => {
         try {
-          await deleteFile.mutateAsync(file.id)
+          await deleteFile.mutateAsync(item.id)
           notifications.show({ message: '删除成功', color: 'green' })
         } catch (err) {
           notifications.show({
@@ -117,111 +146,45 @@ export function FileList({ currentPrefix, onUploadClick, onCreateFolderClick }: 
     })
   }
 
-  const breadcrumbParts = currentPrefix.split('/').filter(Boolean)
-
-  const columns = [
-    ...buildFileColumns({
-      onPreview: handlePreview,
-      onCopyUrl: handleCopyUrl,
-      onDelete: handleDelete,
-    }),
-    {
-      accessor: 'actions',
-      title: '操作',
-      width: 140,
-      render: (record: FileRecord) => (
-        <Group gap={4} wrap="nowrap">
-          <Tooltip label="预览">
-            <ActionIcon variant="subtle" size="sm" onClick={() => handlePreview(record)}>
-              <IconEye size={14} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="复制链接">
-            <ActionIcon variant="subtle" size="sm" onClick={() => handleCopyUrl(record)}>
-              <IconCopy size={14} />
-            </ActionIcon>
-          </Tooltip>
-          <Tooltip label="下载">
-            <ActionIcon
-              variant="subtle"
-              size="sm"
-              onClick={async () => {
-                const result = await getFileUrl.mutateAsync(record.id)
-                window.open(result.url, '_blank')
-              }}
-            >
-              <IconDownload size={14} />
-            </ActionIcon>
-          </Tooltip>
-          <PermissionGuard permission="storage:file:delete">
-            <Tooltip label="删除">
-              <ActionIcon
-                variant="subtle"
-                color="red"
-                size="sm"
-                onClick={() => handleDelete(record)}
-              >
-                <IconTrash size={14} />
-              </ActionIcon>
-            </Tooltip>
-          </PermissionGuard>
-        </Group>
-      ),
-    },
-  ]
+  const columns = createColumns({
+    onNavigate,
+    onDeleteFolder,
+    onPreview: handlePreview,
+    onCopyUrl: handleCopyUrl,
+    onDownload: handleDownload,
+    onDeleteFile: handleDeleteFile,
+  })
 
   const items = ((data as Record<string, unknown>)?.items ?? []) as FileRecord[]
   const total = ((data as Record<string, unknown>)?.total ?? 0) as number
 
+  // WHY: 文件夹仅在第 1 页置顶显示，totalRecords 需包含文件夹数以保持分页一致
+  const folderCount = page === 1 ? folders.length : 0
+  const records: StorageItem[] = [
+    ...(page === 1
+      ? folders.map((f) => ({ type: 'folder' as const, id: `dir-${f.prefix}`, ...f }))
+      : []),
+    ...items.map((f) => ({ type: 'file' as const, ...f })),
+  ]
+
   return (
     <>
-      <Paper withBorder p="md" radius="md">
-        <Group justify="space-between" mb="md">
-          <Breadcrumbs>
-            <Text size="sm" style={{ cursor: 'pointer' }} fw={currentPrefix === '' ? 700 : 400}>
-              根目录
-            </Text>
-            {breadcrumbParts.map((part) => (
-              <Text size="sm" key={part}>
-                {part}
-              </Text>
-            ))}
-          </Breadcrumbs>
-
-          <Group gap="sm">
-            <PermissionGuard permission="storage:file:upload">
-              <Button
-                size="xs"
-                variant="light"
-                leftSection={<IconFolderPlus size={14} />}
-                onClick={onCreateFolderClick}
-              >
-                新建目录
-              </Button>
-              <Button size="xs" leftSection={<IconUpload size={14} />} onClick={onUploadClick}>
-                上传文件
-              </Button>
-            </PermissionGuard>
-          </Group>
-        </Group>
-
-        <DataTable
-          withTableBorder
-          borderRadius="md"
-          striped
-          highlightOnHover
-          minHeight={200}
-          columns={columns}
-          records={items}
-          fetching={isLoading}
-          noRecordsText="暂无文件"
-          totalRecords={total}
-          recordsPerPage={PAGE_SIZE}
-          page={page}
-          onPageChange={setPage}
-          paginationText={({ from, to, totalRecords }) => `${from}-${to} / 共 ${totalRecords} 条`}
-        />
-      </Paper>
+      <DataTable
+        withTableBorder
+        borderRadius="md"
+        striped
+        highlightOnHover
+        minHeight={150}
+        columns={columns}
+        records={records}
+        fetching={filesLoading || foldersLoading}
+        noRecordsText="暂无文件或目录"
+        totalRecords={total + folderCount}
+        recordsPerPage={PAGE_SIZE + folderCount}
+        page={page}
+        onPageChange={setPage}
+        paginationText={({ totalRecords }) => `共 ${totalRecords} 项`}
+      />
 
       <FilePreviewDialog
         file={previewFile}

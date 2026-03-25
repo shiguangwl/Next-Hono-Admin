@@ -156,10 +156,19 @@ export const storage = new Hono<Env>()
     async (c) => {
       const formData = await c.req.formData()
       const file = formData.get('file') as File | null
-      const prefix = (formData.get('prefix') as string) ?? ''
-      const isPublic = Number(formData.get('isPublic') ?? 0)
+      const rawPrefix = (formData.get('prefix') as string) ?? ''
+      const rawIsPublic = Number(formData.get('isPublic') ?? 0)
 
       if (!file) return R.fail(c, '请选择文件')
+
+      // WHY: 与其他路由保持一致的输入校验标准
+      const PREFIX_MAX_LENGTH = 500
+      if (rawPrefix.length > PREFIX_MAX_LENGTH) {
+        return R.fail(c, `路径前缀过长 (最大 ${PREFIX_MAX_LENGTH} 字符)`)
+      }
+      if (rawIsPublic !== 0 && rawIsPublic !== 1) {
+        return R.fail(c, 'isPublic 参数无效')
+      }
 
       // WHY: 在分配 Buffer 前检查大小，避免大文件耗尽内存
       if (file.size > STORAGE_DEFAULTS.MAX_UPLOAD_MEMORY) {
@@ -170,11 +179,11 @@ export const storage = new Hono<Env>()
       const buffer = Buffer.from(await file.arrayBuffer())
       const admin = c.get('admin')
       const result = await uploadViaServer({
-        prefix,
+        prefix: rawPrefix,
         fileName: file.name,
         fileBuffer: buffer,
         contentType: file.type,
-        isPublic,
+        isPublic: rawIsPublic,
         uploaderId: admin?.adminId ?? null,
         uploaderName: admin?.username ?? null,
       })

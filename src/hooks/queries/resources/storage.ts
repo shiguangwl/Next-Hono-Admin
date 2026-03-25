@@ -106,7 +106,6 @@ export function useCreateFolder() {
 }
 
 export function usePresignUpload() {
-  const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: {
       prefix: string
@@ -118,9 +117,6 @@ export function usePresignUpload() {
         json: input,
       })
       return unwrapApiData<{ uploadUrl: string; fileKey: string }>(response, '获取上传链接失败')
-    },
-    onSuccess: () => {
-      qc.invalidateQueries({ queryKey: storageKeys.all })
     },
   })
 }

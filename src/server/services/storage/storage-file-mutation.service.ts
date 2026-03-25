@@ -239,3 +239,19 @@ export async function deleteFolder(prefix: string): Promise<{ deleted: number }>
 
   return { deleted: files.length }
 }
+
+// WHY: 简化签名供其他服务内部调用，无需传调用者身份
+export async function uploadFromService(input: {
+  prefix: string
+  fileName: string
+  fileBuffer: Buffer
+  contentType: string
+  isPublic?: number
+}): Promise<FileVo> {
+  return uploadViaServer({
+    ...input,
+    isPublic: input.isPublic ?? 0,
+    uploaderId: null,
+    uploaderName: null,
+  })
+}

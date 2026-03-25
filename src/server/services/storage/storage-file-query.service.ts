@@ -1,4 +1,4 @@
-import { and, count, desc, eq, like, not } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, like, not } from 'drizzle-orm'
 import { db } from '@/db'
 import { storageFile } from '@/db/schema'
 import { STORAGE_CONFIG_KEYS } from '@/lib/constants'
@@ -130,4 +130,49 @@ export async function getFolderFileCount(prefix: string): Promise<number> {
     .then((r) => r[0])
 
   return Number(result?.count ?? 0)
+}
+
+export async function getFileByKey(key: string): Promise<FileVo> {
+  const row = await db
+    .select()
+    .from(storageFile)
+    .where(eq(storageFile.fileKey, key))
+    .limit(1)
+    .then((r) => r[0])
+
+  if (!row) throw new NotFoundError('StorageFile', key)
+  return toFileVo(row)
+}
+
+export async function resolvePublicUrl(fileKey: string): Promise<string | null> {
+  const publicUrlBase = await getConfigValue<string>(STORAGE_CONFIG_KEYS.PUBLIC_URL)
+  if (!publicUrlBase) return null
+  return `${publicUrlBase.replace(/\/+$/, '')}/${fileKey}`
+}
+
+export async function getFileUrls(
+  ids: number[]
+): Promise<Array<{ id: number; url: string; isPublic: boolean }>> {
+  if (ids.length === 0) return []
+
+  const rows = await db.select().from(storageFile).where(inArray(storageFile.id, ids))
+
+  // WHY: allSettled 保证单个 presign 失败不会阻断其余文件的 URL 生成
+  const results = await Promise.allSettled(
+    rows.map(async (row) => {
+      if (row.isPublic === 1) {
+        const publicUrl = await resolvePublicUrl(row.fileKey)
+        if (publicUrl) return { id: row.id, url: publicUrl, isPublic: true }
+      }
+      const url = await presignDownloadUrl(row.fileKey)
+      return { id: row.id, url, isPublic: row.isPublic === 1 }
+    })
+  )
+
+  return results
+    .filter(
+      (r): r is PromiseFulfilledResult<{ id: number; url: string; isPublic: boolean }> =>
+        r.status === 'fulfilled'
+    )
+    .map((r) => r.value)
 }

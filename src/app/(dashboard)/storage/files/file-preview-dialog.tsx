@@ -2,7 +2,7 @@
 
 import { Image, Modal, Stack, Table, Text } from '@mantine/core'
 
-import type { FileRecord } from './file-columns'
+import type { FileRecord } from './file-list'
 
 interface FilePreviewDialogProps {
   file: FileRecord | null

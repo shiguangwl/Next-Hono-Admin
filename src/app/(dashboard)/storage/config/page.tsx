@@ -10,7 +10,6 @@ import {
   SimpleGrid,
   Stack,
   Switch,
-  TagsInput,
   TextInput,
 } from '@mantine/core'
 import { notifications } from '@mantine/notifications'
@@ -29,7 +28,6 @@ interface ConfigForm {
   publicUrl: string
   forcePathStyle: boolean
   maxFileSize: number
-  allowedExtensions: string[]
 }
 
 const DEFAULT_MAX_FILE_SIZE_MB = 50
@@ -44,7 +42,6 @@ function createEmptyForm(): ConfigForm {
     publicUrl: '',
     forcePathStyle: false,
     maxFileSize: DEFAULT_MAX_FILE_SIZE_MB,
-    allowedExtensions: [],
   }
 }
 
@@ -68,7 +65,6 @@ export default function StorageConfigPage() {
       maxFileSize: Math.round(
         ((c.maxFileSize as number) ?? DEFAULT_MAX_FILE_SIZE_MB * 1024 * 1024) / 1024 / 1024
       ),
-      allowedExtensions: (c.allowedExtensions as string[]) ?? [],
     })
   }, [config])
 
@@ -87,7 +83,6 @@ export default function StorageConfigPage() {
         publicUrl: form.publicUrl || undefined,
         forcePathStyle: form.forcePathStyle,
         maxFileSize: form.maxFileSize * 1024 * 1024,
-        allowedExtensions: form.allowedExtensions,
       })
       notifications.show({ message: '配置已保存', color: 'green' })
     } catch (err) {
@@ -100,7 +95,10 @@ export default function StorageConfigPage() {
 
   const handleTest = async () => {
     if (!form.endpoint || !form.bucket || !form.accessKeyId) {
-      notifications.show({ message: '请先填写 Endpoint、Bucket 和 Access Key ID', color: 'red' })
+      notifications.show({
+        message: '请先填写 Endpoint、Bucket 和 Access Key ID',
+        color: 'red',
+      })
       return
     }
     try {
@@ -214,28 +212,20 @@ export default function StorageConfigPage() {
             />
           </SimpleGrid>
 
+          <NumberInput
+            label="最大文件大小 (MB)"
+            min={1}
+            max={1024}
+            value={form.maxFileSize}
+            onChange={(v) => update('maxFileSize', v || DEFAULT_MAX_FILE_SIZE_MB)}
+          />
+
           <Switch
             label="Force Path Style"
             description="MinIO 等自托管服务需要开启"
             checked={form.forcePathStyle}
             onChange={(e) => update('forcePathStyle', e.currentTarget.checked)}
           />
-
-          <SimpleGrid cols={{ base: 1, sm: 2 }} spacing="md">
-            <NumberInput
-              label="最大文件大小 (MB)"
-              min={1}
-              max={1024}
-              value={form.maxFileSize}
-              onChange={(v) => update('maxFileSize', v || DEFAULT_MAX_FILE_SIZE_MB)}
-            />
-            <TagsInput
-              label="允许的文件扩展名"
-              placeholder="输入后回车添加"
-              value={form.allowedExtensions}
-              onChange={(v) => update('allowedExtensions', v)}
-            />
-          </SimpleGrid>
         </Stack>
       </Paper>
     </PageContainer>
