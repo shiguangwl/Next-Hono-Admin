@@ -53,8 +53,14 @@ function createLogger() {
       return getTraceContext() ?? {}
     },
 
-    // 时间戳格式
-    timestamp: pino.stdTimeFunctions.isoTime,
+    // WHY: 使用北京时间(UTC+8) ISO 格式，便于国内团队排查问题
+    timestamp() {
+      const now = new Date()
+      const offset = 8 * 60 * 60_000
+      const local = new Date(now.getTime() + offset)
+      const iso = local.toISOString().replace('Z', '+08:00')
+      return `,"time":"${iso}"`
+    },
 
     // 基础字段配置
     base: {
