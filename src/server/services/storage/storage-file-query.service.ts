@@ -1,4 +1,4 @@
-import { and, count, desc, eq, inArray, like, not } from 'drizzle-orm'
+import { and, count, desc, eq, inArray, like, not, type SQL } from 'drizzle-orm'
 import { db } from '@/db'
 import { storageFile } from '@/db/schema'
 import { STORAGE_CONFIG_KEYS } from '@/lib/constants'
@@ -6,6 +6,7 @@ import { formatDateToLocal } from '@/lib/date'
 import { NotFoundError } from '@/lib/errors'
 import {
   buildPaginatedResult,
+  buildSortOrder,
   normalizePagination,
   type PaginatedResult,
 } from '@/server/utils/pagination'
@@ -29,8 +30,11 @@ export function toFileVo(row: typeof storageFile.$inferSelect): FileVo {
   }
 }
 
+const FILE_SORTABLE_FIELDS = ['fileName', 'fileSize', 'mimeType', 'createdAt'] as const
+const FILE_DEFAULT_ORDER: SQL[] = [desc(storageFile.createdAt)]
+
 export async function listFiles(query: FileQuery): Promise<PaginatedResult<FileVo>> {
-  const { page, pageSize, offset } = normalizePagination(query)
+  const { page, pageSize, offset, sortBy, sortOrder } = normalizePagination(query)
   const whereClauses = [not(eq(storageFile.mimeType, FOLDER_PLACEHOLDER_MIME))]
 
   if (query.prefix) {
@@ -43,13 +47,20 @@ export async function listFiles(query: FileQuery): Promise<PaginatedResult<FileV
   }
 
   const where = and(...whereClauses)
+  const orderBy = buildSortOrder(
+    storageFile,
+    sortBy,
+    sortOrder,
+    FILE_SORTABLE_FIELDS,
+    FILE_DEFAULT_ORDER
+  )
 
   const [items, totalResult] = await Promise.all([
     db
       .select()
       .from(storageFile)
       .where(where as never)
-      .orderBy(desc(storageFile.createdAt))
+      .orderBy(...orderBy)
       .limit(pageSize)
       .offset(offset),
     db

@@ -68,6 +68,6 @@ export const FolderCreateSchema = z.object({
     .regex(/^[a-zA-Z0-9\u4e00-\u9fa5_-]+$/, '目录名仅支持中英文、数字、下划线和短横线'),
 })
 
-export const FolderDeleteSchema = z.object({
+export const FolderDeleteQuerySchema = z.object({
   prefix: z.string().min(1).max(500),
 })

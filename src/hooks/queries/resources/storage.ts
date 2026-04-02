@@ -94,7 +94,7 @@ export function useCreateFolder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (input: { prefix: string; folderName: string }) => {
-      const response = await getClient().files.folder.$post({
+      const response = await getClient().files.folders.$post({
         json: input,
       })
       return unwrapApiData(response, '创建目录失败')
@@ -188,8 +188,8 @@ export function useDeleteFolder() {
   const qc = useQueryClient()
   return useMutation({
     mutationFn: async (prefix: string) => {
-      const response = await getClient().files.folder.$delete({
-        json: { prefix },
+      const response = await getClient().files.folders.$delete({
+        query: { prefix },
       })
       return unwrapApiData(response, '删除目录失败')
     },

@@ -177,22 +177,15 @@ export async function updateFile(
   id: number,
   input: { fileName?: string; isPublic?: number }
 ): Promise<FileVo> {
-  const row = await db
-    .select()
-    .from(storageFile)
-    .where(eq(storageFile.id, id))
-    .limit(1)
-    .then((r) => r[0])
-
-  if (!row) throw new NotFoundError('StorageFile', id)
-
-  await db
+  const [affected] = await db
     .update(storageFile)
     .set({
-      fileName: input.fileName ?? row.fileName,
-      isPublic: input.isPublic ?? row.isPublic,
+      ...(input.fileName !== undefined && { fileName: input.fileName }),
+      ...(input.isPublic !== undefined && { isPublic: input.isPublic }),
     })
     .where(eq(storageFile.id, id))
+
+  if (affected.affectedRows === 0) throw new NotFoundError('StorageFile', id)
 
   const updated = await db
     .select()

@@ -31,6 +31,10 @@ function createPool(): mysql.Pool {
     timezone: 'local',
   })
 
+  pool.pool.on('connection', (connection) => {
+    connection.query("SET time_zone = '+08:00'")
+  })
+
   return pool
 }
 

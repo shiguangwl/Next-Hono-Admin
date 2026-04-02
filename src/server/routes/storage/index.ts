@@ -10,7 +10,6 @@ import {
   deleteFile,
   deleteFolder,
   getFileUrl,
-  getFolderFileCount,
   getStorageConfig,
   listFiles,
   listFolders,
@@ -27,7 +26,7 @@ import {
   ConfirmUploadSchema,
   FileQuerySchema,
   FolderCreateSchema,
-  FolderDeleteSchema,
+  FolderDeleteQuerySchema,
   FolderPrefixSchema,
   PresignRequestSchema,
   TestConnectionSchema,
@@ -88,18 +87,8 @@ export const storage = new Hono<Env>()
       return R.ok(c, folders)
     }
   )
-  .get(
-    '/files/folder/count',
-    requirePermission('storage:file:list'),
-    zValidator('query', FolderPrefixSchema),
-    async (c) => {
-      const { prefix } = c.req.valid('query')
-      const fileCount = await getFolderFileCount(prefix)
-      return R.ok(c, { count: fileCount })
-    }
-  )
   .post(
-    '/files/folder',
+    '/files/folders',
     requirePermission('storage:file:upload'),
     auditLog({
       module: '文件管理',
@@ -218,16 +207,16 @@ export const storage = new Hono<Env>()
     }
   )
   .delete(
-    '/files/folder',
+    '/files/folders',
     requirePermission('storage:file:delete'),
     auditLog({
       module: '文件管理',
       operation: '删除目录',
       description: '删除虚拟目录',
     }),
-    zValidator('json', FolderDeleteSchema),
+    zValidator('query', FolderDeleteQuerySchema),
     async (c) => {
-      const { prefix } = c.req.valid('json')
+      const { prefix } = c.req.valid('query')
       const result = await deleteFolder(prefix)
       return R.ok(c, result)
     }
