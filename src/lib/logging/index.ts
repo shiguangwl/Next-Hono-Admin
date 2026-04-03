@@ -12,4 +12,4 @@ export {
   runWithRequestContext,
 } from './context'
 // 日志工具
-export { type LogMeta, logger, rootLogger } from './logger'
+export { type ErrorLogMeta, type LogMeta, logger, rootLogger } from './logger'

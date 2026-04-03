@@ -80,13 +80,23 @@ function createLogger() {
 /** 根 logger 实例 */
 const rootLogger = createLogger()
 
-/** 日志元数据类型 */
 export type LogMeta = Record<string, unknown>
 
-/**
- * 获取带请求上下文的 logger
- * 自动注入 requestId（如果在请求上下文中）
- */
+/** warn/error/fatal 的 meta 类型，引导开发者使用 err key */
+export type ErrorLogMeta = LogMeta & { err?: Error }
+
+// WHY: catch(error) { log({ error }) } 是最高频误用，pino 只识别 err key
+function normalizeMeta(meta?: LogMeta): Record<string, unknown> {
+  if (!meta) return {}
+  const { error, ...rest } = meta
+  if (error instanceof Error) {
+    // WHY: err 已显式设置时，说明开发者用了正确 key，丢弃误命名的 error
+    if ('err' in rest) return rest
+    return { ...rest, err: error }
+  }
+  return meta
+}
+
 function getContextualLogger(): pino.Logger {
   try {
     const ctx = getRequestContext()
@@ -99,62 +109,35 @@ function getContextualLogger(): pino.Logger {
   return rootLogger
 }
 
-/**
- * 日志记录器
- * 自动注入请求上下文中的 requestId
- */
+type PinoLevel = 'debug' | 'info' | 'warn' | 'error' | 'fatal'
+
+function emit(level: PinoLevel, msg: string, meta?: LogMeta): void {
+  getContextualLogger()[level](normalizeMeta(meta), msg)
+}
+
 export const logger = {
-  /**
-   * 调试日志（仅开发环境）
-   */
   debug(msg: string, meta?: LogMeta): void {
-    getContextualLogger().debug(meta ?? {}, msg)
+    emit('debug', msg, meta)
   },
 
-  /**
-   * 信息日志
-   */
   info(msg: string, meta?: LogMeta): void {
-    getContextualLogger().info(meta ?? {}, msg)
+    emit('info', msg, meta)
   },
 
-  /**
-   * 警告日志
-   */
-  warn(msg: string, meta?: LogMeta): void {
-    getContextualLogger().warn(meta ?? {}, msg)
+  warn(msg: string, meta?: ErrorLogMeta): void {
+    emit('warn', msg, meta)
   },
 
-  /**
-   * 错误日志
-   */
-  error(msg: string, meta?: LogMeta & { err?: Error }): void {
-    const log = getContextualLogger()
-    if (meta?.err) {
-      // Pino 会自动序列化 Error 对象（包含 stack）
-      log.error({ ...meta, err: meta.err }, msg)
-    } else {
-      log.error(meta ?? {}, msg)
-    }
+  error(msg: string, meta?: ErrorLogMeta): void {
+    emit('error', msg, meta)
   },
 
-  /**
-   * 创建子 logger（用于模块级日志）
-   */
+  fatal(msg: string, meta?: ErrorLogMeta): void {
+    emit('fatal', msg, meta)
+  },
+
   child(bindings: LogMeta): pino.Logger {
     return rootLogger.child(bindings)
-  },
-
-  /**
-   * 致命错误（进程级崩溃）
-   */
-  fatal(msg: string, meta?: LogMeta & { err?: Error }): void {
-    const log = getContextualLogger()
-    if (meta?.err) {
-      log.fatal({ ...meta, err: meta.err }, msg)
-    } else {
-      log.fatal(meta ?? {}, msg)
-    }
   },
 }
 
