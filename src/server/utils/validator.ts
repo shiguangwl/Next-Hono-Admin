@@ -2,6 +2,7 @@ import { zValidator as baseZValidator } from '@hono/zod-validator'
 import type { ValidationTargets } from 'hono'
 import type { ZodIssue, ZodSchema } from 'zod'
 import { ValidationError, type ValidationIssue, type ValidationIssueSource } from '@/lib/errors'
+import { logger } from '@/lib/logging'
 
 function toValidationSource(target: keyof ValidationTargets): ValidationIssueSource {
   if (target === 'json' || target === 'form' || target === 'query') {
@@ -26,9 +27,17 @@ export const zValidator = <T extends ZodSchema, Target extends keyof ValidationT
 ) => {
   return baseZValidator(target, schema, (result) => {
     if (!result.success) {
-      throw new ValidationError('请求参数校验失败', {
-        issues: formatIssues(result.error.issues, toValidationSource(target)),
+      const source = toValidationSource(target)
+      const issues = formatIssues(result.error.issues, source)
+
+      // WHY: 开发环境打印原始数据和校验原因，便于快速排查参数问题
+      logger.debug('参数校验失败', {
+        source: target,
+        rawData: result.data,
+        issues,
       })
+
+      throw new ValidationError('请求参数校验失败', { issues })
     }
   })
 }
