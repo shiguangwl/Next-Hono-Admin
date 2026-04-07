@@ -5,23 +5,22 @@
 [![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
 [![Hono](https://img.shields.io/badge/Hono-orange?logo=hono)](https://hono.dev/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-blue?logo=typescript)](https://www.typescriptlang.org/)
-[![License](https://img.shields.io/badge/License-MIT-green)](./LICENSE)
 
 ## 项目简介
 
-NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，提供后台系统常见能力：认证、权限、审计、日志、CRUD 与可复用的 Hooks/路由工厂，方便快速扩展业务模块。
+NextAdminHono 以「前后端一体 + 端到端类型安全」为核心目标，提供后台系统常见能力：认证、权限、审计、日志，以及可复用的 CRUD 中间件与 React Query Hooks 模式，方便快速扩展业务模块。
 
 ## 功能概览
 
 - 服务端会话认证、RBAC 权限（菜单/按钮）
 - 请求级上下文、结构化日志、审计日志
-- CRUD 路由工厂 + React Query Hooks 工厂
+- 共享 CRUD 中间件 + React Query Hooks 工厂
 - MySQL + Drizzle ORM（类型安全 Schema）
 - Docker 生产部署
 
 ## 技术栈
 
-- Frontend: Next.js App Router、React 19、Mantine 7、@tanstack/react-query、Zustand
+- Frontend: Next.js App Router、React 19、Mantine 8、@tanstack/react-query、Zustand
 - Backend: Hono、Drizzle ORM、MySQL2、Zod
 - 工具链: Biome、pnpm、Docker
 
@@ -82,6 +81,7 @@ pnpm dev
 - 菜单：`/api/menus`
 - 操作日志：`/api/operation-logs`
 - 系统配置：`/api/configs`
+- 存储：`/api/storage`
 
 > 当前版本未集成 OpenAPI 自动文档生成。如需要，可通过 `@hono/zod-openapi` 扩展。
 
@@ -134,18 +134,19 @@ docker compose logs -f app
 
 ## 文档索引
 
-- [00-AI 开发指引](./docs/00-AI开发指引.md)
-- [01-项目概览](./docs/01-项目概览.md)
-- [02-目录结构](./docs/02-目录结构.md)
-- [03-架构设计](./docs/03-架构设计.md)
-- [04-数据库设计](./docs/04-数据库设计.md)
-- [05-服务端开发](./docs/05-服务端开发.md)
-- [06-客户端开发](./docs/06-客户端开发.md)
-- [07-认证与权限](./docs/07-认证与权限.md)
-- [08-错误处理](./docs/08-错误处理.md)
-- [09-新增模块指南](./docs/09-新增模块指南.md)
-- [10-部署与运维](./docs/10-部署与运维.md)
-
-## 开源协议
-
-[MIT License](./LICENSE)
+- [01-01-项目概览](./docs/01-01-项目概览.md)
+- [01-02-AI开发指引](./docs/01-02-AI开发指引.md)
+- [01-03-新增模块指南](./docs/01-03-新增模块指南.md)
+- [02-01-目录结构](./docs/02-01-目录结构.md)
+- [02-02-架构设计](./docs/02-02-架构设计.md)
+- [02-03-数据库设计](./docs/02-03-数据库设计.md)
+- [02-04-工程标准](./docs/02-04-工程标准.md)
+- [03-01-服务端开发](./docs/03-01-服务端开发.md)
+- [03-02-客户端开发](./docs/03-02-客户端开发.md)
+- [03-03-认证与权限](./docs/03-03-认证与权限.md)
+- [03-04-错误处理](./docs/03-04-错误处理.md)
+- [03-05-安全白皮书](./docs/03-05-安全白皮书.md)
+- [04-01-测试指南](./docs/04-01-测试指南.md)
+- [04-02-可观测性](./docs/04-02-可观测性.md)
+- [05-01-部署与运维](./docs/05-01-部署与运维.md)
+- [05-02-配置管理](./docs/05-02-配置管理.md)

@@ -66,6 +66,8 @@ function createLogger() {
     base: {
       pid: process.pid,
       hostname: process.env.HOSTNAME || 'localhost',
+      service: 'admin-scaffold-rbac',
+      env: process.env.NODE_ENV ?? 'development',
     },
 
     // 序列化器：标准化对象格式

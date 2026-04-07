@@ -58,6 +58,9 @@ export const env = createEnv({
     // 日志级别（默认：开发=debug，生产=info）
     LOG_LEVEL: z.enum(['fatal', 'error', 'warn', 'info', 'debug', 'trace', 'silent']).optional(),
 
+    OTEL_EXPORTER_OTLP_ENDPOINT: z.string().url().optional(),
+    OTEL_SERVICE_NAME: z.string().min(1).optional().default('next-hono-admin'),
+
     // WHY: AES-256 需要 32 bytes 密钥，hex 编码后为 64 字符
     STORAGE_ENCRYPTION_KEY: z
       .string()
@@ -86,6 +89,8 @@ export const env = createEnv({
     CORS_ORIGINS: process.env.CORS_ORIGINS,
     NODE_ENV: process.env.NODE_ENV,
     LOG_LEVEL: process.env.LOG_LEVEL,
+    OTEL_EXPORTER_OTLP_ENDPOINT: process.env.OTEL_EXPORTER_OTLP_ENDPOINT,
+    OTEL_SERVICE_NAME: process.env.OTEL_SERVICE_NAME,
     COOKIE_SECURE: process.env.COOKIE_SECURE,
     STORAGE_ENCRYPTION_KEY: process.env.STORAGE_ENCRYPTION_KEY,
   },

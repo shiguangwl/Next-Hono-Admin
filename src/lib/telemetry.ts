@@ -6,6 +6,7 @@
 
 import { type Attributes, trace } from '@opentelemetry/api'
 import pino from 'pino'
+import { env } from '@/env'
 import { HEALTH_CHECK_PATH } from '@/lib/constants'
 
 // WHY: 独立 pino 实例避免循环依赖（telemetry ↔ logger）
@@ -49,14 +50,14 @@ export function getTraceContext(): Attributes | undefined {
  * @description 仅在 OTEL_EXPORTER_OTLP_ENDPOINT 存在时执行
  */
 export async function initTelemetry(): Promise<void> {
-  const rawEndpoint = process.env.OTEL_EXPORTER_OTLP_ENDPOINT
+  const rawEndpoint = env.OTEL_EXPORTER_OTLP_ENDPOINT
   if (!rawEndpoint) return
 
   // WHY: 末尾斜杠会导致拼接时出现双斜杠 (e.g. http://host:4318//v1/traces)
   const otlpEndpoint = rawEndpoint.replace(/\/+$/, '')
 
   try {
-    const serviceName = process.env.OTEL_SERVICE_NAME || 'next-hono-admin'
+    const serviceName = env.OTEL_SERVICE_NAME
 
     const { NodeSDK } = await import('@opentelemetry/sdk-node')
     const { OTLPTraceExporter } = await import('@opentelemetry/exporter-trace-otlp-http')

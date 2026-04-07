@@ -4,6 +4,10 @@ import { deleteExpiredSessions } from '@/server/services'
 const CLEANUP_INTERVAL_MS = 60 * 60 * 1000
 const INITIAL_DELAY_MS = 30 * 1000
 
+declare global {
+  var __sessionCleanupTaskStarted: boolean | undefined
+}
+
 async function runCleanup() {
   try {
     const deleted = await deleteExpiredSessions()
@@ -16,6 +20,13 @@ async function runCleanup() {
 }
 
 export function startSessionCleanupTask(): void {
+  if (globalThis.__sessionCleanupTaskStarted) {
+    logger.debug('Session cleanup task already started, skipping duplicate registration')
+    return
+  }
+
+  globalThis.__sessionCleanupTaskStarted = true
+
   const initialTimer = setTimeout(() => {
     void runCleanup()
 
